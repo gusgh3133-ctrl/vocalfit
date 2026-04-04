@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 보컬핏 스튜디오 [연습 앱]</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        :root {
+            --bg: #0d0d1a; --bg2: #151528; --card: #1e1e35;
+            --purple: #8b5cf6; --blue: #06b6d4; --green: #10b981;
+            --red: #ef4444; --yellow: #f59e0b;
+            --text: #f1f5f9; --text2: #94a3b8; --muted: #64748b;
+            --border: #2a2a45;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg); color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh; max-width: 480px; margin: 0 auto;
+        }
+
+        /* Header */
+        .header { padding: 22px 20px 14px; text-align: center; background: var(--bg2); border-bottom: 1px solid var(--border); }
+        .header h1 { font-size: 1.45rem; font-weight: 800; background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header p { color: var(--text2); font-size: 0.8rem; margin-top: 3px; }
+
+        /* Tabs */
+        .tabs { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab { flex: 1; min-width: 0; padding: 11px 4px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text2); font-size: .76rem; font-weight: 500; cursor: pointer; transition: all .2s; white-space: nowrap; }
+        .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        /* ── SELF ASSESSMENT ── */
+        .sa-intro { font-size: .82rem; color: var(--text2); line-height: 1.75; text-align: center; padding: 4px 0 8px; }
+        .sa-intro strong { color: var(--text); }
+        .sa-divider { height: 1px; background: var(--border); margin: 14px 0; }
+        .vtype-card { border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid; }
+        .vtype-card .vt-tag   { font-size: .68rem; font-weight: 800; letter-spacing: .04em; margin-bottom: 6px; }
+        .vtype-card .vt-ko    { font-size: .95rem; font-weight: 800; color: var(--text); }
+        .vtype-card .vt-en    { font-size: .75rem; font-weight: 700; margin-top: 1px; margin-bottom: 8px; }
+        .vtype-card .vt-short { font-size: .8rem; font-weight: 700; color: var(--text); line-height: 1.5; margin-bottom: 6px; }
+        .vtype-card .vt-long  { font-size: .75rem; color: var(--text2); line-height: 1.65; }
+        /* 타입별 색상 */
+        .vt-pressed  { background: rgba(239,68,68,.08);   border-color: rgba(239,68,68,.3);   }
+        .vt-pressed  .vt-tag, .vt-pressed  .vt-en { color: #f87171; }
+        .vt-breathy  { background: rgba(6,182,212,.08);   border-color: rgba(6,182,212,.3);   }
+        .vt-breathy  .vt-tag, .vt-breathy  .vt-en { color: var(--blue); }
+        .vt-extrinsic{ background: rgba(245,158,11,.08);  border-color: rgba(245,158,11,.3);  }
+        .vt-extrinsic .vt-tag, .vt-extrinsic .vt-en { color: var(--yellow); }
+        .vt-under    { background: rgba(139,92,246,.08);  border-color: rgba(139,92,246,.3);  }
+        .vt-under    .vt-tag, .vt-under    .vt-en { color: var(--purple); }
+        .vt-register { background: rgba(16,185,129,.08);  border-color: rgba(16,185,129,.3);  }
+        .vt-register .vt-tag, .vt-register .vt-en { color: var(--green); }
+        .vt-stable   { background: rgba(99,102,241,.08);  border-color: rgba(99,102,241,.3);  }
+        .vt-stable   .vt-tag, .vt-stable   .vt-en { color: #818cf8; }
+        /* YouTube 링크 플레이스홀더 */
+        .yt-slot { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg2); border: 1px dashed var(--border); border-radius: 10px; margin-top: 8px; cursor: pointer; transition: border-color .15s; }
+        .yt-slot:hover { border-color: var(--purple); }
+        .yt-icon { font-size: 1.4rem; flex-shrink: 0; }
+        .yt-label { font-size: .78rem; color: var(--muted); }
+        .yt-label strong { display: block; font-size: .82rem; color: var(--text2); margin-bottom: 1px; }
+
+        /* ── ROUTINE ── */
+        .routine-step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .routine-step:last-child { border-bottom: none; padding-bottom: 0; }
+        .step-num { min-width: 26px; height: 26px; border-radius: 50%; background: var(--purple); color: #fff; font-size: .75rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+        .step-body { flex: 1; }
+        .step-title { font-size: .88rem; font-weight: 700; color: var(--text); }
+        .step-desc  { font-size: .77rem; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+        .step-time  { font-size: .7rem; color: var(--purple); font-weight: 700; margin-top: 4px; }
+        .routine-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .68rem; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+        .rb-warm  { background: rgba(245,158,11,.15); color: var(--yellow); border: 1px solid rgba(245,158,11,.3); }
+        .rb-main  { background: rgba(139,92,246,.15); color: var(--purple); border: 1px solid rgba(139,92,246,.3); }
+        .rb-cool  { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+
+        /* ── STUDIO (소개) ── */
+        .studio-hero { text-align: center; padding: 10px 0 18px; }
+        .studio-hero .sh-logo { font-size: 2.8rem; margin-bottom: 10px; }
+        .studio-hero h2 { font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .studio-hero p  { font-size: .8rem; color: var(--text2); margin-top: 6px; line-height: 1.6; }
+        .vip-tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: .72rem; font-weight: 700; background: rgba(139,92,246,.15); color: var(--purple); border: 1px solid rgba(139,92,246,.3); margin-bottom: 10px; }
+        .coach-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .coach-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .coach-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 800; color: #fff; flex-shrink: 0; }
+        .coach-name  { font-size: .88rem; font-weight: 700; color: var(--text); }
+        .coach-desc  { font-size: .76rem; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+        .coach-kr    { background: linear-gradient(135deg, #d97706, #b45309); }
+        .principle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+        .principle-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 10px 8px; }
+        .pi-icon  { font-size: 1.2rem; margin-bottom: 4px; }
+        .pi-title { font-size: .75rem; font-weight: 700; color: var(--text); }
+        .pi-sub   { font-size: .67rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+        /* ── NOTES (참고사항) ── */
+        .notes-placeholder { text-align: center; padding: 40px 20px; color: var(--muted); }
+        .notes-placeholder .np-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .notes-placeholder p { font-size: .82rem; line-height: 1.6; }
+
+        /* Sections */
+        .section { display: none; padding: 18px 16px; }
+        .section.active { display: block; }
+
+        /* Card */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+        .card-label { font-size: .72rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+
+        /* Buttons */
+        .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-size: .95rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+        .btn-purple { background: linear-gradient(135deg, var(--purple), #7c3aed); color: #fff; }
+        .btn-purple:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(139,92,246,.4); }
+        .btn-red    { background: linear-gradient(135deg, var(--red), #dc2626); color: #fff; }
+        .btn-green  { background: linear-gradient(135deg, var(--green), #059669); color: #fff; }
+        .btn-ghost  { background: var(--bg2); color: var(--text); border: 1px solid var(--border); }
+
+        /* ── PITCH ── */
+        .mic-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .mic-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background .3s; }
+        .mic-dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 1.4s infinite; }
+        @keyframes blink { 0%,100%{opacity:1}50%{opacity:.4} }
+
+        .note-center { text-align: center; padding: 10px 0 16px; }
+        .note-giant { font-size: 5.5rem; font-weight: 900; line-height: 1; transition: color .1s; color: var(--muted); }
+        .note-giant.in-tune { color: var(--green); }
+        .note-giant.sharp   { color: var(--red); }
+        .note-giant.flat    { color: var(--blue); }
+        .note-sub  { font-size: 1.15rem; color: var(--text2); margin-top: 6px; }
+        .note-freq { font-size: .82rem; color: var(--muted); margin-top: 3px; }
+
+        .cents-wrap { margin: 8px 0 4px; }
+        .cents-bar { position: relative; height: 36px; background: var(--bg2); border-radius: 18px; overflow: hidden; }
+        .cents-center-line { position: absolute; top: 50%; left: 50%; width: 2px; height: 26px; transform: translate(-50%,-50%); background: var(--border); }
+        .cents-needle { position: absolute; top: 50%; left: 50%; width: 6px; height: 22px; transform: translate(-50%,-50%); border-radius: 3px; background: var(--green); transition: left .08s ease-out, background .1s; }
+        .cents-tick { position: absolute; top: 50%; width: 1px; height: 10px; transform: translateY(-50%); background: var(--border); }
+        .cents-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: .68rem; padding: 3px 10px 0; }
+        .cents-val { text-align: center; color: var(--text2); font-size: .8rem; margin-top: 4px; }
+
+        .history-chips { display: flex; gap: 7px; flex-wrap: wrap; min-height: 34px; align-items: center; }
+        .chip { padding: 4px 11px; border-radius: 20px; font-size: .82rem; font-weight: 600; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); }
+        .chip.fresh { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+        /* ── PITCH CHECK NOTE GRID ── */
+        .pc-note-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .pc-note-cell {
+            padding: 7px 3px 6px;
+            text-align: center;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .15s;
+            line-height: 1.3;
+            user-select: none;
+        }
+        .pc-note-cell .pnc-en { font-size: .72rem; font-weight: 700; color: var(--text); }
+        .pc-note-cell .pnc-ko { font-size: .6rem; color: var(--text2); margin-top: 1px; }
+        .pc-note-cell.sharp { background: #181830; border-color: #252545; }
+        .pc-note-cell.sharp .pnc-en { color: var(--text2); }
+        .pc-note-cell:hover:not(.disabled) { border-color: var(--purple); transform: scale(1.05); }
+        .pc-note-cell.active { background: var(--blue); border-color: var(--blue); }
+        .pc-note-cell.active .pnc-en, .pc-note-cell.active .pnc-ko { color: #fff; }
+        .pc-note-cell.disabled { opacity: .38; cursor: default; pointer-events: none; }
+        .pc-note-cell.result-good { background: rgba(16,185,129,.25); border-color: var(--green); }
+        .pc-note-cell.result-good .pnc-en { color: var(--green); }
+        .pc-note-cell.result-high { background: rgba(239,68,68,.2); border-color: var(--red); }
+        .pc-note-cell.result-high .pnc-en { color: var(--red); }
+        .pc-note-cell.result-low  { background: rgba(6,182,212,.2); border-color: var(--blue); }
+        .pc-note-cell.result-low  .pnc-en { color: var(--blue); }
+
+        /* 가이드 음 – 남성(C3) / 여성(D4) */
+        .pc-note-cell.guide-male {
+            background: linear-gradient(145deg, #1e3a5f, #1a2a4a);
+            border-color: #3b82f6;
+            box-shadow: 0 0 8px rgba(59,130,246,.35);
+        }
+        .pc-note-cell.guide-male .pnc-en { color: #93c5fd; }
+        .pc-note-cell.guide-male .pnc-ko { color: #60a5fa; }
+        .pc-note-cell.guide-male .pnc-guide { font-size: .55rem; font-weight: 800; color: #3b82f6; letter-spacing: .02em; margin-top: 2px; }
+
+        .pc-note-cell.guide-female {
+            background: linear-gradient(145deg, #4a1a3a, #3a1230);
+            border-color: #ec4899;
+            box-shadow: 0 0 8px rgba(236,72,153,.35);
+        }
+        .pc-note-cell.guide-female .pnc-en { color: #f9a8d4; }
+        .pc-note-cell.guide-female .pnc-ko { color: #f472b6; }
+        .pc-note-cell.guide-female .pnc-guide { font-size: .55rem; font-weight: 800; color: #ec4899; letter-spacing: .02em; margin-top: 2px; }
+
+        .pc-note-cell.guide-male:hover,
+        .pc-note-cell.guide-female:hover { transform: scale(1.05); }
+
+        .pcs-status-box {
+            text-align: center;
+            padding: 16px 10px 12px;
+            background: var(--bg2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-top: 12px;
+        }
+        .pcs-countdown {
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: var(--purple);
+            line-height: 1;
+            transition: color .3s;
+        }
+        .pcs-phase {
+            font-size: .82rem;
+            color: var(--text2);
+            margin-top: 7px;
+        }
+        .pcs-result {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 10px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .pcs-result.good { color: var(--green); background: rgba(16,185,129,.12); }
+        .pcs-result.high { color: var(--red);   background: rgba(239,68,68,.12); }
+        .pcs-result.low  { color: var(--blue);  background: rgba(6,182,212,.12); }
+        .pcs-result.warn { color: var(--yellow);background: rgba(245,158,11,.12); }
+
+        /* ── EXERCISE ── */
+        .loading-msg { text-align: center; color: var(--text2); font-size: .82rem; margin-bottom: 8px; }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 14px; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--blue)); border-radius: 2px; transition: width .4s; }
+
+        .voice-toggle { display: flex; background: var(--bg2); border-radius: 10px; padding: 4px; gap: 4px; }
+        .vtoggle { flex: 1; padding: 9px 6px; background: none; border: none; border-radius: 7px; color: var(--text2); font-size: .88rem; font-weight: 500; cursor: pointer; transition: all .15s; }
+        .vtoggle.active { background: var(--purple); color: #fff; }
+        .range-hint { font-size: .75rem; color: var(--muted); margin-top: 7px; }
+
+        /* Starting key grid */
+        .key-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 10px; }
+        .key-cell { padding: 8px 4px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .15s; line-height: 1.2; }
+        .key-cell.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .key-cell:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
+
+        /* Auto-progress toggle */
+        .two-toggle { display: flex; background: var(--bg2); border-radius: 10px; padding: 4px; gap: 4px; }
+        .ttoggle { flex: 1; padding: 8px 6px; background: none; border: none; border-radius: 7px; color: var(--text2); font-size: .84rem; font-weight: 500; cursor: pointer; transition: all .15s; text-align: center; }
+        .ttoggle.active { background: var(--blue); color: #fff; }
+
+        /* BPM */
+        .bpm-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+        input[type=range] { flex: 1; -webkit-appearance: none; height: 4px; background: var(--border); border-radius: 2px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--purple); border-radius: 50%; cursor: pointer; }
+        .bpm-val { min-width: 60px; text-align: right; color: var(--purple); font-weight: 700; font-size: .88rem; }
+
+        /* Key progression bar */
+        .key-prog-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+        .kprog-item {
+            padding: 5px 8px; border-radius: 8px; font-size: .72rem; font-weight: 700;
+            background: var(--bg2); border: 1px solid var(--border); color: var(--muted);
+            transition: all .2s; min-width: 34px; text-align: center;
+        }
+        .kprog-item.current { background: var(--blue); border-color: var(--blue); color: #fff; transform: scale(1.15); box-shadow: 0 0 10px rgba(6,182,212,.4); }
+        .kprog-item.done    { border-color: var(--purple); color: var(--purple); }
+
+        /* Playback display */
+        .playback-card { text-align: center; }
+        .play-note-big { font-size: 3.8rem; font-weight: 900; color: var(--blue); line-height: 1; }
+        .play-solfege  { font-size: 1.6rem; font-weight: 700; color: var(--purple); margin-top: 4px; }
+        .play-note-sub { font-size: .82rem; color: var(--text2); margin-top: 4px; }
+
+        /* Scale direction arrow + dots */
+        .direction-arrow { font-size: 1.1rem; margin: 10px 0 4px; }
+        .scale-dots { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+        .sdot {
+            min-width: 42px; padding: 5px 4px;
+            border-radius: 8px;
+            background: var(--bg2); border: 2px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            transition: all .12s; cursor: default;
+        }
+        .sdot-kor { font-size: .68rem; font-weight: 700; color: var(--muted); line-height: 1; }
+        .sdot-en  { font-size: .58rem; color: var(--muted); line-height: 1; }
+        .sdot.active { background: var(--blue); border-color: var(--blue); transform: scale(1.15); box-shadow: 0 0 8px rgba(6,182,212,.5); }
+        .sdot.active .sdot-kor, .sdot.active .sdot-en { color: #fff; }
+        .sdot.done   { border-color: var(--purple); }
+        .sdot.done .sdot-kor, .sdot.done .sdot-en { color: var(--purple); }
+        .sdot.peak   { border-color: var(--yellow); }
+        .sdot.peak.active { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 8px rgba(245,158,11,.5); }
+
+        /* Action row */
+        .action-row { display: flex; gap: 10px; }
+        .action-row .btn { flex: 2; }
+        .action-row .btn-sm { flex: 1; font-size: .82rem; }
+        .status-hint { text-align: center; color: var(--muted); font-size: .78rem; margin-top: 10px; }
+
+        /* Footer */
+        .app-footer { padding: 20px 16px 28px; border-top: 1px solid var(--border); background: var(--bg2); text-align: center; }
+        .app-footer .ft-biz  { font-size: .72rem; color: var(--muted); line-height: 1.9; }
+        .app-footer .ft-name { font-size: .7rem; color: var(--muted); margin-top: 6px; }
+
+        /* Label badge */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .68rem; font-weight: 700; background: rgba(6,182,212,.15); color: var(--blue); border: 1px solid rgba(6,182,212,.3); margin-left: 6px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <header class="header">
+        <h1>🎵 보컬핏 스튜디오 [연습 앱]</h1>
+        <p>Vocal Fit Studio · 음정 체크 &amp; 발성 연습</p>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab active" onclick="switchTab('studio')">🏠 스튜디오</button>
+        <button class="tab"        onclick="switchTab('selfcheck')">🔍 셀프 평가</button>
+        <button class="tab"        onclick="switchTab('routine')">🎯 추천 루틴</button>
+        <button class="tab"        onclick="switchTab('pitch')">🎤 음정 체크</button>
+        <button class="tab"        onclick="switchTab('exercise')">🎹 발성 연습</button>
+        <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
+    </nav>
+
+    <!-- ══════════════ STUDIO TAB ══════════════ -->
+    <section id="studio-section" class="section active">
+
+        <!-- 히어로 -->
+        <div class="card">
+            <div class="studio-hero">
+                <div class="sh-logo">🎙️</div>
+                <h2>보컬핏 스튜디오</h2>
+                <p>이 앱은 <strong style="color:var(--purple);">Vocology in Practice (ViP)</strong>의<br>방법론과 철학을 기반으로 만들어졌습니다.</p>
+            </div>
+            <div style="font-size:.8rem;color:var(--text2);line-height:1.7;border-top:1px solid var(--border);padding-top:14px;">
+                ViP는 전 세계의 엘리트 음성 전문가들로 이루어진 네트워크로,
+                보컬 교사, 보컬 코치, 작곡가, 프로듀서, 음악 산업 종사자,
+                언어치료 전문가, 이비인후과 전문의(ENT), 후두 전문의(laryngologist) 등을 포함합니다.
+                <br><br>
+                ViP 인증 인스트럭터는 보컬 건강, 과학, 그리고 페다고지(교육학)의 최전선의 자료를 공부하고
+                오늘날의 현대 보컬리스트에게 최상의 보컬 트레이닝과 360도 케어를 제공하는 것이 목표입니다.
+            </div>
+        </div>
+
+        <!-- 핵심 코치 -->
+        <div class="card">
+            <div class="card-label">ViP 주요 멤버</div>
+
+            <div class="coach-item">
+                <div class="coach-avatar">DS</div>
+                <div>
+                    <div class="coach-name">Dave Stroud <span class="vip-tag">ViP Founder</span></div>
+                    <div class="coach-desc">American Idol, Pop Idol Tours 등 글로벌 프로그램에 참여하고 Adam Lambert, Jordin Sparks 등과 작업하며 현대 보컬 트레이닝의 흐름을 만들어온 보컬 코치.</div>
+                </div>
+            </div>
+
+            <div class="coach-item">
+                <div class="coach-avatar">AM</div>
+                <div>
+                    <div class="coach-name">Allie Moss <span class="vip-tag">ViP Coach</span></div>
+                    <div class="coach-desc">A Great Big World의 Chad King 등 아티스트를 코칭하며 현장 중심의 보컬 트레이닝을 이어가고 있는 코치.</div>
+                </div>
+            </div>
+
+            <div class="coach-item">
+                <div class="coach-avatar">JS</div>
+                <div>
+                    <div class="coach-name">Justin Stoney <span class="vip-tag">New York Vocal Coaching</span></div>
+                    <div class="coach-desc">다양한 프로 가수와 배우, 브로드웨이 및 레코딩 아티스트들을 지도하며 현대 보컬 트레이닝을 실제 공연과 음악 산업 환경에 적용해온 보컬 코치.</div>
+                </div>
+            </div>
+
+            <div class="coach-item">
+                <div class="coach-avatar">KT</div>
+                <div>
+                    <div class="coach-name">Korel Tunador <span class="vip-tag">ViP Board Member</span></div>
+                    <div class="coach-desc">Katy Perry, Goo Goo Dolls, Rob Thomas 등과 함께 투어와 공연, 방송 무대에서 활동해온 뮤지션이자 보컬 코치.</div>
+                </div>
+            </div>
+
+            <div class="coach-item">
+                <div class="coach-avatar coach-kr">JOE</div>
+                <div>
+                    <div class="coach-name">JOE <span class="vip-tag" style="background:rgba(217,119,6,.15);color:#d97706;border-color:rgba(217,119,6,.3);">ViP 한국 지역 책임자</span></div>
+                    <div class="coach-desc">정서주, 순순희(기태·지환), 김현성, 유라, 박혜경 등 다양한 아티스트의 보컬 트레이닝을 진행하며 이론과 실제를 연결하는 코칭을 이어가고 있습니다.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7가지 핵심 원칙 -->
+        <div class="card">
+            <div class="card-label">7가지 핵심 원칙</div>
+            <div style="font-size:.78rem;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+                ViP는 노래를 기술만이 아니라, <strong style="color:var(--text);">인간 전체로 다루는 프레임</strong>을 기반으로 합니다.
+                보컬은 신체 구조와 건강, 감정과 심리, 음악적 이해, 학습 방식까지 모두 연결된 결과입니다.
+            </div>
+            <div class="principle-grid">
+                <div class="principle-item">
+                    <div class="pi-icon">🫁</div>
+                    <div class="pi-title">Anatomy &amp; Health</div>
+                    <div class="pi-sub">발성 구조와 보컬 건강의 이해</div>
+                </div>
+                <div class="principle-item">
+                    <div class="pi-icon">🎨</div>
+                    <div class="pi-title">Artistry</div>
+                    <div class="pi-sub">감정과 스타일을 포함한 음악적 표현력</div>
+                </div>
+                <div class="principle-item">
+                    <div class="pi-icon">🧠</div>
+                    <div class="pi-title">Body &amp; Mind</div>
+                    <div class="pi-sub">심리, 긴장, 학습 방식까지 고려한 접근</div>
+                </div>
+                <div class="principle-item">
+                    <div class="pi-icon">🎵</div>
+                    <div class="pi-title">Musicianship</div>
+                    <div class="pi-sub">리듬, 음정, 음악적 기본기</div>
+                </div>
+                <div class="principle-item">
+                    <div class="pi-icon">📚</div>
+                    <div class="pi-title">Vocal Pedagogy</div>
+                    <div class="pi-sub">문제를 분석하고 해결하는 지도 방법</div>
+                </div>
+                <div class="principle-item">
+                    <div class="pi-icon">💼</div>
+                    <div class="pi-title">Business &amp; Dev</div>
+                    <div class="pi-sub">지속 가능한 코치로서의 성장</div>
+                </div>
+            </div>
+            <!-- 7번째: Holistic – 전체 폭으로 -->
+            <div class="principle-item" style="margin-top:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="pi-icon" style="font-size:1.4rem;">🌐</div>
+                    <div>
+                        <div class="pi-title">Holistic Approach</div>
+                        <div class="pi-sub">기술을 넘어, 사람 전체를 다루는 통합적 접근. 단순히 '노래를 잘하게 만드는 것'이 아닌 지속 가능하고 안정적인 발성과 표현을 만들어냅니다.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ══════════════ SELF-CHECK TAB ══════════════ -->
+    <section id="selfcheck-section" class="section">
+
+        <!-- 인트로 -->
+        <div class="card">
+            <div class="card-label">Voice Type-Based Approach</div>
+            <p class="sa-intro">
+                목소리는 하나의 문제가 아니라, <strong>여러 요소가 복합적으로 작용</strong>합니다.<br>
+                대부분 한 가지가 아닌 <strong>두 가지 이상의 패턴</strong>이 동시에 나타납니다.
+            </p>
+            <div class="sa-divider"></div>
+            <p class="sa-intro" style="text-align:left;">
+                보컬코치는 이러한 다양한 타입과 예외적인 타입들을 잘 구별하고 발견하여
+                가장 효과적인 TOOL을 제시하고, 그것이 곧 학습으로 이어질 수 있게 훈련을 설계합니다.
+            </p>
+        </div>
+
+        <!-- 타입 1 -->
+        <div class="vtype-card vt-pressed">
+            <div class="vt-tag">TYPE 01</div>
+            <div class="vt-ko">밀어서 부르는 타입</div>
+            <div class="vt-en">Pressed / Overdriven Voice</div>
+            <div class="vt-short">힘으로 밀어 올리는 발성 패턴으로,<br>과도한 성대 압박과 긴장이 동반됩니다.</div>
+            <div class="vt-long">목소리의 힘, 두께, 저음을 담당하는 흉성의 비율이 높은 경우입니다. 흉성은 갑상피열근(Thyroarytenoid muscle)(TA)의 영향을 받으며, 이 근육의 비중이 높아지거나 사용할 수밖에 없다면 목소리는 점점 커지고 통제하기 어려워집니다.</div>
+            <div class="yt-slot" id="yt-pressed"><div class="yt-icon">▶️</div><div class="yt-label"><strong>관련 영상</strong>준비 중</div></div>
+        </div>
+
+        <!-- 타입 2 -->
+        <div class="vtype-card vt-breathy">
+            <div class="vt-tag">TYPE 02</div>
+            <div class="vt-ko">소리가 가벼운 타입</div>
+            <div class="vt-en">Breathy / Under-connected Voice</div>
+            <div class="vt-short">성대 접촉이 부족하여 소리가 약하고,<br>힘 없이 가벼운 발성이 나타납니다.</div>
+            <div class="vt-long">목소리의 얇기, 유연함, 고음을 담당하는 두성의 비율이 높은 경우입니다. 두성은 윤상갑상근(Cricothyroid muscle)(CT)의 영향을 받으며, 이 근육의 비중이 높아지거나 사용이 많아질수록 목소리는 점점 작아지고, 때로는 목이 조이는 현상이 생기기도 합니다.</div>
+            <div class="yt-slot" id="yt-breathy"><div class="yt-icon">▶️</div><div class="yt-label"><strong>관련 영상</strong>준비 중</div></div>
+        </div>
+
+        <!-- 타입 3 -->
+        <div class="vtype-card vt-extrinsic">
+            <div class="vt-tag">TYPE 03</div>
+            <div class="vt-ko">외부 힘이 개입된 타입</div>
+            <div class="vt-en">Extrinsic Tension Pattern</div>
+            <div class="vt-short">목, 턱, 혀 등의 외부 근육이 과도하게 개입되어<br>자연스러운 발성이 방해됩니다.</div>
+            <div class="vt-long">흉성과 더불어 흉쇄유돌근과 같은 외부근육의 개입으로 목이 조이는 현상, 또는 지나치게 숨을 참게 되어 가창 시 어지럽거나 숨이 막히는 경우까지 볼 수 있습니다.</div>
+            <div class="yt-slot" id="yt-extrinsic"><div class="yt-icon">▶️</div><div class="yt-label"><strong>관련 영상</strong>준비 중</div></div>
+        </div>
+
+        <!-- 타입 4 -->
+        <div class="vtype-card vt-under">
+            <div class="vt-tag">TYPE 04</div>
+            <div class="vt-ko">지지 부족 타입</div>
+            <div class="vt-en">Under-supported Breath</div>
+            <div class="vt-short">발성이 불안정하고, 에너지 전달이<br>제대로 이루어지지 않습니다.</div>
+            <div class="vt-long">많은 사람들이 호흡의 부족으로 인해 이 문제를 겪는다고 생각하지만, 실제로는 성대 조절 능력의 문제로 약한 성대 접촉이 나타나거나 호흡을 충분히 활용하지 못하는 경우가 많습니다.</div>
+            <div class="yt-slot" id="yt-under"><div class="yt-icon">▶️</div><div class="yt-label"><strong>관련 영상</strong>준비 중</div></div>
+        </div>
+
+        <!-- 타입 5 -->
+        <div class="vtype-card vt-register">
+            <div class="vt-tag">TYPE 05</div>
+            <div class="vt-ko">전환이 어려운 타입</div>
+            <div class="vt-en">Register Imbalance</div>
+            <div class="vt-short">성구 전환이 원활하지 않아<br>고음에서 무너지거나 끊기는 현상이 나타납니다.</div>
+            <div class="vt-long">흉성과 두성은 서로 다른 성대 진동 패턴을 가지고 있으며, 자연스러운 성구 전환을 위해서는 이 진동 패턴의 변화와 불필요한 힘의 개입이 방해되지 않아야 합니다. 과도한 흉성 또는 외부근육의 개입이 많을 경우 이 문제가 더욱 두드러지게 나타납니다.</div>
+            <div class="yt-slot" id="yt-register"><div class="yt-icon">▶️</div><div class="yt-label"><strong>관련 영상</strong>준비 중</div></div>
+        </div>
+
+        <!-- 타입 6 -->
+        <div class="vtype-card vt-stable">
+            <div class="vt-tag">TYPE 06</div>
+            <div class="vt-ko">비교적 안정된 타입</div>
+            <div class="vt-en">Stable but Unoptimized Voice</div>
+            <div class="vt-short">기본적인 발성은 안정적이지만,<br>더 효율적인 사용을 위한 미세 조정이 필요합니다.</div>
+            <div class="vt-long">흉성과 두성, 그리고 믹스보이스까지 어느 정도 일관된 소리를 낼 수 있지만, 가창자의 테크닉 수준과 스타일에 따라 레슨의 방향이 달라질 수 있습니다.</div>
+            <div class="yt-slot" id="yt-stable"><div class="yt-icon">▶️</div><div class="yt-label"><strong>관련 영상</strong>준비 중</div></div>
+        </div>
+
+    </section>
+
+    <!-- ══════════════ ROUTINE TAB ══════════════ -->
+    <section id="routine-section" class="section">
+
+        <!-- 워밍업 -->
+        <div class="card">
+            <div class="card-label">워밍업 <span class="routine-badge rb-warm">🔥 5분</span></div>
+            <div class="routine-step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                    <div class="step-title">립트릴 (Lip Trill)</div>
+                    <div class="step-desc">입술을 살짝 붙이고 숨을 내뿜으며 입술을 떨어줍니다. 음정을 따라 올라갔다 내려오세요.</div>
+                </div>
+            </div>
+            <div class="routine-step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                    <div class="step-title">허밍 (Humming)</div>
+                    <div class="step-desc">"음~" 소리로 비강 공명을 느끼며 스케일을 부릅니다. 턱과 목에 힘을 빼세요.</div>
+                </div>
+            </div>
+            <div class="routine-step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                    <div class="step-title">스트레칭 &amp; 호흡</div>
+                    <div class="step-desc">목·어깨 스트레칭 후 코로 4박 들이쉬고 입으로 8박 천천히 내쉽니다.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 본 연습 -->
+        <div class="card">
+            <div class="card-label">본 연습 <span class="routine-badge rb-main">🎤 10분</span></div>
+            <div class="routine-step">
+                <div class="step-num">4</div>
+                <div class="step-body">
+                    <div class="step-title">1.5 옥타브 스케일 (발성 연습 탭 활용)</div>
+                    <div class="step-desc">도-미-솔-도'-미'-솔' 아르페지오 패턴. 정점 솔'에서 힘빼고 가볍게 올라가는 것이 핵심입니다.</div>
+                </div>
+            </div>
+            <div class="routine-step">
+                <div class="step-num">5</div>
+                <div class="step-body">
+                    <div class="step-title">음정 기준 체크 (음정 체크 탭 활용)</div>
+                    <div class="step-desc">취약한 음정을 골라 피아노 기준음과 비교 체크합니다. 반음 단위로 정확도를 높여보세요.</div>
+                </div>
+            </div>
+            <div class="routine-step">
+                <div class="step-num">6</div>
+                <div class="step-body">
+                    <div class="step-title">노래 적용</div>
+                    <div class="step-desc">연습한 발성을 실제 노래에 적용해봅니다. 익숙한 곡의 한 소절부터 시작해 호흡과 공명을 의식하며 불러보세요.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 웜다운 -->
+        <div class="card">
+            <div class="card-label">웜다운 <span class="routine-badge rb-cool">🧊 3분</span></div>
+            <div class="routine-step">
+                <div class="step-num">7</div>
+                <div class="step-body">
+                    <div class="step-title">낮은 허밍으로 마무리</div>
+                    <div class="step-desc">무리하지 않는 편안한 음역대에서 "음~" 허밍 3~5분. 성대 피로를 풀어줍니다.</div>
+                </div>
+            </div>
+            <div class="routine-step">
+                <div class="step-num">8</div>
+                <div class="step-body">
+                    <div class="step-title">수분 보충 &amp; 침묵</div>
+                    <div class="step-desc">미지근한 물을 마시고 5분간 말을 자제합니다. 성대 점막 회복에 도움이 됩니다.</div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ══════════════ PITCH TAB ══════════════ -->
+    <section id="pitch-section" class="section">
+
+        <div class="card">
+            <div class="mic-row">
+                <div class="mic-dot" id="mic-dot"></div>
+                <span style="font-size:.82rem;color:var(--text2);" id="mic-label">마이크 꺼짐</span>
+            </div>
+            <button class="btn btn-purple" id="mic-btn" onclick="toggleMic()">🎤 마이크 시작</button>
+        </div>
+
+        <div class="card">
+            <div class="note-center">
+                <div class="note-giant" id="note-big">--</div>
+                <div class="note-sub"   id="note-kor">소리를 내보세요</div>
+                <div class="note-freq"  id="note-freq">-- Hz</div>
+            </div>
+            <div class="card-label" style="margin-bottom:6px;">음정 정확도 (Cents)</div>
+            <div class="cents-wrap">
+                <div class="cents-bar">
+                    <div class="cents-tick" style="left:25%"></div>
+                    <div class="cents-tick" style="left:75%"></div>
+                    <div class="cents-center-line"></div>
+                    <div class="cents-needle" id="cents-needle"></div>
+                </div>
+                <div class="cents-labels">
+                    <span>♭ -50</span><span>-25</span>
+                    <span style="color:var(--green);">±0</span>
+                    <span>+25</span><span>♯ +50</span>
+                </div>
+                <div class="cents-val" id="cents-val">-- cents</div>
+            </div>
+
+            <!-- 음정 기준 체크 결과 (cents 카드 안에 인라인으로 표시) -->
+            <div class="pcs-status-box" id="pcs-status-box" style="display:none;">
+                <div class="pcs-countdown" id="pcs-countdown">3</div>
+                <div class="pcs-phase"    id="pcs-phase">준비 중...</div>
+                <div class="pcs-result"   id="pcs-result" style="display:none;"></div>
+            </div>
+            <div style="margin-top:10px;display:none;" id="pcs-reset-row">
+                <button class="btn btn-ghost" onclick="resetPCS()">↩ 다른 음 선택</button>
+            </div>
+        </div>
+
+        <!-- ── 음정 기준 체크 (Note Reference Grid) ── -->
+        <div class="card">
+            <div class="card-label">음정 기준 체크 <span style="font-size:.65rem;font-weight:400;color:var(--muted);">C3 – F5</span></div>
+            <div style="font-size:.76rem;color:var(--text2);margin-bottom:8px;line-height:1.5;">
+                음 이름을 클릭 → 피아노 음 3초 재생 → 마이크로 음정 체크
+            </div>
+            <div class="pc-note-grid" id="pc-note-grid"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">최근 음정 기록</div>
+            <div class="history-chips" id="history">
+                <span style="color:var(--muted);font-size:.82rem;">아직 없음</span>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ══════════════ EXERCISE TAB ══════════════ -->
+    <section id="exercise-section" class="section">
+
+        <div class="loading-msg" id="piano-msg">🎹 피아노 샘플 로딩 중…</div>
+        <div class="progress-bar"><div class="progress-fill" id="piano-prog"></div></div>
+
+        <!-- Voice range -->
+        <div class="card">
+            <div class="card-label">음역대 선택</div>
+            <div class="voice-toggle">
+                <button class="vtoggle active" onclick="setVoice('male')">🎵 남성 (Male)</button>
+                <button class="vtoggle"        onclick="setVoice('female')">🎵 여성 (Female)</button>
+            </div>
+            <div class="range-hint" id="range-hint">남성 음역대: C3(도) ~ G4(솔) · 반음씩 8키</div>
+        </div>
+
+        <!-- Starting key + progression -->
+        <div class="card">
+            <div class="card-label">
+                시작 음 선택
+                <span class="badge" id="prog-mode-badge">자동 진행</span>
+            </div>
+            <div class="key-grid" id="key-grid"></div>
+        </div>
+
+        <!-- Sexlick / auto-progress mode -->
+        <div class="card">
+            <div class="card-label">1.5 옥타브 스케일 – 키 자동 진행</div>
+            <div class="two-toggle">
+                <button class="ttoggle active" onclick="setProgMode('auto')">🔁 자동 진행 (1.5 oct)</button>
+                <button class="ttoggle"        onclick="setProgMode('loop')">🔂 한 키 반복</button>
+            </div>
+            <!-- Key direction (only relevant in auto mode) -->
+            <div id="dir-row" style="margin-top:10px;">
+                <div style="font-size:.72rem;color:var(--text2);margin-bottom:6px;">키 진행 방향</div>
+                <div class="two-toggle">
+                    <button class="ttoggle active" onclick="setDir('up')">⬆ 낮은 데서 올라가며 (상행 스케일)</button>
+                    <button class="ttoggle"        onclick="setDir('down')">⬇ 높은 데서 내려오며 (하행 스케일)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BPM -->
+        <div class="card">
+            <div class="card-label">빠르기 (BPM)</div>
+            <div class="bpm-row">
+                <span style="font-size:.78rem;color:var(--muted);">느리게</span>
+                <input type="range" id="bpm-slider" min="40" max="160" value="115" oninput="updateBPM(this.value)">
+                <span class="bpm-val" id="bpm-val">115 BPM</span>
+            </div>
+        </div>
+
+        <!-- Playback card (shown during play) -->
+        <div class="card playback-card" id="play-card" style="display:none;">
+            <div class="card-label">현재 연주 중 <span id="play-key-label" style="color:var(--blue);font-weight:700;"></span></div>
+
+            <!-- Key progression row -->
+            <div class="key-prog-row" id="key-prog-row"></div>
+
+            <!-- Current note -->
+            <div style="padding: 14px 0 4px;">
+                <div class="play-note-big" id="play-note">--</div>
+                <div class="play-solfege"  id="play-solfege">--</div>
+                <div class="play-note-sub" id="play-sub">--</div>
+            </div>
+
+            <!-- Direction indicator + scale dots -->
+            <div class="direction-arrow" id="dir-arrow">⬆ 올라가는 중</div>
+            <div class="scale-dots" id="scale-dots"></div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-row">
+            <button class="btn btn-green" id="play-btn" onclick="toggleEx()">▶️ 발성 연습 시작</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetToStart()">↩ 처음부터</button>
+        </div>
+        <div class="status-hint" id="ex-status">피아노 로딩 후 시작하세요</div>
+
+    </section>
+
+    <!-- ══════════════ NOTES TAB ══════════════ -->
+    <section id="notes-section" class="section">
+
+        <div class="card">
+            <div class="card-label">연습 전 주의사항</div>
+            <div class="notes-placeholder">
+                <div class="np-icon">📝</div>
+                <p>곧 내용이 채워질 예정이에요.<br>추가하고 싶은 내용을 알려주세요!</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">발성 팁</div>
+            <div class="notes-placeholder">
+                <div class="np-icon">💡</div>
+                <p>곧 내용이 채워질 예정이에요.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">자주 하는 실수</div>
+            <div class="notes-placeholder">
+                <div class="np-icon">⚠️</div>
+                <p>곧 내용이 채워질 예정이에요.</p>
+            </div>
+        </div>
+
+    </section>
+
+    <footer class="app-footer">
+        <div class="ft-biz">
+            사업자 등록번호 102-22-62997 &nbsp;|&nbsp; 대표자 : 강현호<br>
+            김해대로 2387-1, 6층 보컬핏 스튜디오<br>
+            부산 수영동 502-11, 247스튜디오, 1R
+        </div>
+    </footer>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+let currentTab = 'studio';
+
+// Pitch
+let audioCtx = null, analyser = null, micSource = null;
+let pitchTimer = null, isMicOn = false;
+let noteHistory = [], lastHistNote = '', lastHistTime = 0;
+
+// Exercise
+let voice      = 'male';
+let keyIdx     = 0;         // starting key index in range
+let curKeyIdx  = 0;         // current key index during playback
+let progMode   = 'auto';    // 'auto' | 'loop'
+let keyDir     = 'up';      // 'up' | 'down'
+let bpm        = 115;
+let isPlaying  = false;
+let noteIdx    = 0;
+let playTimer  = null;
+let piano      = null, pianoReady = false;
+
+// ════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════
+const NOTE_EN   = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_KO   = ['도','도♯','레','레♯','미','파','파♯','솔','솔♯','라','라♯','시'];
+const NOTE_TONE = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+
+// ── 1.5 옥타브 스케일 (세스릭스) ──
+// 상승: 도-미-솔 아르페지오로 솔'(정점, 1.5 oct) 까지
+// 하강: 파'-레'-시-라-파-레-도 (특유의 lick 패턴)
+//
+//  ↑   ↑   ↑   ↑    ↑   ★    ↓    ↓   ↓   ↓   ↓   ↓   ↓
+//  도   미   솔  도'  미'  솔'  파'  레'  시   라   파   레   도
+//  0    4    7   12   16   19   17   14   11   9    5    2    0
+const SCALE_UD = [0, 4, 7, 12, 16, 19, 17, 14, 11, 7, 5, 2, 0];
+
+// 계이름 레이블 (13음 위치별)
+const SOLFEGE_UD = ['도', '미', '솔', '도`', '미`', '솔`★', '파`', '레`', '시', '솔', '파', '레', '도'];
+// 정점(index 5 = 솔') 이후는 내려오는 구간
+const PEAK_IDX   = 5;
+
+// 남성 시작 키: C3 ~ G3 (MIDI 48~55)
+const MALE_KEYS = [
+    {label:'C3',  kor:'도',   midi:48}, {label:'C#3', kor:'도♯', midi:49},
+    {label:'D3',  kor:'레',   midi:50}, {label:'D#3', kor:'레♯', midi:51},
+    {label:'E3',  kor:'미',   midi:52}, {label:'F3',  kor:'파',   midi:53},
+    {label:'F#3', kor:'파♯', midi:54}, {label:'G3',  kor:'솔',   midi:55},
+];
+// 여성 시작 키: F3 ~ C4 (MIDI 53~60)
+const FEMALE_KEYS = [
+    {label:'F3',  kor:'파',   midi:53}, {label:'F#3', kor:'파♯', midi:54},
+    {label:'G3',  kor:'솔',   midi:55}, {label:'G#3', kor:'솔♯', midi:56},
+    {label:'A3',  kor:'라',   midi:57}, {label:'A#3', kor:'라♯', midi:58},
+    {label:'B3',  kor:'시',   midi:59}, {label:'C4',  kor:'도',   midi:60},
+];
+
+// ════════════════════════════════════════════════
+// PIANO INIT
+// ════════════════════════════════════════════════
+function initPiano() {
+    document.getElementById('piano-prog').style.width = '25%';
+    try {
+        piano = new Tone.Sampler({
+            urls: {
+                C2:'C2.mp3', Ds2:'Ds2.mp3', Fs2:'Fs2.mp3', A2:'A2.mp3',
+                C3:'C3.mp3', Ds3:'Ds3.mp3', Fs3:'Fs3.mp3', A3:'A3.mp3',
+                C4:'C4.mp3', Ds4:'Ds4.mp3', Fs4:'Fs4.mp3', A4:'A4.mp3',
+                C5:'C5.mp3', Ds5:'Ds5.mp3', Fs5:'Fs5.mp3', A5:'A5.mp3',
+            },
+            release: 1.2,
+            baseUrl: 'https://tonejs.github.io/audio/salamander/',
+            onload: () => {
+                pianoReady = true;
+                document.getElementById('piano-prog').style.width = '100%';
+                document.getElementById('piano-msg').textContent = '✅ 피아노 로딩 완료!';
+                document.getElementById('ex-status').textContent = '발성 연습을 시작하세요';
+                setTimeout(() => {
+                    document.getElementById('piano-msg').style.display = 'none';
+                    document.querySelector('.progress-bar').style.display = 'none';
+                }, 1800);
+            }
+        }).toDestination();
+        document.getElementById('piano-prog').style.width = '55%';
+    } catch(e) {
+        piano = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type:'triangle8' },
+            envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 }
+        }).toDestination();
+        pianoReady = true;
+        document.getElementById('piano-msg').textContent = '🎹 신스 모드 (인터넷 없을 때)';
+        document.getElementById('piano-prog').style.width = '100%';
+        document.getElementById('ex-status').textContent = '발성 연습을 시작하세요';
+    }
+}
+
+// ════════════════════════════════════════════════
+// TAB SWITCH
+// ════════════════════════════════════════════════
+const TAB_ORDER = ['studio', 'selfcheck', 'routine', 'pitch', 'exercise', 'notes'];
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach((b, i) =>
+        b.classList.toggle('active', i === TAB_ORDER.indexOf(tab))
+    );
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(tab + '-section').classList.add('active');
+    if (tab === 'exercise' && !piano) initPiano();
+}
+
+
+// ════════════════════════════════════════════════
+// PITCH DETECTION
+// ════════════════════════════════════════════════
+async function toggleMic() { isMicOn ? stopMic() : await startMic(); }
+
+async function startMic() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+        analyser  = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        micSource = audioCtx.createMediaStreamSource(stream);
+        micSource.connect(analyser);
+        isMicOn = true;
+        document.getElementById('mic-btn').textContent = '⏹ 마이크 정지';
+        document.getElementById('mic-btn').className   = 'btn btn-red';
+        document.getElementById('mic-dot').classList.add('on');
+        document.getElementById('mic-label').textContent = '마이크 켜짐 – 소리를 내보세요';
+        pitchTimer = setInterval(detectPitch, 60);
+    } catch(e) {
+        alert('마이크 권한이 필요합니다.\n브라우저에서 마이크 허용 후 다시 시도하세요.');
+    }
+}
+
+function stopMic() {
+    clearInterval(pitchTimer);
+    if (micSource) micSource.disconnect();
+    if (audioCtx)  audioCtx.close();
+    micSource = audioCtx = analyser = null;
+    isMicOn = false;
+    document.getElementById('mic-btn').textContent = '🎤 마이크 시작';
+    document.getElementById('mic-btn').className   = 'btn btn-purple';
+    document.getElementById('mic-dot').classList.remove('on');
+    document.getElementById('mic-label').textContent = '마이크 꺼짐';
+    resetPitchUI();
+}
+
+function resetPitchUI() {
+    document.getElementById('note-big').textContent = '--';
+    document.getElementById('note-big').className   = 'note-giant';
+    document.getElementById('note-kor').textContent = '소리를 내보세요';
+    document.getElementById('note-freq').textContent= '-- Hz';
+    document.getElementById('cents-needle').style.left = '50%';
+    document.getElementById('cents-val').textContent   = '-- cents';
+}
+
+function detectPitch() {
+    if (!analyser) return;
+    const buf = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(buf);
+    const freq = autoCorrelate(buf, audioCtx.sampleRate);
+    if (!freq || freq < 60 || freq > 1400) { resetPitchUI(); return; }
+    const info = freqToNote(freq);
+    if (!info) return;
+
+    const el = document.getElementById('note-big');
+    el.textContent = info.en + info.oct;
+    const abs = Math.abs(info.cents);
+    el.className = 'note-giant ' + (abs<=10 ? 'in-tune' : info.cents>0 ? 'sharp' : 'flat');
+    document.getElementById('note-kor').textContent  = `${info.ko}${info.oct}  (${info.cents>=0?'+':''}${info.cents} cents)`;
+    document.getElementById('note-freq').textContent = `${Math.round(freq*10)/10} Hz`;
+
+    const pos = Math.max(5, Math.min(95, 50 + (info.cents/50)*44));
+    const needle = document.getElementById('cents-needle');
+    needle.style.left = pos + '%';
+    needle.style.background = abs<=10 ? 'var(--green)' : abs<=25 ? 'var(--yellow)' : 'var(--red)';
+    document.getElementById('cents-val').textContent = (info.cents>=0?'+':'') + info.cents + ' cents';
+    pushHistory(info.en + info.oct);
+}
+
+function autoCorrelate(buf, sr) {
+    const N = buf.length;
+    let rms = 0;
+    for (let i=0;i<N;i++) rms += buf[i]*buf[i];
+    rms = Math.sqrt(rms/N);
+    if (rms < 0.01) return null;
+    let r1=0, r2=N-1;
+    for (let i=0;i<N/2;i++) { if(Math.abs(buf[i])<0.2){r1=i;break;} }
+    for (let i=1;i<N/2;i++) { if(Math.abs(buf[N-i])<0.2){r2=N-i;break;} }
+    const b = buf.slice(r1,r2);
+    const M = b.length;
+    if (M<8) return null;
+    const c = new Float32Array(M);
+    for (let i=0;i<M;i++) for (let j=0;j<M-i;j++) c[i]+=b[j]*b[j+i];
+    let d=0;
+    while(d<M-1&&c[d]>c[d+1]) d++;
+    let mx=-1, mp=-1;
+    for (let i=d;i<M;i++) if(c[i]>mx){mx=c[i];mp=i;}
+    if (mp<1||mp>=M-1) return null;
+    const x1=c[mp-1],x2=c[mp],x3=c[mp+1];
+    const a=(x1+x3-2*x2)/2, bv=(x3-x1)/2;
+    let T0=mp;
+    if (a!==0) T0=mp-bv/(2*a);
+    return sr/T0;
+}
+
+function freqToNote(freq) {
+    const semis = 12*Math.log2(freq/440);
+    const rounded = Math.round(semis);
+    const cents   = Math.round((semis-rounded)*100);
+    const midi    = rounded+69;
+    if (midi<0||midi>127) return null;
+    const oct = Math.floor(midi/12)-1;
+    const idx = ((midi%12)+12)%12;
+    return { en:NOTE_EN[idx], ko:NOTE_KO[idx], oct, cents, midi };
+}
+
+function pushHistory(name) {
+    const now = Date.now();
+    if (name===lastHistNote && now-lastHistTime<500) return;
+    lastHistNote=name; lastHistTime=now;
+    noteHistory.unshift(name);
+    if (noteHistory.length>8) noteHistory.pop();
+    document.getElementById('history').innerHTML =
+        noteHistory.map((n,i) => `<span class="chip${i===0?' fresh':''}">${n}</span>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// EXERCISE – SETTINGS
+// ════════════════════════════════════════════════
+function setVoice(v) {
+    voice=v; keyIdx=0;
+    document.querySelectorAll('.vtoggle').forEach((b,i) =>
+        b.classList.toggle('active', (i===0&&v==='male')||(i===1&&v==='female'))
+    );
+    document.getElementById('range-hint').textContent =
+        v==='male' ? '남성 음역대: C3(도) ~ G4(솔) · 반음씩 8키' : '여성 음역대: F3(파) ~ C5(도) · 반음씩 8키';
+    renderKeys();
+}
+
+function renderKeys() {
+    const keys = voice==='male' ? MALE_KEYS : FEMALE_KEYS;
+    // 재생 중이면 현재 연주 키(curKeyIdx) 강조, 아니면 선택 키(keyIdx) 강조
+    const highlightIdx = isPlaying ? curKeyIdx : keyIdx;
+    document.getElementById('key-grid').innerHTML = keys.map((k,i) =>
+        `<div class="key-cell${i===highlightIdx?' active':''}" onclick="selKey(${i})">
+            <div style="font-size:.82rem;font-weight:700;">${k.label}</div>
+            <div style="font-size:.7rem;opacity:.75;margin-top:2px;">${k.kor}</div>
+        </div>`
+    ).join('');
+}
+
+function selKey(i) {
+    const keys = getKeys();
+
+    if (isPlaying) {
+        // ── 재생 중: 클릭한 키로 즉시 점프 ──
+        clearTimeout(playTimer);
+        keyIdx    = i;
+        curKeyIdx = i;
+        noteIdx   = 0;
+        progSequence = buildProgSequence();
+        seqPos = progSequence.indexOf(i);
+        if (seqPos < 0) seqPos = 0;
+        // 끝 위치 클릭 시 바로 역방향으로
+        pingPongDir = (seqPos === progSequence.length - 1) ? -1 : 1;
+
+        renderKeys();
+        renderKeyProgRow(progSequence, seqPos);
+        document.getElementById('play-key-label').textContent = '키: ' + keys[i].label;
+        renderScaleDots(keys[i].midi);
+        document.querySelectorAll('.sdot').forEach(d => d.classList.remove('active','done'));
+        document.getElementById('dir-arrow').textContent = '⬆ 아르페지오 상승 중';
+        playNextNote();
+
+    } else {
+        // ── 정지 상태 ──
+        keyIdx = i;
+        renderKeys();
+        if (document.getElementById('play-card').style.display !== 'none') {
+            noteIdx = 0;
+            progSequence = buildProgSequence();
+            seqPos = 0;
+            curKeyIdx = progSequence[0];
+            renderKeyProgRow(progSequence, seqPos);
+            document.getElementById('play-key-label').textContent = '키: ' + keys[curKeyIdx].label;
+            renderScaleDots(keys[curKeyIdx].midi);
+            document.querySelectorAll('.sdot').forEach(d => d.classList.remove('active','done'));
+            document.getElementById('dir-arrow').textContent = '⬆ 아르페지오 상승 중';
+            const firstNote = getNoteForStep(0, keys[curKeyIdx].midi);
+            document.getElementById('play-note').textContent    = firstNote.en;
+            document.getElementById('play-solfege').textContent = firstNote.kor;
+            document.getElementById('play-sub').textContent     = firstNote.kor + ' (' + firstNote.en + ')';
+        }
+    }
+}
+
+function setProgMode(m) {
+    progMode=m;
+    document.querySelectorAll('#exercise-section .two-toggle:first-of-type .ttoggle').forEach((b,i) =>
+        b.classList.toggle('active', (i===0&&m==='auto')||(i===1&&m==='loop'))
+    );
+    document.getElementById('dir-row').style.display    = m==='auto' ? 'block' : 'none';
+    document.getElementById('prog-mode-badge').textContent = m==='auto' ? '자동 진행' : '한 키 반복';
+    document.getElementById('prog-mode-badge').style.display = m==='auto' ? '' : 'none';
+}
+
+function setDir(d) {
+    keyDir=d;
+    document.querySelectorAll('#dir-row .ttoggle').forEach((b,i) =>
+        b.classList.toggle('active', (i===0&&d==='up')||(i===1&&d==='down'))
+    );
+}
+
+function updateBPM(v) {
+    bpm=parseInt(v);
+    document.getElementById('bpm-val').textContent=bpm+' BPM';
+}
+
+// ════════════════════════════════════════════════
+// EXERCISE – HELPERS
+// ════════════════════════════════════════════════
+function getKeys() { return voice==='male' ? MALE_KEYS : FEMALE_KEYS; }
+
+function getScaleNotes(rootMidi) {
+    return SCALE_UD.map(s => rootMidi+s);
+}
+
+function midiToTone(midi) {
+    const oct = Math.floor(midi/12)-1;
+    const idx = ((midi%12)+12)%12;
+    return NOTE_TONE[idx]+oct;
+}
+
+// 항상 전체 범위 시퀀스를 만듦 → 핑퐁 루프가 어느 키에서 시작해도 정상 동작
+function buildProgSequence() {
+    const keys = getKeys();
+    if (progMode==='loop') return [keyIdx];
+    const seq = [];
+    if (keyDir==='up') {
+        for (let i=0; i<keys.length; i++) seq.push(i);       // [0,1,2,...,7]
+    } else {
+        for (let i=keys.length-1; i>=0; i--) seq.push(i);   // [7,6,5,...,0]
+    }
+    return seq;
+}
+
+// ════════════════════════════════════════════════
+// EXERCISE – PLAYBACK UI
+// ════════════════════════════════════════════════
+function renderKeyProgRow(sequence, currentSeqPos) {
+    const keys = getKeys();
+    document.getElementById('key-prog-row').innerHTML = sequence.map((ki,si) => {
+        let cls = 'kprog-item';
+        if (si < currentSeqPos)  cls += ' done';
+        if (si === currentSeqPos) cls += ' current';
+        return `<div class="${cls}">${keys[ki].label}</div>`;
+    }).join('');
+}
+
+// rootMidi 기준으로 각 음의 고정 도(fixed-do) + 영문 음이름 계산
+function getNoteForStep(stepIndex, rootMidi) {
+    const midi = rootMidi + SCALE_UD[stepIndex];
+    const noteIdx = ((midi % 12) + 12) % 12;
+    const oct = Math.floor(midi / 12) - 1;
+    return {
+        kor: NOTE_KO[noteIdx],
+        en:  NOTE_EN[noteIdx] + oct,
+        isPeak: (stepIndex === PEAK_IDX),
+        midi
+    };
+}
+
+function renderScaleDots(rootMidi) {
+    if (rootMidi === undefined) {
+        const keys = getKeys();
+        rootMidi = keys[curKeyIdx !== undefined ? curKeyIdx : keyIdx].midi;
+    }
+    document.getElementById('scale-dots').innerHTML = SCALE_UD.map((_,i) => {
+        const n = getNoteForStep(i, rootMidi);
+        const peakMark = n.isPeak ? '★' : '';
+        return `<div class="sdot${n.isPeak?' peak':''}" id="sd${i}">
+            <span class="sdot-kor">${n.kor}${peakMark}</span>
+            <span class="sdot-en">${n.en}</span>
+        </div>`;
+    }).join('');
+}
+
+function updateScaleDots(idx) {
+    document.querySelectorAll('.sdot').forEach((d,i) => {
+        d.classList.remove('active','done');
+        if (i < idx) d.classList.add('done');
+        if (i === idx) d.classList.add('active');
+    });
+    // direction arrow
+    const arrowEl = document.getElementById('dir-arrow');
+    if (idx <= PEAK_IDX) arrowEl.textContent = '⬆ 아르페지오 상승 중';
+    else                  arrowEl.textContent = '⬇ 파-레 하강 lick';
+}
+
+// ════════════════════════════════════════════════
+// EXERCISE – PLAY / STOP
+// ════════════════════════════════════════════════
+let progSequence = [];
+let seqPos       = 0;
+let pingPongDir  = 1;  // 1 = 순방향(올라가며), -1 = 역방향(내려오며)
+
+async function toggleEx() {
+    if (!pianoReady) { alert('피아노가 아직 로딩 중입니다. 잠시만 기다려주세요.'); return; }
+    isPlaying ? stopEx() : await startEx();
+}
+
+async function startEx() {
+    await Tone.start();
+
+    // 처음 시작인지 이어서 시작인지 구분
+    const isResume = (progSequence.length > 0 && document.getElementById('play-card').style.display !== 'none');
+
+    if (!isResume) {
+        // 처음 시작: 상태 초기화
+        noteIdx = 0;
+        progSequence = buildProgSequence();
+
+        // 선택한 키(keyIdx) 위치를 전체 시퀀스에서 찾아 시작점으로 설정
+        seqPos = progSequence.indexOf(keyIdx);
+        if (seqPos < 0) seqPos = 0;
+
+        // 끝 위치(G3 등)에서 시작하면 바로 역방향으로 핑퐁
+        pingPongDir = (seqPos === progSequence.length - 1) ? -1 : 1;
+
+        curKeyIdx = progSequence[seqPos];
+        const keys0 = getKeys();
+        renderScaleDots(keys0[curKeyIdx].midi);
+        renderKeyProgRow(progSequence, seqPos);
+    }
+
+    isPlaying = true;
+    document.getElementById('play-btn').textContent = '⏹ 정지';
+    document.getElementById('play-btn').className   = 'btn btn-red';
+    document.getElementById('play-card').style.display = 'block';
+    document.getElementById('ex-status').textContent   = '🎶 연습 중...';
+
+    playNextNote();
+}
+
+function playNextNote() {
+    if (!isPlaying) return;
+
+    // All notes in current scale done?
+    if (noteIdx >= SCALE_UD.length) {
+        noteIdx = 0;
+        if (progMode==='auto') {
+            // 핑퐁 방향으로 다음 키 이동
+            seqPos += pingPongDir;
+            if (seqPos >= progSequence.length) {
+                // 끝에 도달 → 방향 반전, 한 칸 되돌아감
+                pingPongDir = -1;
+                seqPos = progSequence.length - 2;
+                if (seqPos < 0) seqPos = 0; // 키가 1개뿐인 엣지 케이스
+            } else if (seqPos < 0) {
+                // 처음에 도달 → 방향 반전, 한 칸 앞으로
+                pingPongDir = 1;
+                seqPos = 1;
+                if (seqPos >= progSequence.length) seqPos = 0;
+            }
+            curKeyIdx = progSequence[seqPos];
+            const keysNext = getKeys();
+            renderKeyProgRow(progSequence, seqPos);
+            renderScaleDots(keysNext[curKeyIdx].midi);   // 새 키의 음이름으로 도트 갱신
+            renderKeys();                                // 시작 음 그리드도 현재 키 강조 갱신
+            document.querySelectorAll('.sdot').forEach(d => d.classList.remove('active','done'));
+            // Small pause between keys
+            playTimer = setTimeout(playNextNote, (60000/bpm)*0.8);
+            return;
+        } else {
+            // Loop same key
+            document.querySelectorAll('.sdot').forEach(d => d.classList.remove('active','done'));
+            playTimer = setTimeout(playNextNote, (60000/bpm)*0.6);
+            return;
+        }
+    }
+
+    const keys   = getKeys();
+    const rootMidi = keys[curKeyIdx].midi;
+    const n      = getNoteForStep(noteIdx, rootMidi);  // 고정 도 + 영문 음이름
+    const tNote  = midiToTone(n.midi);
+
+    // Update key label
+    document.getElementById('play-key-label').textContent = '키: ' + keys[curKeyIdx].label;
+
+    // Update note display (고정 도 기준)
+    document.getElementById('play-note').textContent    = n.en;           // e.g. F4
+    document.getElementById('play-solfege').textContent = n.kor;          // e.g. 파
+    document.getElementById('play-sub').textContent     = n.kor + ' (' + n.en + ')'; // e.g. 파 (F4)
+
+    // Update dots & direction arrow
+    updateScaleDots(noteIdx);
+
+    // Play piano note
+    try {
+        const dur = (60/bpm)*0.82;
+        piano.triggerAttackRelease(tNote, dur);
+    } catch(e) { console.warn('Note error:', tNote, e); }
+
+    noteIdx++;
+    playTimer = setTimeout(playNextNote, 60000/bpm);
+}
+
+function stopEx() {
+    isPlaying = false;
+    clearTimeout(playTimer);
+    try { if(piano) piano.releaseAll(); } catch(e){}
+    // 버튼만 변경, play-card는 그대로 유지 (정지된 화면 유지)
+    document.getElementById('play-btn').textContent = '▶️ 이어서 시작';
+    document.getElementById('play-btn').className   = 'btn btn-green';
+    document.getElementById('ex-status').textContent   = '⏸ 일시 정지됨 – 이어서 시작하거나 처음부터 누르세요';
+}
+
+function resetToStart() {
+    isPlaying = false;
+    clearTimeout(playTimer);
+    try { if(piano) piano.releaseAll(); } catch(e){}
+    noteIdx = 0; seqPos = 0;
+    keyIdx = 0;
+    document.getElementById('play-btn').textContent = '▶️ 발성 연습 시작';
+    document.getElementById('play-btn').className   = 'btn btn-green';
+    document.getElementById('play-card').style.display = 'none';
+    document.getElementById('ex-status').textContent   = '발성 연습을 시작하세요';
+    renderKeys();
+}
+
+// ════════════════════════════════════════════════
+// PITCH CHECK – NOTE GRID  (C3 = MIDI 48 ~ F5 = MIDI 77)
+// ════════════════════════════════════════════════
+
+// Build the 30-note list once
+const PRACTICE_NOTES = (function() {
+    const SHARP_INDICES = new Set([1,3,6,8,10]); // C# D# F# G# A#
+    const arr = [];
+    for (let midi = 48; midi <= 77; midi++) {
+        const idx = ((midi % 12) + 12) % 12;
+        const oct = Math.floor(midi / 12) - 1;
+        arr.push({ midi, en: NOTE_EN[idx] + oct, ko: NOTE_KO[idx], isSharp: SHARP_INDICES.has(idx) });
+    }
+    return arr;
+})();
+
+// PCS state
+let pcsState      = 'idle'; // 'idle' | 'playing' | 'recording' | 'result'
+let pcsTargetMidi = null;
+let pcsSamples    = [];
+let pcsTimer      = null;
+let pcsSampleTmr  = null;
+let pcsMicStream  = null;
+let pcsMicCtx     = null;
+let pcsMicAn      = null;
+let pcsMicSrc     = null;
+
+function midiToFreq(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+// ── Render grid ──
+const GUIDE_MALE   = 48; // C3
+const GUIDE_FEMALE = 62; // D4
+
+function renderNoteGrid() {
+    document.getElementById('pc-note-grid').innerHTML = PRACTICE_NOTES.map(n => {
+        let cls = 'pc-note-cell' + (n.isSharp ? ' sharp' : '');
+        let guideBadge = '';
+        if (n.midi === GUIDE_MALE) {
+            cls += ' guide-male';
+            guideBadge = '<div class="pnc-guide">남자 기준</div>';
+        } else if (n.midi === GUIDE_FEMALE) {
+            cls += ' guide-female';
+            guideBadge = '<div class="pnc-guide">여자 기준</div>';
+        }
+        return `<div class="${cls}" id="pcn-${n.midi}" onclick="startPitchCheck(${n.midi})">
+            <div class="pnc-en">${n.en}</div>
+            <div class="pnc-ko">${n.ko}</div>
+            ${guideBadge}
+        </div>`;
+    }).join('');
+}
+
+// ── Ensure piano is ready (init silently if needed) ──
+async function ensurePianoReady() {
+    if (piano && pianoReady) return true;
+    if (!piano) {
+        // init piano (will also update exercise-tab UI elements, fine since invisible)
+        initPiano();
+    }
+    // Wait up to 8 s for sampler, then give up and use synth
+    let waited = 0;
+    while (!pianoReady && waited < 8000) {
+        await new Promise(r => setTimeout(r, 250));
+        waited += 250;
+    }
+    if (!pianoReady) {
+        // Last-resort fallback: replace with instant PolySynth
+        try { piano.dispose(); } catch(e){}
+        piano = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type:'triangle8' },
+            envelope: { attack:.02, decay:.6, sustain:.4, release:1.8 }
+        }).toDestination();
+        pianoReady = true;
+    }
+    return true;
+}
+
+// ── Main entry: user clicks a note cell ──
+async function startPitchCheck(midi) {
+    // 진행 중이어도 즉시 취소하고 새로 시작
+    if (pcsState !== 'idle') {
+        clearInterval(pcsTimer);
+        clearInterval(pcsSampleTmr);
+        _pcsCleanupMic();
+        try { if (piano) piano.releaseAll(); } catch(e){}
+        pcsState = 'idle';
+        document.getElementById('pcs-result').style.display = 'none';
+        document.getElementById('pcs-reset-row').style.display = 'none';
+        document.getElementById('pcs-countdown').style.color = 'var(--purple)';
+        // 이전 결과 셀 색상 초기화 (가이드 클래스 유지)
+        if (pcsTargetMidi) {
+            const prev = document.getElementById(`pcn-${pcsTargetMidi}`);
+            if (prev) {
+                const pn = PRACTICE_NOTES.find(n => n.midi === pcsTargetMidi);
+                let baseCls = 'pc-note-cell' + (pn?.isSharp ? ' sharp' : '');
+                if (pcsTargetMidi === GUIDE_MALE)   baseCls += ' guide-male';
+                if (pcsTargetMidi === GUIDE_FEMALE) baseCls += ' guide-female';
+                prev.className = baseCls;
+            }
+        }
+    }
+
+    pcsState      = 'playing';
+    pcsTargetMidi = midi;
+    pcsSamples    = [];
+
+    // Mark cell + show status box
+    renderNoteGrid();
+    const cellEl = document.getElementById(`pcn-${midi}`);
+    if (cellEl) { cellEl.classList.remove('disabled'); cellEl.classList.add('active'); }
+
+    const statusBox = document.getElementById('pcs-status-box');
+    const cdEl      = document.getElementById('pcs-countdown');
+    const phaseEl   = document.getElementById('pcs-phase');
+    const resultEl  = document.getElementById('pcs-result');
+    statusBox.style.display = 'block';
+    cdEl.style.color        = 'var(--purple)';
+    cdEl.textContent        = '…';
+    phaseEl.textContent     = '🎹 피아노 로딩 확인 중...';
+    resultEl.style.display  = 'none';
+    resultEl.textContent    = '';
+    resultEl.className      = 'pcs-result';
+    document.getElementById('pcs-reset-row').style.display = 'none';
+
+    // Make sure piano is ready
+    await ensurePianoReady();
+
+    // ── Phase 1: play piano 3 s ──
+    await Tone.start();
+    try { piano.triggerAttack(midiToTone(midi)); } catch(e){}
+
+    let pianoCD = 3;
+    cdEl.textContent    = pianoCD;
+    phaseEl.textContent = '🎹 피아노 음 재생 중... 잘 들어보세요';
+
+    pcsTimer = setInterval(() => {
+        pianoCD--;
+        if (pianoCD > 0) {
+            cdEl.textContent = pianoCD;
+        } else {
+            clearInterval(pcsTimer);
+            try { if (piano) piano.releaseAll(); } catch(e){}
+            _pcsStartRecording();
+        }
+    }, 1000);
+}
+
+// ── Phase 2: record mic for 3 s ──
+async function _pcsStartRecording() {
+    pcsState = 'recording';
+
+    const cdEl    = document.getElementById('pcs-countdown');
+    const phaseEl = document.getElementById('pcs-phase');
+    cdEl.style.color    = 'var(--green)';
+    cdEl.textContent    = '3';
+    phaseEl.textContent = '🎤 지금 같은 음을 내보세요!';
+
+    // Open mic
+    try {
+        pcsMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        pcsMicCtx    = new (window.AudioContext || window.webkitAudioContext)();
+        pcsMicAn     = pcsMicCtx.createAnalyser();
+        pcsMicAn.fftSize = 2048;
+        pcsMicSrc    = pcsMicCtx.createMediaStreamSource(pcsMicStream);
+        pcsMicSrc.connect(pcsMicAn);
+    } catch(e) {
+        phaseEl.textContent = '❌ 마이크 권한이 필요합니다. 브라우저에서 허용 후 다시 시도하세요.';
+        cdEl.textContent = '!';
+        cdEl.style.color = 'var(--red)';
+        _pcsCleanupMic();
+        pcsState = 'result';
+        document.getElementById('pcs-reset-row').style.display = 'block';
+        return;
+    }
+
+    // Sample pitch every 80 ms
+    pcsSampleTmr = setInterval(() => {
+        if (!pcsMicAn) return;
+        const buf = new Float32Array(pcsMicAn.fftSize);
+        pcsMicAn.getFloatTimeDomainData(buf);
+        const freq = autoCorrelate(buf, pcsMicCtx.sampleRate);
+        if (freq && freq > 60 && freq < 1400) pcsSamples.push(freq);
+    }, 80);
+
+    // Countdown 3→0 then analyze
+    let recCD = 3;
+    pcsTimer = setInterval(() => {
+        recCD--;
+        if (recCD > 0) {
+            cdEl.textContent = recCD;
+        } else {
+            clearInterval(pcsTimer);
+            clearInterval(pcsSampleTmr);
+            _pcsCleanupMic();
+            _pcsAnalyze();
+        }
+    }, 1000);
+}
+
+function _pcsCleanupMic() {
+    clearInterval(pcsSampleTmr);
+    if (pcsMicSrc)    { try { pcsMicSrc.disconnect(); } catch(e){} }
+    if (pcsMicCtx)    { try { pcsMicCtx.close(); } catch(e){} }
+    if (pcsMicStream) { try { pcsMicStream.getTracks().forEach(t => t.stop()); } catch(e){} }
+    pcsMicStream = pcsMicCtx = pcsMicAn = pcsMicSrc = null;
+}
+
+// ── Phase 3: analyze & show result ──
+function _pcsAnalyze() {
+    pcsState = 'result';
+
+    const cdEl    = document.getElementById('pcs-countdown');
+    const phaseEl = document.getElementById('pcs-phase');
+    const resultEl= document.getElementById('pcs-result');
+    const cellEl  = document.getElementById(`pcn-${pcsTargetMidi}`);
+    const tNote   = PRACTICE_NOTES.find(n => n.midi === pcsTargetMidi);
+
+    document.getElementById('pcs-reset-row').style.display = 'block';
+    resultEl.style.display = 'inline-block';
+
+    // 가이드 클래스 복원 헬퍼
+    function _restoreGuide(el, midi) {
+        if (!el) return;
+        el.classList.remove('active');
+        if (midi === GUIDE_MALE)   el.classList.add('guide-male');
+        if (midi === GUIDE_FEMALE) el.classList.add('guide-female');
+    }
+
+    if (pcsSamples.length < 4) {
+        cdEl.textContent    = '?';
+        cdEl.style.color    = 'var(--yellow)';
+        phaseEl.textContent = `⚠️ ${tNote.en} (${tNote.ko}) – 소리가 잘 감지되지 않았어요`;
+        resultEl.textContent= '소리를 더 크게 내거나 마이크를 가까이 해보세요';
+        resultEl.className  = 'pcs-result warn';
+        _restoreGuide(cellEl, pcsTargetMidi);
+        return;
+    }
+
+    // Median of collected frequencies
+    const sorted    = [...pcsSamples].sort((a, b) => a - b);
+    const medFreq   = sorted[Math.floor(sorted.length / 2)];
+    const targetFreq= midiToFreq(pcsTargetMidi);
+    const centsOff  = Math.round(1200 * Math.log2(medFreq / targetFreq));
+    const sign      = centsOff >= 0 ? '+' : '';
+
+    phaseEl.textContent = `📊 ${tNote.en} (${tNote.ko}) 음정 분석 결과`;
+
+    if (cellEl) cellEl.classList.remove('active');
+
+    if (Math.abs(centsOff) <= 20) {
+        cdEl.textContent    = '✓';
+        cdEl.style.color    = 'var(--green)';
+        resultEl.textContent= `✅ 정확해요! (${sign}${centsOff} cents)`;
+        resultEl.className  = 'pcs-result good';
+        _restoreGuide(cellEl, pcsTargetMidi);
+        if (cellEl) cellEl.classList.add('result-good');
+    } else if (centsOff > 20) {
+        cdEl.textContent    = '⬇';
+        cdEl.style.color    = 'var(--red)';
+        resultEl.textContent= `⬇ 더 낮춰야 해요 (+${centsOff} cents 높게 냈어요)`;
+        resultEl.className  = 'pcs-result high';
+        _restoreGuide(cellEl, pcsTargetMidi);
+        if (cellEl) cellEl.classList.add('result-high');
+    } else {
+        cdEl.textContent    = '⬆';
+        cdEl.style.color    = 'var(--blue)';
+        resultEl.textContent= `⬆ 더 높여야 해요 (${centsOff} cents 낮게 냈어요)`;
+        resultEl.className  = 'pcs-result low';
+        _restoreGuide(cellEl, pcsTargetMidi);
+        if (cellEl) cellEl.classList.add('result-low');
+    }
+}
+
+// ── Reset: back to idle grid ──
+function resetPCS() {
+    clearInterval(pcsTimer);
+    clearInterval(pcsSampleTmr);
+    _pcsCleanupMic();
+    try { if (piano) piano.releaseAll(); } catch(e){}
+
+    pcsState      = 'idle';
+    pcsTargetMidi = null;
+    pcsSamples    = [];
+
+    document.getElementById('pcs-status-box').style.display    = 'none';
+    document.getElementById('pcs-reset-row').style.display     = 'none';
+    document.getElementById('pcs-countdown').style.color       = 'var(--purple)';
+    document.getElementById('pcs-result').style.display        = 'none';
+    renderNoteGrid();
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    renderKeys();
+    renderNoteGrid();
+    // init two-toggle button references correctly
+    const autoBtn = document.querySelector('#exercise-section .two-toggle:first-of-type .ttoggle:first-child');
+    if (autoBtn) autoBtn.classList.add('active');
+});
+</script>
+</body>
+</html>
