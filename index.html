@@ -975,14 +975,6 @@
                 <button class="ttoggle active" onclick="setProgMode('auto')">🔁 자동 진행 (1.5 oct)</button>
                 <button class="ttoggle"        onclick="setProgMode('loop')">🔂 한 키 반복</button>
             </div>
-            <!-- Key direction (only relevant in auto mode) -->
-            <div id="dir-row" style="margin-top:10px;">
-                <div style="font-size:.72rem;color:var(--text2);margin-bottom:6px;">키 진행 방향</div>
-                <div class="two-toggle">
-                    <button class="ttoggle active" onclick="setDir('up')">⬆ 낮은 데서 올라가며 (상행 스케일)</button>
-                    <button class="ttoggle"        onclick="setDir('down')">⬇ 높은 데서 내려오며 (하행 스케일)</button>
-                </div>
-            </div>
         </div>
 
         <!-- BPM -->
@@ -1200,7 +1192,7 @@ function initPiano() {
             envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 }
         }).toDestination();
         pianoReady = true;
-        document.getElementById('piano-msg').textContent = '🎹 신스 모드 (인터넷 없을 때)';
+        document.getElementById('piano-msg').textContent = '✅ 피아노 로딩 완료!';
         document.getElementById('piano-prog').style.width = '100%';
         document.getElementById('ex-status').textContent = '발성 연습을 시작하세요';
     }
