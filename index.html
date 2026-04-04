@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎵 보컬핏 스튜디오 [연습 앱]</title>
+    <title>보컬핏 스튜디오 | Vocal Training System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         :root {
@@ -237,6 +237,20 @@
         .vtoggle.active { background: var(--purple); color: #fff; }
         .range-hint { font-size: .75rem; color: var(--muted); margin-top: 7px; }
 
+        /* Scale selector */
+        .scale-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .scale-box { padding: 12px 6px; text-align: center; background: var(--bg2); border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .15s; }
+        .scale-box .sb-name { font-size: .82rem; font-weight: 800; color: var(--text2); line-height: 1.2; }
+        .scale-box .sb-desc { font-size: .62rem; color: var(--muted); margin-top: 4px; line-height: 1.3; }
+        .scale-box.active { background: rgba(139,92,246,.12); border-color: var(--purple); }
+        .scale-box.active .sb-name { color: var(--purple); }
+        .scale-box.active .sb-desc { color: var(--purple); opacity: .7; }
+        .scale-box:hover:not(.active) { border-color: var(--purple); opacity: .85; }
+        /* Sustain dot */
+        .sdot.sustain { border-color: var(--yellow); animation: sustainPulse 0.8s infinite alternate; }
+        .sdot.sustain .sdot-kor, .sdot.sustain .sdot-en { color: var(--yellow); }
+        @keyframes sustainPulse { from { box-shadow: 0 0 4px rgba(245,158,11,.4); } to { box-shadow: 0 0 12px rgba(245,158,11,.8); } }
+
         /* Starting key grid */
         .key-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 10px; }
         .key-cell { padding: 8px 4px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .15s; line-height: 1.2; }
@@ -302,14 +316,168 @@
 
         /* Label badge */
         .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .68rem; font-weight: 700; background: rgba(6,182,212,.15); color: var(--blue); border: 1px solid rgba(6,182,212,.3); margin-left: 6px; vertical-align: middle; }
+
+        /* ── SPECTROGRAM ── */
+        .spec-canvas-wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; width: 100%; }
+        #spec-waterfall   { display: block; width: 100%; height: 200px; image-rendering: pixelated; }
+        #spec-bar         { display: block; width: 100%; height: 80px; }
+        .spec-note-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 200px; pointer-events: none; }
+        .spec-info-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; }
+        .spec-info-box { flex: 1; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; }
+        .spec-info-box .si-val  { font-size: 1.3rem; font-weight: 900; color: var(--blue); line-height: 1.1; }
+        .spec-info-box .si-label{ font-size: .68rem; color: var(--muted); margin-top: 3px; }
+        .spec-note-box { flex: 1.3; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; }
+        .spec-note-box .sn-note  { font-size: 2rem; font-weight: 900; color: var(--purple); line-height: 1; transition: color .15s; }
+        .spec-note-box .sn-cents { font-size: .75rem; color: var(--text2); margin-top: 3px; }
+        .spec-note-box .sn-hint  { font-size: .62rem; color: var(--muted); margin-top: 2px; }
+        .spec-legend { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+        .spec-legend-bar { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(to right, #000010, #003080, #00b0d0, #20e060, #e0e000, #ff2000); }
+        .spec-legend-label { font-size: .65rem; color: var(--muted); white-space: nowrap; }
+        .spec-c-line { position: absolute; top: 0; height: 100%; width: 1px; background: rgba(255,255,255,.18); pointer-events: none; }
+        .spec-c-label { position: absolute; top: 3px; font-size: .55rem; color: rgba(255,255,255,.5); pointer-events: none; transform: translateX(-50%); }
+        /* Inspect cursor */
+        .spec-cursor { position: absolute; top: 0; width: 2px; height: 100%; background: rgba(255,255,255,.75); pointer-events: none; z-index: 5; display: none; box-shadow: 0 0 6px rgba(255,255,255,.5); }
+        .spec-inspect-card {
+            display: none; margin-top: 10px; padding: 12px 14px;
+            background: var(--bg2); border: 1px solid var(--purple); border-radius: 12px;
+            text-align: center; animation: specFadeIn .2s ease;
+        }
+        .spec-inspect-card .si-time { font-size: .72rem; color: var(--muted); margin-bottom: 6px; }
+        .spec-inspect-card .si-row  { display: flex; justify-content: center; gap: 14px; align-items: baseline; }
+        .spec-inspect-card .si-big  { font-size: 1.6rem; font-weight: 900; color: var(--purple); }
+        .spec-inspect-card .si-mid  { font-size: 1rem; font-weight: 700; color: var(--blue); }
+        .spec-inspect-card .si-sm   { font-size: .78rem; color: var(--text2); }
+        .spec-inspect-hint { font-size: .7rem; color: var(--muted); text-align: center; margin-top: 6px; display: none; }
+        @keyframes specFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Expand toggle button ── */
+        .spec-expand-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px;
+            background: var(--bg2); color: var(--text2); font-size: .74rem; font-weight: 600;
+            cursor: pointer; transition: all .15s; margin-top: 10px;
+        }
+        .spec-expand-btn:hover { border-color: var(--purple); color: var(--purple); }
+        /* Expanded state */
+        .spec-expanded #spec-waterfall { height: 340px; }
+        .spec-expanded .spec-note-overlay { height: 340px; }
+        .spec-expanded .spec-cursor { height: 340px; }
+        .spec-expanded #spec-bar { height: 130px; }
+
+        /* ── RESPONSIVE: Mobile-first (touch-friendly) ── */
+        @media (max-width: 767px) {
+            .btn { padding: 15px; font-size: 1rem; min-height: 50px; }
+            .tab { padding: 13px 6px; font-size: .78rem; }
+            .pc-note-cell { padding: 9px 3px 8px; }
+            .pc-note-cell .pnc-en { font-size: .78rem; }
+            .key-cell { padding: 10px 4px; min-height: 44px; }
+            .vtoggle { padding: 11px 6px; }
+            .ttoggle { padding: 10px 6px; }
+            .scale-box { padding: 14px 6px; }
+        }
+
+        /* ── RESPONSIVE: Desktop / Tablet (768px+) ── */
+        @media (min-width: 768px) {
+            body { max-width: 960px; }
+            .header { padding: 28px 32px 18px; }
+            .header h1 { font-size: 1.8rem; }
+            .header p  { font-size: .9rem; }
+
+            /* Tabs as pills */
+            .tabs { justify-content: center; gap: 4px; padding: 6px 12px; }
+            .tab  { flex: none; padding: 10px 18px; font-size: .85rem; border-radius: 8px; border-bottom: none; }
+            .tab.active { background: rgba(139,92,246,.15); color: var(--purple); }
+
+            /* Section padding & cards */
+            .section { padding: 24px 28px; }
+            .card { padding: 22px 24px; margin-bottom: 18px; border-radius: 18px; }
+            .card-label { font-size: .78rem; margin-bottom: 14px; }
+
+            /* Two-column layout for sections with sidebar-like content */
+            .desk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+            .desk-full { grid-column: 1 / -1; }
+
+            /* Bigger buttons */
+            .btn { padding: 14px; font-size: 1rem; border-radius: 14px; }
+            .btn:hover { transform: translateY(-2px); }
+
+            /* Pitch section */
+            .note-giant { font-size: 6.5rem; }
+            .cents-bar  { height: 44px; }
+            .pc-note-grid { grid-template-columns: repeat(8, 1fr); gap: 6px; }
+            .pc-note-cell { padding: 10px 4px; }
+            .pc-note-cell .pnc-en { font-size: .82rem; }
+
+            /* Exercise */
+            .voice-toggle { max-width: 320px; }
+            .scale-selector { gap: 10px; }
+            .scale-box { padding: 16px 8px; }
+            .scale-box .sb-name { font-size: .9rem; }
+            .key-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+            .key-cell { padding: 10px 6px; font-size: .88rem; }
+            .play-note-big { font-size: 5rem; }
+            .play-solfege  { font-size: 2rem; }
+            .scale-dots { gap: 7px; }
+            .sdot { min-width: 52px; padding: 7px 6px; }
+            .bpm-row { max-width: 400px; }
+
+            /* Spectrogram – bigger canvases */
+            #spec-waterfall { height: 280px; }
+            .spec-note-overlay { height: 280px; }
+            .spec-cursor { height: 280px; }
+            #spec-bar { height: 110px; }
+            .spec-info-row { gap: 12px; }
+            .spec-info-box { padding: 14px 10px; }
+            .spec-info-box .si-val { font-size: 1.5rem; }
+            .spec-note-box { padding: 14px 10px; }
+            .spec-note-box .sn-note { font-size: 2.5rem; }
+            .spec-inspect-card .si-big { font-size: 2rem; }
+            .spec-inspect-card .si-mid { font-size: 1.2rem; }
+            /* Expanded desktop */
+            .spec-expanded #spec-waterfall { height: 440px; }
+            .spec-expanded .spec-note-overlay { height: 440px; }
+            .spec-expanded .spec-cursor { height: 440px; }
+            .spec-expanded #spec-bar { height: 170px; }
+
+            /* Studio / selfcheck / routine cards */
+            .studio-hero h2 { font-size: 1.5rem; }
+            .coach-item { padding: 14px 0; }
+            .principle-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .vtype-card { padding: 18px; }
+            .routine-step { padding: 14px 0; }
+
+            /* Footer */
+            .app-footer { padding: 24px 32px 32px; }
+            .app-footer .ft-biz { font-size: .78rem; }
+        }
+
+        /* ── RESPONSIVE: Large desktop (1200px+) ── */
+        @media (min-width: 1200px) {
+            body { max-width: 1120px; }
+            .section { padding: 28px 36px; }
+
+            .pc-note-grid { grid-template-columns: repeat(10, 1fr); }
+            .key-grid { grid-template-columns: repeat(7, 1fr); }
+            .principle-grid { grid-template-columns: repeat(4, 1fr); }
+
+            /* Spectrogram even larger */
+            #spec-waterfall { height: 340px; }
+            .spec-note-overlay { height: 340px; }
+            .spec-cursor { height: 340px; }
+            #spec-bar { height: 140px; }
+            .spec-expanded #spec-waterfall { height: 520px; }
+            .spec-expanded .spec-note-overlay { height: 520px; }
+            .spec-expanded .spec-cursor { height: 520px; }
+            .spec-expanded #spec-bar { height: 200px; }
+        }
     </style>
 </head>
 <body>
 <div id="app">
 
     <header class="header">
-        <h1>🎵 보컬핏 스튜디오 [연습 앱]</h1>
-        <p>Vocal Fit Studio · 음정 체크 &amp; 발성 연습</p>
+        <h1>보컬핏 스튜디오</h1>
+        <p>Vocal Training System</p>
     </header>
 
     <nav class="tabs">
@@ -317,6 +485,7 @@
         <button class="tab"        onclick="switchTab('selfcheck')">🔍 셀프 평가</button>
         <button class="tab"        onclick="switchTab('routine')">🎯 추천 루틴</button>
         <button class="tab"        onclick="switchTab('pitch')">🎤 음정 체크</button>
+        <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
         <button class="tab"        onclick="switchTab('exercise')">🎹 발성 연습</button>
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
     </nav>
@@ -338,6 +507,9 @@
                 <br><br>
                 ViP 인증 인스트럭터는 보컬 건강, 과학, 그리고 페다고지(교육학)의 최전선의 자료를 공부하고
                 오늘날의 현대 보컬리스트에게 최상의 보컬 트레이닝과 360도 케어를 제공하는 것이 목표입니다.
+                <div style="margin-top:14px;padding:10px 12px;background:rgba(139,92,246,.08);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;font-size:.74rem;color:var(--muted);line-height:1.6;">
+                    © 본 앱의 모든 콘텐츠는 보컬핏 스튜디오의 고유 자산이며,<br>무단 사용·복제·배포를 금지합니다.
+                </div>
             </div>
         </div>
 
@@ -656,12 +828,108 @@
 
     </section>
 
+    <!-- ══════════════ SPECTROGRAM TAB ══════════════ -->
+    <section id="spectrogram-section" class="section">
+
+        <div class="desk-grid">
+        <!-- Mic control card -->
+        <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <div class="mic-dot" id="spec-mic-dot"></div>
+                <span style="font-size:.82rem;font-weight:700;color:var(--text2);" id="spec-mic-label">대기 중</span>
+            </div>
+            <div id="spec-status-msg" style="font-size:.74rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">마이크를 켜면 목소리의 주파수를 실시간으로 분석합니다.</div>
+            <button class="btn btn-purple" id="spec-toggle-btn" onclick="toggleSpecMic()">🎙️ 마이크 시작</button>
+        </div>
+
+        <!-- Realtime note info -->
+        <div class="card">
+            <div class="card-label">실시간 분석</div>
+            <div class="spec-info-row">
+                <div class="spec-info-box">
+                    <div class="si-val" id="spec-hz">— Hz</div>
+                    <div class="si-label">감지 주파수</div>
+                </div>
+                <div class="spec-note-box" id="spec-note-wrap">
+                    <div class="sn-note" id="spec-note">—</div>
+                    <div class="sn-cents" id="spec-cents">—</div>
+                </div>
+                <div class="spec-info-box">
+                    <div class="si-val" id="spec-db">— dB</div>
+                    <div class="si-label">음량 레벨</div>
+                </div>
+            </div>
+            <div style="margin-top:10px;padding:8px 10px;background:var(--bg2);border-radius:8px;font-size:.72rem;color:var(--muted);line-height:1.65;">
+                <span style="color:var(--blue);">감지 주파수</span> = 현재 가장 강하게 들리는 음의 진동수&nbsp;&nbsp;·&nbsp;&nbsp;
+                <span style="color:var(--purple);">가운데 음정</span> = 내가 지금 내는 음이름 (예: C4, D#4)&nbsp;&nbsp;·&nbsp;&nbsp;
+                <span style="color:var(--blue);">음량 레벨</span> = 마이크에 들어오는 소리 크기
+            </div>
+        </div>
+
+        </div><!-- /desk-grid -->
+
+        <!-- Waterfall spectrogram -->
+        <div class="card" style="padding:14px;">
+            <div class="card-label">스펙트로그램 (시간 흐름)</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.6;margin-bottom:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;">
+                오른쪽으로 시간이 흐릅니다 ➡ · 밝을수록 더 강한 소리 · 아래쪽 = 저음, 위쪽 = 고음<br>
+                <span style="color:rgba(255,255,255,.55);">가로 점선</span> = C 기준음 (C3·C4·C5·C6) — 내 목소리가 어떤 음역인지 비교해보세요
+            </div>
+            <div class="spec-canvas-wrap" id="spec-waterfall-wrap">
+                <canvas id="spec-waterfall" width="440" height="200"></canvas>
+                <svg class="spec-note-overlay" id="spec-overlay" viewBox="0 0 440 200" preserveAspectRatio="none"></svg>
+                <div class="spec-cursor" id="spec-cursor"></div>
+            </div>
+            <div class="spec-legend">
+                <span class="spec-legend-label">약</span>
+                <div class="spec-legend-bar"></div>
+                <span class="spec-legend-label">강</span>
+            </div>
+            <div class="spec-inspect-hint" id="spec-inspect-hint">💡 정지 후 스펙트로그램을 터치하면 그 시점의 음정을 확인할 수 있어요</div>
+            <div class="spec-inspect-card" id="spec-inspect-card">
+                <div class="si-time" id="spec-inspect-time">— 초 전</div>
+                <div class="si-row">
+                    <span class="si-big" id="spec-inspect-note">—</span>
+                    <span class="si-mid" id="spec-inspect-hz">— Hz</span>
+                    <span class="si-sm" id="spec-inspect-db">— dB</span>
+                </div>
+                <div style="font-size:.68rem;color:var(--muted);margin-top:6px;" id="spec-inspect-cents">—</div>
+            </div>
+        </div>
+
+        <!-- FFT bar chart -->
+        <div class="card" style="padding:14px;">
+            <div class="card-label">주파수 스펙트럼 (현재)</div>
+            <div class="spec-canvas-wrap">
+                <canvas id="spec-bar" width="440" height="80"></canvas>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;padding:0 2px;">
+                <span style="font-size:.62rem;color:var(--muted);">60 Hz</span>
+                <span style="font-size:.62rem;color:var(--muted);">200 Hz</span>
+                <span style="font-size:.62rem;color:var(--muted);">500 Hz</span>
+                <span style="font-size:.62rem;color:var(--muted);">1 kHz</span>
+                <span style="font-size:.62rem;color:var(--muted);">2 kHz</span>
+                <span style="font-size:.62rem;color:var(--muted);">5 kHz</span>
+            </div>
+        </div>
+
+        <!-- Expand / collapse button -->
+        <div style="text-align:center;">
+            <button class="spec-expand-btn" id="spec-expand-btn" onclick="toggleSpecExpand()">
+                <span id="spec-expand-icon">🔍</span>
+                <span id="spec-expand-text">분석 화면 확대</span>
+            </button>
+        </div>
+
+    </section>
+
     <!-- ══════════════ EXERCISE TAB ══════════════ -->
     <section id="exercise-section" class="section">
 
         <div class="loading-msg" id="piano-msg">🎹 피아노 샘플 로딩 중…</div>
         <div class="progress-bar"><div class="progress-fill" id="piano-prog"></div></div>
 
+        <div class="desk-grid">
         <!-- Voice range -->
         <div class="card">
             <div class="card-label">음역대 선택</div>
@@ -670,6 +938,25 @@
                 <button class="vtoggle"        onclick="setVoice('female')">🎵 여성 (Female)</button>
             </div>
             <div class="range-hint" id="range-hint">남성 음역대: C3(도) ~ G4(솔) · 반음씩 8키</div>
+        </div>
+
+        <!-- Scale selector -->
+        <div class="card">
+            <div class="card-label">스케일 선택</div>
+            <div class="scale-selector">
+                <div class="scale-box active" id="sb-1.5oct" onclick="setScaleType('1.5oct')">
+                    <div class="sb-name">1.5 옥타브</div>
+                    <div class="sb-desc">도-미-솔-도'-미'-솔'★-파'-레'-시-솔-파-레-도</div>
+                </div>
+                <div class="scale-box" id="sb-1358" onclick="setScaleType('1358')">
+                    <div class="sb-name">1-3-5-8</div>
+                    <div class="sb-desc">도-미-솔-도'★-솔-미-도</div>
+                </div>
+                <div class="scale-box" id="sb-1358s" onclick="setScaleType('1358s')">
+                    <div class="sb-name">1-3-5-8-S</div>
+                    <div class="sb-desc">도-미-솔-도'★(서스테인)-솔-미-도</div>
+                </div>
+            </div>
         </div>
 
         <!-- Starting key + progression -->
@@ -681,9 +968,9 @@
             <div class="key-grid" id="key-grid"></div>
         </div>
 
-        <!-- Sexlick / auto-progress mode -->
+        <!-- Auto-progress mode -->
         <div class="card">
-            <div class="card-label">1.5 옥타브 스케일 – 키 자동 진행</div>
+            <div class="card-label">키 자동 진행</div>
             <div class="two-toggle">
                 <button class="ttoggle active" onclick="setProgMode('auto')">🔁 자동 진행 (1.5 oct)</button>
                 <button class="ttoggle"        onclick="setProgMode('loop')">🔂 한 키 반복</button>
@@ -707,6 +994,8 @@
                 <span class="bpm-val" id="bpm-val">115 BPM</span>
             </div>
         </div>
+
+        </div><!-- /desk-grid -->
 
         <!-- Playback card (shown during play) -->
         <div class="card playback-card" id="play-card" style="display:none;">
@@ -767,9 +1056,9 @@
 
     <footer class="app-footer">
         <div class="ft-biz">
-            사업자 등록번호 102-22-62997 &nbsp;|&nbsp; 대표자 : 강현호<br>
-            김해대로 2387-1, 6층 보컬핏 스튜디오<br>
-            부산 수영동 502-11, 247스튜디오, 1R
+            대표자 : 강현호<br>
+            김해 스튜디오 : 김해대로 2387-1, 6층 보컬핏 스튜디오<br>
+            부산 스튜디오 : 부산 수영동 502-11, 247스튜디오, 1R
         </div>
     </footer>
 
@@ -805,19 +1094,43 @@ const NOTE_EN   = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const NOTE_KO   = ['도','도♯','레','레♯','미','파','파♯','솔','솔♯','라','라♯','시'];
 const NOTE_TONE = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 
-// ── 1.5 옥타브 스케일 (세스릭스) ──
-// 상승: 도-미-솔 아르페지오로 솔'(정점, 1.5 oct) 까지
-// 하강: 파'-레'-시-라-파-레-도 (특유의 lick 패턴)
-//
-//  ↑   ↑   ↑   ↑    ↑   ★    ↓    ↓   ↓   ↓   ↓   ↓   ↓
-//  도   미   솔  도'  미'  솔'  파'  레'  시   라   파   레   도
-//  0    4    7   12   16   19   17   14   11   9    5    2    0
-const SCALE_UD = [0, 4, 7, 12, 16, 19, 17, 14, 11, 7, 5, 2, 0];
+// ════════════════════════════════════════════════
+// SCALE DEFINITIONS
+// ════════════════════════════════════════════════
+const SCALES = {
+    '1.5oct': {
+        notes:      [0, 4, 7, 12, 16, 19, 17, 14, 11, 7, 5, 2, 0],
+        peakIdx:    5,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '⬆ 아르페지오 상승 중',
+        downArrow:  '⬇ 파-레 하강 lick',
+    },
+    '1358': {
+        notes:      [0, 4, 7, 12, 7, 4, 0],
+        peakIdx:    3,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '⬆ 상승 중',
+        downArrow:  '⬇ 하강 중',
+    },
+    '1358s': {
+        notes:      [0, 4, 7, 12, 7, 4, 0],
+        peakIdx:    3,
+        sustainIdx: 3,   // 도' 서스테인
+        sustainSec: 3,
+        upArrow:    '⬆ 상승 중',
+        downArrow:  '⬇ 하강 중',
+    },
+};
 
-// 계이름 레이블 (13음 위치별)
-const SOLFEGE_UD = ['도', '미', '솔', '도`', '미`', '솔`★', '파`', '레`', '시', '솔', '파', '레', '도'];
-// 정점(index 5 = 솔') 이후는 내려오는 구간
-const PEAK_IDX   = 5;
+// 현재 선택된 스케일
+let scaleType = '1.5oct';
+function curScale() { return SCALES[scaleType]; }
+
+// 하위 호환용 (일부 로직에서 직접 참조)
+const SCALE_UD  = SCALES['1.5oct'].notes;
+const PEAK_IDX  = SCALES['1.5oct'].peakIdx;
 
 // 남성 시작 키: C3 ~ G3 (MIDI 48~55)
 const MALE_KEYS = [
@@ -833,6 +1146,26 @@ const FEMALE_KEYS = [
     {label:'A3',  kor:'라',   midi:57}, {label:'A#3', kor:'라♯', midi:58},
     {label:'B3',  kor:'시',   midi:59}, {label:'C4',  kor:'도',   midi:60},
 ];
+
+// 1-3-5-8 / 1-3-5-8-S 전용 시작 키 (더 넓은 범위)
+// 남성: C3 ~ C4 (MIDI 48~60) · 13키
+const MALE_KEYS_1358 = (function(){
+    const arr = [];
+    for (let m = 48; m <= 60; m++) {
+        const idx = ((m%12)+12)%12, oct = Math.floor(m/12)-1;
+        arr.push({ label: NOTE_EN[idx]+oct, kor: NOTE_KO[idx], midi: m });
+    }
+    return arr;
+})();
+// 여성: F3 ~ F4 (MIDI 53~65) · 13키
+const FEMALE_KEYS_1358 = (function(){
+    const arr = [];
+    for (let m = 53; m <= 65; m++) {
+        const idx = ((m%12)+12)%12, oct = Math.floor(m/12)-1;
+        arr.push({ label: NOTE_EN[idx]+oct, kor: NOTE_KO[idx], midi: m });
+    }
+    return arr;
+})();
 
 // ════════════════════════════════════════════════
 // PIANO INIT
@@ -876,7 +1209,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['studio', 'selfcheck', 'routine', 'pitch', 'exercise', 'notes'];
+const TAB_ORDER = ['studio', 'selfcheck', 'routine', 'pitch', 'spectrogram', 'exercise', 'notes'];
 function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab').forEach((b, i) =>
@@ -885,6 +1218,8 @@ function switchTab(tab) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tab + '-section').classList.add('active');
     if (tab === 'exercise' && !piano) initPiano();
+    // Stop spectrogram mic when leaving that tab
+    if (tab !== 'spectrogram' && specRunning) stopSpecMic();
 }
 
 
@@ -1008,18 +1343,30 @@ function pushHistory(name) {
 // ════════════════════════════════════════════════
 // EXERCISE – SETTINGS
 // ════════════════════════════════════════════════
+function getRangeHint() {
+    const is1358 = scaleType === '1358' || scaleType === '1358s';
+    if (voice === 'male') {
+        return is1358
+            ? '남성 음역대: C3(도) ~ C4(도) · 반음씩 13키'
+            : '남성 음역대: C3(도) ~ G3(솔) · 반음씩 8키';
+    } else {
+        return is1358
+            ? '여성 음역대: F3(파) ~ F4(파) · 반음씩 13키'
+            : '여성 음역대: F3(파) ~ C4(도) · 반음씩 8키';
+    }
+}
+
 function setVoice(v) {
-    voice=v; keyIdx=0;
+    voice = v; keyIdx = 0;
     document.querySelectorAll('.vtoggle').forEach((b,i) =>
         b.classList.toggle('active', (i===0&&v==='male')||(i===1&&v==='female'))
     );
-    document.getElementById('range-hint').textContent =
-        v==='male' ? '남성 음역대: C3(도) ~ G4(솔) · 반음씩 8키' : '여성 음역대: F3(파) ~ C5(도) · 반음씩 8키';
+    document.getElementById('range-hint').textContent = getRangeHint();
     renderKeys();
 }
 
 function renderKeys() {
-    const keys = voice==='male' ? MALE_KEYS : FEMALE_KEYS;
+    const keys = getKeys();
     // 재생 중이면 현재 연주 키(curKeyIdx) 강조, 아니면 선택 키(keyIdx) 강조
     const highlightIdx = isPlaying ? curKeyIdx : keyIdx;
     document.getElementById('key-grid').innerHTML = keys.map((k,i) =>
@@ -1100,7 +1447,12 @@ function updateBPM(v) {
 // ════════════════════════════════════════════════
 // EXERCISE – HELPERS
 // ════════════════════════════════════════════════
-function getKeys() { return voice==='male' ? MALE_KEYS : FEMALE_KEYS; }
+function getKeys() {
+    if (scaleType === '1358' || scaleType === '1358s') {
+        return voice === 'male' ? MALE_KEYS_1358 : FEMALE_KEYS_1358;
+    }
+    return voice === 'male' ? MALE_KEYS : FEMALE_KEYS;
+}
 
 function getScaleNotes(rootMidi) {
     return SCALE_UD.map(s => rootMidi+s);
@@ -1138,15 +1490,49 @@ function renderKeyProgRow(sequence, currentSeqPos) {
     }).join('');
 }
 
+// 스케일 선택
+function setScaleType(type) {
+    scaleType = type;
+    ['1.5oct','1358','1358s'].forEach(t => {
+        document.getElementById('sb-' + t).classList.toggle('active', t === type);
+    });
+
+    // 키 범위가 바뀌므로 keyIdx 클램핑 + UI 갱신
+    const newKeys = getKeys();
+    if (keyIdx >= newKeys.length) keyIdx = 0;
+    if (curKeyIdx >= newKeys.length) curKeyIdx = 0;
+    document.getElementById('range-hint').textContent = getRangeHint();
+    renderKeys();
+
+    // 재생 중이면 처음 음부터 재시작
+    if (isPlaying) {
+        clearTimeout(playTimer);
+        noteIdx = 0;
+        progSequence = buildProgSequence();
+        seqPos = progSequence.indexOf(keyIdx);
+        if (seqPos < 0) seqPos = 0;
+        curKeyIdx = progSequence[seqPos];
+        renderScaleDots(newKeys[curKeyIdx].midi);
+        document.querySelectorAll('.sdot').forEach(d => d.classList.remove('active','done'));
+        playNextNote();
+    } else if (document.getElementById('play-card').style.display !== 'none') {
+        noteIdx = 0;
+        renderScaleDots(newKeys[curKeyIdx !== undefined ? curKeyIdx : keyIdx].midi);
+        document.querySelectorAll('.sdot').forEach(d => d.classList.remove('active','done'));
+    }
+}
+
 // rootMidi 기준으로 각 음의 고정 도(fixed-do) + 영문 음이름 계산
 function getNoteForStep(stepIndex, rootMidi) {
-    const midi = rootMidi + SCALE_UD[stepIndex];
+    const sc = curScale();
+    const midi = rootMidi + sc.notes[stepIndex];
     const noteIdx = ((midi % 12) + 12) % 12;
     const oct = Math.floor(midi / 12) - 1;
     return {
         kor: NOTE_KO[noteIdx],
         en:  NOTE_EN[noteIdx] + oct,
-        isPeak: (stepIndex === PEAK_IDX),
+        isPeak:    (stepIndex === sc.peakIdx),
+        isSustain: (stepIndex === sc.sustainIdx),
         midi
     };
 }
@@ -1156,26 +1542,32 @@ function renderScaleDots(rootMidi) {
         const keys = getKeys();
         rootMidi = keys[curKeyIdx !== undefined ? curKeyIdx : keyIdx].midi;
     }
-    document.getElementById('scale-dots').innerHTML = SCALE_UD.map((_,i) => {
+    const sc = curScale();
+    document.getElementById('scale-dots').innerHTML = sc.notes.map((_,i) => {
         const n = getNoteForStep(i, rootMidi);
-        const peakMark = n.isPeak ? '★' : '';
-        return `<div class="sdot${n.isPeak?' peak':''}" id="sd${i}">
-            <span class="sdot-kor">${n.kor}${peakMark}</span>
+        const mark = n.isSustain ? '★S' : n.isPeak ? '★' : '';
+        const cls  = 'sdot' + (n.isPeak || n.isSustain ? ' peak' : '');
+        return `<div class="${cls}" id="sd${i}">
+            <span class="sdot-kor">${n.kor}${mark}</span>
             <span class="sdot-en">${n.en}</span>
         </div>`;
     }).join('');
 }
 
 function updateScaleDots(idx) {
+    const sc = curScale();
     document.querySelectorAll('.sdot').forEach((d,i) => {
-        d.classList.remove('active','done');
+        d.classList.remove('active','done','sustain');
         if (i < idx) d.classList.add('done');
-        if (i === idx) d.classList.add('active');
+        if (i === idx) {
+            d.classList.add('active');
+            if (i === sc.sustainIdx) d.classList.add('sustain');
+        }
     });
-    // direction arrow
     const arrowEl = document.getElementById('dir-arrow');
-    if (idx <= PEAK_IDX) arrowEl.textContent = '⬆ 아르페지오 상승 중';
-    else                  arrowEl.textContent = '⬇ 파-레 하강 lick';
+    if (idx < sc.peakIdx)       arrowEl.textContent = sc.upArrow;
+    else if (idx === sc.sustainIdx) arrowEl.textContent = '★ 서스테인 – 소리를 끌어주세요!';
+    else                         arrowEl.textContent = sc.downArrow;
 }
 
 // ════════════════════════════════════════════════
@@ -1227,7 +1619,7 @@ function playNextNote() {
     if (!isPlaying) return;
 
     // All notes in current scale done?
-    if (noteIdx >= SCALE_UD.length) {
+    if (noteIdx >= curScale().notes.length) {
         noteIdx = 0;
         if (progMode==='auto') {
             // 핑퐁 방향으로 다음 키 이동
@@ -1276,14 +1668,17 @@ function playNextNote() {
     // Update dots & direction arrow
     updateScaleDots(noteIdx);
 
-    // Play piano note
+    // Play piano note (서스테인 음은 긴 duration 적용)
+    const sc = curScale();
+    const isSustain  = (noteIdx === sc.sustainIdx); // noteIdx 증가 전에 체크
+    const noteDurSec = isSustain ? sc.sustainSec : (60/bpm)*0.82;
+    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000/bpm;
     try {
-        const dur = (60/bpm)*0.82;
-        piano.triggerAttackRelease(tNote, dur);
+        piano.triggerAttackRelease(tNote, noteDurSec);
     } catch(e) { console.warn('Note error:', tNote, e); }
 
     noteIdx++;
-    playTimer = setTimeout(playNextNote, 60000/bpm);
+    playTimer = setTimeout(playNextNote, waitMs);
 }
 
 function stopEx() {
@@ -1611,7 +2006,392 @@ document.addEventListener('DOMContentLoaded', () => {
     // init two-toggle button references correctly
     const autoBtn = document.querySelector('#exercise-section .two-toggle:first-of-type .ttoggle:first-child');
     if (autoBtn) autoBtn.classList.add('active');
+
+    // Build C-note reference lines on spectrogram
+    buildSpecOverlay();
 });
+
+// ════════════════════════════════════════════════
+// SPECTROGRAM TAB
+// ════════════════════════════════════════════════
+const SPEC_MIN_HZ = 60;
+const SPEC_MAX_HZ = 5000;
+const SPEC_FFT    = 4096;   // FFT size
+const SPEC_SMOOTH = 0.75;   // analyser smoothing
+
+let specCtx      = null;    // AudioContext
+let specAnalyser = null;
+let specSource   = null;
+let specStream   = null;
+let specRunning  = false;
+let specRafId    = null;
+
+// ── History buffer: stores per-column analysis data ──
+const SPEC_HISTORY_MAX = 220; // canvas width / 2px per column
+let specHistory     = [];     // array of { hz, note, cents, db, ts }
+let specStopTime    = 0;      // timestamp when mic was stopped
+
+// Pre-compute color LUT (256 entries, dark→blue→cyan→green→yellow→red)
+const SPEC_LUT = (function(){
+    const lut = new Uint8ClampedArray(256 * 4);
+    const stops = [
+        [0,   [0,   0,   16]],
+        [40,  [0,   20,  100]],
+        [100, [0,  150,  200]],
+        [155, [20,  220,  80]],
+        [200, [230, 230,   0]],
+        [255, [255,  20,   0]],
+    ];
+    for (let v = 0; v < 256; v++) {
+        let lo = stops[0], hi = stops[stops.length-1];
+        for (let i = 0; i < stops.length-1; i++) {
+            if (v >= stops[i][0] && v <= stops[i+1][0]) { lo=stops[i]; hi=stops[i+1]; break; }
+        }
+        const t  = lo[0]===hi[0] ? 0 : (v-lo[0])/(hi[0]-lo[0]);
+        lut[v*4+0] = lo[1][0] + (hi[1][0]-lo[1][0])*t;
+        lut[v*4+1] = lo[1][1] + (hi[1][1]-lo[1][1])*t;
+        lut[v*4+2] = lo[1][2] + (hi[1][2]-lo[1][2])*t;
+        lut[v*4+3] = 255;
+    }
+    return lut;
+})();
+
+// Convert canvas X (0..W) → frequency using log scale
+function specXtoHz(x, W) {
+    const logMin = Math.log(SPEC_MIN_HZ);
+    const logMax = Math.log(SPEC_MAX_HZ);
+    return Math.exp(logMin + (x / W) * (logMax - logMin));
+}
+// Convert frequency → canvas X
+function specHztoX(hz, W) {
+    const logMin = Math.log(SPEC_MIN_HZ);
+    const logMax = Math.log(SPEC_MAX_HZ);
+    return ((Math.log(hz) - logMin) / (logMax - logMin)) * W;
+}
+
+function buildSpecOverlay() {
+    const svg  = document.getElementById('spec-overlay');
+    if (!svg) return;
+    const W = 440, H = 200;
+    // Draw HORIZONTAL lines at each C note frequency
+    // Y axis: top=high freq, bottom=low freq (log scale)
+    const cNotes = [
+        {midi:48, label:'C3'},
+        {midi:60, label:'C4'},
+        {midi:72, label:'C5'},
+        {midi:84, label:'C6'},
+    ];
+    let svgContent = '';
+    const logMin = Math.log(SPEC_MIN_HZ);
+    const logMax = Math.log(SPEC_MAX_HZ);
+    for (const cn of cNotes) {
+        const freq = 440 * Math.pow(2, (cn.midi - 69) / 12);
+        if (freq < SPEC_MIN_HZ || freq > SPEC_MAX_HZ) continue;
+        // frac=0 at bottom (low freq), frac=1 at top (high freq)
+        const frac = (Math.log(freq) - logMin) / (logMax - logMin);
+        const y = H * (1 - frac);  // invert: top=high
+        svgContent += `<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.38)" stroke-width="1" stroke-dasharray="5,4"/>`;
+        svgContent += `<rect x="2" y="${(y-7).toFixed(1)}" width="24" height="14" rx="3" fill="rgba(0,0,0,0.6)"/>`;
+        svgContent += `<text x="14" y="${(y+4).toFixed(1)}" font-size="9" fill="rgba(255,255,255,0.85)" font-family="monospace" text-anchor="middle" font-weight="bold">${cn.label}</text>`;
+    }
+    svg.innerHTML = svgContent;
+}
+
+let specExpanded = false;
+function toggleSpecExpand() {
+    specExpanded = !specExpanded;
+    const section = document.getElementById('spectrogram-section');
+    section.classList.toggle('spec-expanded', specExpanded);
+    document.getElementById('spec-expand-icon').textContent = specExpanded ? '🔎' : '🔍';
+    document.getElementById('spec-expand-text').textContent = specExpanded ? '분석 화면 축소' : '분석 화면 확대';
+    // Re-build overlay for new height
+    buildSpecOverlay();
+}
+
+async function toggleSpecMic() {
+    if (specRunning) {
+        stopSpecMic();
+    } else {
+        await startSpecMic();
+    }
+}
+
+async function startSpecMic() {
+    try {
+        specStream   = await navigator.mediaDevices.getUserMedia({ audio: true });
+        specCtx      = new (window.AudioContext || window.webkitAudioContext)();
+        specAnalyser = specCtx.createAnalyser();
+        specAnalyser.fftSize           = SPEC_FFT;
+        specAnalyser.smoothingTimeConstant = SPEC_SMOOTH;
+        specSource   = specCtx.createMediaStreamSource(specStream);
+        specSource.connect(specAnalyser);
+        specRunning  = true;
+
+        document.getElementById('spec-mic-dot').classList.add('on');
+        document.getElementById('spec-mic-label').textContent = '듣는 중';
+        document.getElementById('spec-status-msg').textContent = '소리를 내면 실시간으로 분석됩니다. 가까이서 또렷하게 발성해 보세요.';
+        document.getElementById('spec-toggle-btn').textContent = '⏹ 마이크 중지';
+        document.getElementById('spec-toggle-btn').className = 'btn btn-red';
+
+        // Clear waterfall canvas & history
+        const wfCanvas = document.getElementById('spec-waterfall');
+        const wfCtx    = wfCanvas.getContext('2d');
+        wfCtx.fillStyle = '#000';
+        wfCtx.fillRect(0, 0, wfCanvas.width, wfCanvas.height);
+        specHistory = [];
+
+        // Hide inspect UI
+        document.getElementById('spec-inspect-card').style.display = 'none';
+        document.getElementById('spec-inspect-hint').style.display = 'none';
+        document.getElementById('spec-cursor').style.display = 'none';
+
+        specDrawLoop();
+    } catch(e) {
+        alert('마이크 접근이 거부되었거나 지원되지 않습니다.\n' + e.message);
+    }
+}
+
+function stopSpecMic() {
+    specRunning = false;
+    specStopTime = Date.now();
+    if (specRafId) { cancelAnimationFrame(specRafId); specRafId = null; }
+    if (specSource) { try { specSource.disconnect(); } catch(e){} specSource = null; }
+    if (specCtx)    { specCtx.close(); specCtx = null; }
+    if (specStream) { specStream.getTracks().forEach(t => t.stop()); specStream = null; }
+    specAnalyser = null;
+
+    document.getElementById('spec-mic-dot').classList.remove('on');
+    document.getElementById('spec-mic-label').textContent = '정지됨';
+    document.getElementById('spec-mic-label').style.color = 'var(--text2)';
+    document.getElementById('spec-status-msg').textContent = '스펙트로그램을 터치해서 녹음된 구간의 음정을 확인해 보세요.';
+    document.getElementById('spec-toggle-btn').textContent = '🎙️ 마이크 시작';
+    document.getElementById('spec-toggle-btn').className = 'btn btn-purple';
+
+    // Show inspect hint if there's history
+    if (specHistory.length > 0) {
+        document.getElementById('spec-inspect-hint').style.display = 'block';
+    }
+    document.getElementById('spec-hz').textContent    = '— Hz';
+    document.getElementById('spec-note').textContent  = '—';
+    document.getElementById('spec-cents').textContent = '—';
+    document.getElementById('spec-db').textContent    = '— dB';
+}
+
+let _specFrameCount = 0;
+function specDrawLoop() {
+    if (!specRunning) return;
+    specRafId = requestAnimationFrame(specDrawLoop);
+
+    const bufLen     = specAnalyser.frequencyBinCount;   // SPEC_FFT / 2
+    const freqData   = new Uint8Array(bufLen);
+    const timeData   = new Float32Array(SPEC_FFT);
+    specAnalyser.getByteFrequencyData(freqData);
+    specAnalyser.getFloatTimeDomainData(timeData);
+
+    // ── Pitch + dB (compute first, share with history) ──
+    const sr = specCtx ? specCtx.sampleRate : 44100;
+    let rmsVal = 0;
+    for (let i = 0; i < timeData.length; i++) rmsVal += timeData[i] * timeData[i];
+    rmsVal = Math.sqrt(rmsVal / timeData.length);
+    const dbVal = rmsVal > 0 ? Math.round(20 * Math.log10(rmsVal)) : -100;
+    const pitchHz = autoCorrelate(timeData, sr);
+
+    // ── Waterfall (every 2 frames for performance) ──
+    if (_specFrameCount % 2 === 0) {
+        drawSpecWaterfall(freqData, bufLen);
+        // Push history snapshot for this column
+        let noteStr = null, centsVal = 0;
+        if (pitchHz && pitchHz > SPEC_MIN_HZ && pitchHz < SPEC_MAX_HZ) {
+            const info = freqToNote(pitchHz);
+            if (info) { noteStr = info.en + info.oct; centsVal = info.cents; }
+        }
+        specHistory.push({ hz: pitchHz, note: noteStr, cents: centsVal, db: dbVal, ts: Date.now() });
+        if (specHistory.length > SPEC_HISTORY_MAX) specHistory.shift();
+    }
+
+    // ── Bar spectrum ──
+    drawSpecBar(freqData, bufLen);
+
+    // ── Pitch + dB info (use pre-computed values) ──
+    updateSpecInfo(pitchHz, dbVal);
+
+    _specFrameCount++;
+}
+
+function drawSpecWaterfall(freqData, bufLen) {
+    const canvas = document.getElementById('spec-waterfall');
+    const ctx    = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // Scroll left by 2px
+    const img = ctx.getImageData(2, 0, W-2, H);
+    ctx.putImageData(img, 0, 0);
+
+    // Draw new column (rightmost 2px)
+    const col = ctx.createImageData(2, H);
+    const sr  = specCtx ? specCtx.sampleRate : 44100;
+    for (let y = 0; y < H; y++) {
+        // Map y → frequency (top=high, bottom=low)
+        const frac = 1 - (y / H);
+        const hz   = Math.exp(Math.log(SPEC_MIN_HZ) + frac * (Math.log(SPEC_MAX_HZ) - Math.log(SPEC_MIN_HZ)));
+        const binF = hz / (sr / SPEC_FFT);
+        const bin  = Math.min(Math.floor(binF), bufLen - 1);
+        const val  = freqData[bin];
+        const li   = val * 4;
+        for (let dx = 0; dx < 2; dx++) {
+            const pi = (y * 2 + dx) * 4;
+            col.data[pi+0] = SPEC_LUT[li+0];
+            col.data[pi+1] = SPEC_LUT[li+1];
+            col.data[pi+2] = SPEC_LUT[li+2];
+            col.data[pi+3] = 255;
+        }
+    }
+    ctx.putImageData(col, W-2, 0);
+}
+
+function drawSpecBar(freqData, bufLen) {
+    const canvas = document.getElementById('spec-bar');
+    const ctx    = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const sr = specCtx ? specCtx.sampleRate : 44100;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+
+    for (let x = 0; x < W; x++) {
+        const hz  = specXtoHz(x, W);
+        const bin = Math.min(Math.floor(hz / (sr / SPEC_FFT)), bufLen - 1);
+        const val = freqData[bin];
+        const barH = (val / 255) * H;
+        const li   = val * 4;
+        ctx.fillStyle = `rgb(${SPEC_LUT[li]},${SPEC_LUT[li+1]},${SPEC_LUT[li+2]})`;
+        ctx.fillRect(x, H - barH, 1, barH);
+    }
+}
+
+let _specStatusThrottle = 0;
+function updateSpecInfo(freq, db) {
+    document.getElementById('spec-db').textContent = db > -60 ? db + ' dB' : '— dB';
+
+    const noteEl = document.getElementById('spec-note');
+    if (freq && freq > SPEC_MIN_HZ && freq < SPEC_MAX_HZ) {
+        document.getElementById('spec-hz').textContent = Math.round(freq) + ' Hz';
+        const info = freqToNote(freq);
+        if (info) {
+            noteEl.textContent  = info.en + info.oct;
+            const sign = info.cents > 0 ? '+' : '';
+            document.getElementById('spec-cents').textContent = sign + info.cents + ' cents';
+            const absC = Math.abs(info.cents);
+            if (absC <= 10)      noteEl.style.color = 'var(--green)';
+            else if (absC <= 25) noteEl.style.color = 'var(--yellow)';
+            else                 noteEl.style.color = 'var(--red)';
+        }
+    } else {
+        document.getElementById('spec-hz').textContent    = '— Hz';
+        noteEl.textContent  = '—';
+        noteEl.style.color  = 'var(--purple)';
+        document.getElementById('spec-cents').textContent = '—';
+    }
+
+    // Dynamic mic status messages (throttled to ~every 15 frames)
+    if (_specStatusThrottle++ % 15 === 0) {
+        const lbl = document.getElementById('spec-mic-label');
+        const msg = document.getElementById('spec-status-msg');
+        if (db < -45) {
+            lbl.textContent = '신호 약함';
+            lbl.style.color = 'var(--yellow)';
+            msg.textContent = '소리가 거의 감지되지 않아요. 마이크에 더 가까이 대고 소리를 내보세요.';
+        } else if (db > -5) {
+            lbl.textContent = '너무 시끄러움';
+            lbl.style.color = 'var(--red)';
+            msg.textContent = '입력 신호가 너무 강합니다. 마이크에서 조금 떨어지거나 볼륨을 낮춰보세요.';
+        } else if (freq && freq > SPEC_MIN_HZ) {
+            lbl.textContent = '듣는 중';
+            lbl.style.color = 'var(--green)';
+            msg.textContent = '음성이 잘 감지되고 있습니다!';
+        } else {
+            lbl.textContent = '듣는 중';
+            lbl.style.color = 'var(--text2)';
+            msg.textContent = '소리를 내면 실시간으로 분석됩니다. 가까이서 또렷하게 발성해 보세요.';
+        }
+    }
+}
+
+// ── Spectrogram inspect on click/touch ──
+(function() {
+    const wrap = document.getElementById('spec-waterfall-wrap');
+    if (!wrap) return;
+
+    function handleInspect(e) {
+        // Only when stopped and has history
+        if (specRunning || specHistory.length === 0) return;
+
+        e.preventDefault();
+        const canvas = document.getElementById('spec-waterfall');
+        const rect   = canvas.getBoundingClientRect();
+        const touch  = e.touches ? e.touches[0] : e;
+        const cssX   = touch.clientX - rect.left;
+        // Convert CSS X → canvas X (canvas.width vs rect.width)
+        const canvasX = (cssX / rect.width) * canvas.width;
+
+        // Columns are 2px wide, newest at right edge.
+        // History: index 0 = oldest column (leftmost), last = newest (rightmost)
+        const totalCols = specHistory.length;
+        const canvasW   = canvas.width;
+        // How many columns fit on canvas
+        const maxCols   = Math.floor(canvasW / 2);
+        // The history occupies the right portion of the canvas
+        const startX    = canvasW - (totalCols * 2);
+        const colIdx    = Math.floor((canvasX - startX) / 2);
+
+        if (colIdx < 0 || colIdx >= totalCols) {
+            // Clicked on empty area
+            document.getElementById('spec-cursor').style.display = 'none';
+            document.getElementById('spec-inspect-card').style.display = 'none';
+            return;
+        }
+
+        const entry = specHistory[colIdx];
+
+        // Show cursor
+        const cursorEl = document.getElementById('spec-cursor');
+        const pct = ((startX + colIdx * 2 + 1) / canvasW) * 100;
+        cursorEl.style.left    = pct + '%';
+        cursorEl.style.display = 'block';
+
+        // Compute time offset
+        const secsAgo = ((specStopTime - entry.ts) / 1000).toFixed(1);
+
+        // Show inspect card
+        const card = document.getElementById('spec-inspect-card');
+        card.style.display = 'block';
+        document.getElementById('spec-inspect-time').textContent = secsAgo + '초 전';
+        document.getElementById('spec-inspect-note').textContent = entry.note || '—';
+        document.getElementById('spec-inspect-hz').textContent   = entry.hz ? Math.round(entry.hz) + ' Hz' : '— Hz';
+        document.getElementById('spec-inspect-db').textContent   = entry.db > -60 ? entry.db + ' dB' : '— dB';
+
+        if (entry.note && entry.cents !== undefined) {
+            const sign = entry.cents > 0 ? '+' : '';
+            document.getElementById('spec-inspect-cents').textContent = sign + entry.cents + ' cents';
+        } else {
+            document.getElementById('spec-inspect-cents').textContent = '음성 감지 안됨';
+        }
+
+        // Color the note
+        const noteEl = document.getElementById('spec-inspect-note');
+        if (entry.note) {
+            const absC = Math.abs(entry.cents);
+            if (absC <= 10)      noteEl.style.color = 'var(--green)';
+            else if (absC <= 25) noteEl.style.color = 'var(--yellow)';
+            else                 noteEl.style.color = 'var(--red)';
+        } else {
+            noteEl.style.color = 'var(--purple)';
+        }
+    }
+
+    wrap.addEventListener('click', handleInspect);
+    wrap.addEventListener('touchstart', handleInspect, { passive: false });
+})();
 </script>
 </body>
 </html>
