@@ -74,6 +74,19 @@
         .rb-main  { background: rgba(139,92,246,.15); color: var(--purple); border: 1px solid rgba(139,92,246,.3); }
         .rb-cool  { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
 
+        /* ── WARMUP STEPS ── */
+        .wu-step { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; background: var(--card2); border: 1.5px solid transparent; transition: all .25s; }
+        .wu-step.active { border-color: var(--purple); background: rgba(139,92,246,.1); box-shadow: 0 0 12px rgba(139,92,246,.15); }
+        .wu-step.done { opacity: .55; }
+        .wu-step-num { min-width: 24px; height: 24px; border-radius: 50%; background: var(--border); color: var(--text2); font-size: .72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .wu-step.active .wu-step-num { background: var(--purple); color: #fff; }
+        .wu-step.done .wu-step-num { background: var(--green); color: #fff; }
+        .wu-step-body { flex: 1; min-width: 0; }
+        .wu-step-name { font-size: .84rem; font-weight: 700; color: var(--text); }
+        .wu-step-desc { font-size: .72rem; color: var(--text2); margin-top: 2px; }
+        .wu-step-badge { font-size: .68rem; font-weight: 700; color: var(--purple); background: rgba(139,92,246,.12); padding: 3px 8px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+        .wu-step.active .wu-step-badge { background: var(--purple); color: #fff; }
+
         /* ── STUDIO (소개) ── */
         .studio-hero { text-align: center; padding: 10px 0 18px; }
         .studio-hero .sh-logo { font-size: 2.8rem; margin-bottom: 10px; }
@@ -693,54 +706,47 @@
     <!-- ══════════════ ROUTINE TAB ══════════════ -->
     <section id="routine-section" class="section">
 
-        <!-- 워밍업 -->
+        <!-- 🔥 워밍업 루틴 (자동 재생) -->
         <div class="card">
-            <div class="card-label">워밍업 <span class="routine-badge rb-warm">🔥 5분</span></div>
+            <div class="card-label">🔥 워밍업 루틴 <span class="routine-badge rb-warm">자동 재생 · 7단계</span></div>
+
+            <!-- 음역 선택 -->
+            <div class="two-toggle" id="wu-voice-toggle" style="margin-bottom:10px;">
+                <button class="vtoggle active" onclick="wuSetVoice('male')">🎵 남성</button>
+                <button class="vtoggle"        onclick="wuSetVoice('female')">🎵 여성</button>
+            </div>
+            <div id="wu-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:12px;text-align:center;">남성 시작: C3 ~ C4</div>
+
+            <!-- 재생 / 정지 -->
+            <button class="btn btn-green" id="wu-play-btn" onclick="wuStart()" style="width:100%;margin-bottom:12px;">▶️ 워밍업 시작</button>
+            <div id="wu-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+
+            <!-- 7-step list -->
+            <div id="wu-step-list"></div>
+        </div>
+
+        <!-- 본 연습 가이드 -->
+        <div class="card">
+            <div class="card-label">본 연습 <span class="routine-badge rb-main">🎤 10분</span></div>
             <div class="routine-step">
                 <div class="step-num">1</div>
                 <div class="step-body">
-                    <div class="step-title">립트릴 (Lip Trill)</div>
-                    <div class="step-desc">입술을 살짝 붙이고 숨을 내뿜으며 입술을 떨어줍니다. 음정을 따라 올라갔다 내려오세요.</div>
+                    <div class="step-title">1.5 옥타브 스케일 (발성 연습 탭 활용)</div>
+                    <div class="step-desc">1-3-5-8-10-12 아르페지오 패턴. 정점에서 힘빼고 가볍게 올라가는 것이 핵심입니다.</div>
                 </div>
             </div>
             <div class="routine-step">
                 <div class="step-num">2</div>
-                <div class="step-body">
-                    <div class="step-title">허밍 (Humming)</div>
-                    <div class="step-desc">"음~" 소리로 비강 공명을 느끼며 스케일을 부릅니다. 턱과 목에 힘을 빼세요.</div>
-                </div>
-            </div>
-            <div class="routine-step">
-                <div class="step-num">3</div>
-                <div class="step-body">
-                    <div class="step-title">스트레칭 &amp; 호흡</div>
-                    <div class="step-desc">목·어깨 스트레칭 후 코로 4박 들이쉬고 입으로 8박 천천히 내쉽니다.</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 본 연습 -->
-        <div class="card">
-            <div class="card-label">본 연습 <span class="routine-badge rb-main">🎤 10분</span></div>
-            <div class="routine-step">
-                <div class="step-num">4</div>
-                <div class="step-body">
-                    <div class="step-title">1.5 옥타브 스케일 (발성 연습 탭 활용)</div>
-                    <div class="step-desc">도-미-솔-도'-미'-솔' 아르페지오 패턴. 정점 솔'에서 힘빼고 가볍게 올라가는 것이 핵심입니다.</div>
-                </div>
-            </div>
-            <div class="routine-step">
-                <div class="step-num">5</div>
                 <div class="step-body">
                     <div class="step-title">음정 기준 체크 (음정 체크 탭 활용)</div>
                     <div class="step-desc">취약한 음정을 골라 피아노 기준음과 비교 체크합니다. 반음 단위로 정확도를 높여보세요.</div>
                 </div>
             </div>
             <div class="routine-step">
-                <div class="step-num">6</div>
+                <div class="step-num">3</div>
                 <div class="step-body">
                     <div class="step-title">노래 적용</div>
-                    <div class="step-desc">연습한 발성을 실제 노래에 적용해봅니다. 익숙한 곡의 한 소절부터 시작해 호흡과 공명을 의식하며 불러보세요.</div>
+                    <div class="step-desc">연습한 발성을 실제 노래에 적용해봅니다. 익숙한 곡의 한 소절부터 시작하세요.</div>
                 </div>
             </div>
         </div>
@@ -749,14 +755,14 @@
         <div class="card">
             <div class="card-label">웜다운 <span class="routine-badge rb-cool">🧊 3분</span></div>
             <div class="routine-step">
-                <div class="step-num">7</div>
+                <div class="step-num">1</div>
                 <div class="step-body">
                     <div class="step-title">낮은 허밍으로 마무리</div>
                     <div class="step-desc">무리하지 않는 편안한 음역대에서 "음~" 허밍 3~5분. 성대 피로를 풀어줍니다.</div>
                 </div>
             </div>
             <div class="routine-step">
-                <div class="step-num">8</div>
+                <div class="step-num">2</div>
                 <div class="step-body">
                     <div class="step-title">수분 보충 &amp; 침묵</div>
                     <div class="step-desc">미지근한 물을 마시고 5분간 말을 자제합니다. 성대 점막 회복에 도움이 됩니다.</div>
@@ -945,16 +951,40 @@
             <div class="card-label">스케일 선택</div>
             <div class="scale-selector">
                 <div class="scale-box active" id="sb-1.5oct" onclick="setScaleType('1.5oct')">
-                    <div class="sb-name">1.5 옥타브</div>
-                    <div class="sb-desc">도-미-솔-도'-미'-솔'★-파'-레'-시-솔-파-레-도</div>
+                    <div class="sb-name">1.5 Octave</div>
+                    <div class="sb-desc">1-3-5-8-10-12★-11-9-7-5-4-2-1</div>
+                </div>
+                <div class="scale-box" id="sb-2.0oct" onclick="setScaleType('2.0oct')">
+                    <div class="sb-name">2.0 Octave</div>
+                    <div class="sb-desc">1-3-5-8-10-12-15-17-19★-18-16-14-12-11-9-7-5-4-2-1</div>
                 </div>
                 <div class="scale-box" id="sb-1358" onclick="setScaleType('1358')">
-                    <div class="sb-name">1-3-5-8</div>
-                    <div class="sb-desc">도-미-솔-도'★-솔-미-도</div>
+                    <div class="sb-name">Arpeggio</div>
+                    <div class="sb-desc">1-3-5-8★-5-3-1</div>
                 </div>
                 <div class="scale-box" id="sb-1358s" onclick="setScaleType('1358s')">
-                    <div class="sb-name">1-3-5-8-S</div>
-                    <div class="sb-desc">도-미-솔-도'★(서스테인)-솔-미-도</div>
+                    <div class="sb-name">Arpeggio Sustain</div>
+                    <div class="sb-desc">1-3-5-8★(서스테인)-5-3-1</div>
+                </div>
+                <div class="scale-box" id="sb-1358r" onclick="setScaleType('1358r')">
+                    <div class="sb-name">Arpeggio Repeat</div>
+                    <div class="sb-desc">1-3-5-8★×4-5-3-1</div>
+                </div>
+                <div class="scale-box" id="sb-5tone" onclick="setScaleType('5tone')">
+                    <div class="sb-name">5-Tone Scale</div>
+                    <div class="sb-desc">1-2-3-4-5★-4-3-2-1</div>
+                </div>
+                <div class="scale-box" id="sb-broken" onclick="setScaleType('broken')">
+                    <div class="sb-name">Broken Pattern</div>
+                    <div class="sb-desc">1-5-3-8★-5-3-1</div>
+                </div>
+                <div class="scale-box" id="sb-1358rd" onclick="setScaleType('1358rd')">
+                    <div class="sb-name">Descending Repeat</div>
+                    <div class="sb-desc">8★×4→5→3→1</div>
+                </div>
+                <div class="scale-box" id="sb-desc" onclick="setScaleType('desc')">
+                    <div class="sb-name">Descending</div>
+                    <div class="sb-desc">8→5→3→1</div>
                 </div>
             </div>
         </div>
@@ -971,7 +1001,7 @@
         <!-- Auto-progress mode -->
         <div class="card">
             <div class="card-label">키 자동 진행</div>
-            <div class="two-toggle">
+            <div class="two-toggle" id="prog-toggle">
                 <button class="ttoggle active" onclick="setProgMode('auto')">🔁 자동 진행 (1.5 oct)</button>
                 <button class="ttoggle"        onclick="setProgMode('loop')">🔂 한 키 반복</button>
             </div>
@@ -1098,6 +1128,14 @@ const SCALES = {
         upArrow:    '⬆ 아르페지오 상승 중',
         downArrow:  '⬇ 파-레 하강 lick',
     },
+    '2.0oct': {
+        notes:      [0, 4, 7, 12, 16, 19, 24, 28, 31, 29, 26, 23, 19, 17, 14, 11, 7, 5, 2, 0],
+        peakIdx:    8,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '⬆ 상승 중',
+        downArrow:  '⬇ 하강 중',
+    },
     '1358': {
         notes:      [0, 4, 7, 12, 7, 4, 0],
         peakIdx:    3,
@@ -1112,6 +1150,46 @@ const SCALES = {
         sustainIdx: 3,   // 도' 서스테인
         sustainSec: 3,
         upArrow:    '⬆ 상승 중',
+        downArrow:  '⬇ 하강 중',
+    },
+    '5tone': {
+        notes:      [0, 2, 4, 5, 7, 5, 4, 2, 0],
+        peakIdx:    4,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '⬆ 상승 중',
+        downArrow:  '⬇ 하강 중',
+    },
+    '1358r': {
+        notes:      [0, 4, 7, 12, 12, 12, 12, 7, 4, 0],
+        peakIdx:    3,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '⬆ 상승 중',
+        downArrow:  '⬇ 하강 중',
+    },
+    'broken': {
+        notes:      [0, 7, 4, 12, 7, 4, 0],
+        peakIdx:    3,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '⬆ 상승 중',
+        downArrow:  '⬇ 하강 중',
+    },
+    '1358rd': {
+        notes:      [0, 0, 0, 0, -5, -8, -12],
+        peakIdx:    0,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '🎵 반복 중',
+        downArrow:  '⬇ 하강 중',
+    },
+    'desc': {
+        notes:      [0, -5, -8, -12],
+        peakIdx:    0,
+        sustainIdx: -1,
+        sustainSec: 0,
+        upArrow:    '🎵 시작음',
         downArrow:  '⬇ 하강 중',
     },
 };
@@ -1153,6 +1231,26 @@ const MALE_KEYS_1358 = (function(){
 const FEMALE_KEYS_1358 = (function(){
     const arr = [];
     for (let m = 53; m <= 65; m++) {
+        const idx = ((m%12)+12)%12, oct = Math.floor(m/12)-1;
+        arr.push({ label: NOTE_EN[idx]+oct, kor: NOTE_KO[idx], midi: m });
+    }
+    return arr;
+})();
+
+// 하행 스케일 전용 시작 키 (높은 음→낮은 음 순서)
+// 남성: C5(72) ~ E3(52) · 21키
+const MALE_KEYS_DESC = (function(){
+    const arr = [];
+    for (let m = 72; m >= 52; m--) {
+        const idx = ((m%12)+12)%12, oct = Math.floor(m/12)-1;
+        arr.push({ label: NOTE_EN[idx]+oct, kor: NOTE_KO[idx], midi: m });
+    }
+    return arr;
+})();
+// 여성: F5(77) ~ C4(60) · 18키
+const FEMALE_KEYS_DESC = (function(){
+    const arr = [];
+    for (let m = 77; m >= 60; m--) {
         const idx = ((m%12)+12)%12, oct = Math.floor(m/12)-1;
         arr.push({ label: NOTE_EN[idx]+oct, kor: NOTE_KO[idx], midi: m });
     }
@@ -1209,7 +1307,9 @@ function switchTab(tab) {
     );
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tab + '-section').classList.add('active');
-    if (tab === 'exercise' && !piano) initPiano();
+    if ((tab === 'exercise' || tab === 'routine') && !piano) initPiano();
+    // Stop warmup when leaving routine tab
+    if (tab !== 'routine' && wuActive) wuStop();
     // Stop spectrogram mic when leaving that tab
     if (tab !== 'spectrogram' && specRunning) stopSpecMic();
 }
@@ -1336,7 +1436,12 @@ function pushHistory(name) {
 // EXERCISE – SETTINGS
 // ════════════════════════════════════════════════
 function getRangeHint() {
-    const is1358 = scaleType === '1358' || scaleType === '1358s';
+    if (scaleType === 'desc' || scaleType === '1358rd') {
+        return voice === 'male'
+            ? '남성 음역대: E3(미) ~ C5(도) · 반음씩 21키 (하행)'
+            : '여성 음역대: C4(도) ~ F5(파) · 반음씩 18키 (하행)';
+    }
+    const is1358 = scaleType === '1358' || scaleType === '1358s' || scaleType === '1358r' || scaleType === '5tone' || scaleType === 'broken';
     if (voice === 'male') {
         return is1358
             ? '남성 음역대: C3(도) ~ C4(도) · 반음씩 13키'
@@ -1416,19 +1521,15 @@ function selKey(i) {
 
 function setProgMode(m) {
     progMode=m;
-    document.querySelectorAll('#exercise-section .two-toggle:first-of-type .ttoggle').forEach((b,i) =>
+    document.querySelectorAll('#prog-toggle .ttoggle').forEach((b,i) =>
         b.classList.toggle('active', (i===0&&m==='auto')||(i===1&&m==='loop'))
     );
-    document.getElementById('dir-row').style.display    = m==='auto' ? 'block' : 'none';
     document.getElementById('prog-mode-badge').textContent = m==='auto' ? '자동 진행' : '한 키 반복';
     document.getElementById('prog-mode-badge').style.display = m==='auto' ? '' : 'none';
 }
 
 function setDir(d) {
     keyDir=d;
-    document.querySelectorAll('#dir-row .ttoggle').forEach((b,i) =>
-        b.classList.toggle('active', (i===0&&d==='up')||(i===1&&d==='down'))
-    );
 }
 
 function updateBPM(v) {
@@ -1440,7 +1541,10 @@ function updateBPM(v) {
 // EXERCISE – HELPERS
 // ════════════════════════════════════════════════
 function getKeys() {
-    if (scaleType === '1358' || scaleType === '1358s') {
+    if (scaleType === 'desc' || scaleType === '1358rd') {
+        return voice === 'male' ? MALE_KEYS_DESC : FEMALE_KEYS_DESC;
+    }
+    if (scaleType === '1358' || scaleType === '1358s' || scaleType === '1358r' || scaleType === '5tone' || scaleType === 'broken') {
         return voice === 'male' ? MALE_KEYS_1358 : FEMALE_KEYS_1358;
     }
     return voice === 'male' ? MALE_KEYS : FEMALE_KEYS;
@@ -1485,9 +1589,15 @@ function renderKeyProgRow(sequence, currentSeqPos) {
 // 스케일 선택
 function setScaleType(type) {
     scaleType = type;
-    ['1.5oct','1358','1358s'].forEach(t => {
+    ['1.5oct','2.0oct','1358','1358s','1358r','5tone','broken','1358rd','desc'].forEach(t => {
         document.getElementById('sb-' + t).classList.toggle('active', t === type);
     });
+
+    // 하행 스케일은 기본 BPM 70
+    const defaultBpm = (type === 'desc' || type === '1358rd') ? 70 : (type === '2.0oct') ? 150 : 115;
+    bpm = defaultBpm;
+    document.getElementById('bpm-slider').value = bpm;
+    document.getElementById('bpm-val').textContent = bpm + ' BPM';
 
     // 키 범위가 바뀌므로 keyIdx 클램핑 + UI 갱신
     const newKeys = getKeys();
@@ -1694,6 +1804,163 @@ function resetToStart() {
     document.getElementById('play-card').style.display = 'none';
     document.getElementById('ex-status').textContent   = '발성 연습을 시작하세요';
     renderKeys();
+}
+
+// ════════════════════════════════════════════════
+// WARMUP ROUTINE
+// ════════════════════════════════════════════════
+const WARMUP_STEPS = [
+    { name: '립트릴 (Lip Trill)',  syllable: 'Lip Trill', scaleType: '1.5oct', desc: '입술을 떨며 음정을 따라 올라갔다 내려오세요' },
+    { name: 'Mum – 1.5 Octave',   syllable: 'Mum',       scaleType: '1.5oct', desc: '"Mum" 발음으로 1.5 옥타브 스케일' },
+    { name: 'Nay – 1.5 Octave',   syllable: 'Nay',       scaleType: '1.5oct', desc: '"Nay" 발음으로 비강 공명 연습' },
+    { name: 'Goo – 1.5 Octave',   syllable: 'Goo',       scaleType: '1.5oct', desc: '"Goo" 발음으로 후두 안정 연습' },
+    { name: 'Mum – Arpeggio',     syllable: 'Mum',       scaleType: '1358',   desc: '"Mum" 발음으로 아르페지오 (1-3-5-8)' },
+    { name: 'Nah – Arpeggio',     syllable: 'Nah',       scaleType: '1358',   desc: '"Nah" 발음으로 아르페지오 (1-3-5-8)' },
+    { name: 'Noh – Arp. Sustain', syllable: 'Noh',       scaleType: '1358s',  desc: '"Noh" 발음으로 서스테인 아르페지오' },
+];
+
+// Warmup state
+let wuActive    = false;   // warmup running?
+let wuStepIdx   = 0;       // current step (0–6)
+let wuVoice     = 'male';  // warmup voice selection
+let wuNoteIdx   = 0;       // note index within current scale
+let wuKeyIdx    = 0;       // current key index within key range
+let wuTimer     = null;
+let wuKeySeq    = [];      // key progression for current step
+
+function wuGetKeys(sType) {
+    if (sType === '1358' || sType === '1358s') {
+        return wuVoice === 'male' ? MALE_KEYS_1358 : FEMALE_KEYS_1358;
+    }
+    return wuVoice === 'male' ? MALE_KEYS : FEMALE_KEYS;
+}
+
+function wuSetVoice(v) {
+    wuVoice = v;
+    document.querySelectorAll('#wu-voice-toggle .vtoggle').forEach((b, i) =>
+        b.classList.toggle('active', (i === 0 && v === 'male') || (i === 1 && v === 'female'))
+    );
+    // Update range hint
+    document.getElementById('wu-range-hint').textContent =
+        v === 'male' ? '남성 시작: C3 ~ C4' : '여성 시작: F3 ~ F4';
+}
+
+function renderWuSteps() {
+    const list = document.getElementById('wu-step-list');
+    list.innerHTML = WARMUP_STEPS.map((s, i) => {
+        let cls = 'wu-step';
+        if (wuActive && i < wuStepIdx)  cls += ' done';
+        if (wuActive && i === wuStepIdx) cls += ' active';
+        return `<div class="${cls}" id="wu-s${i}">
+            <div class="wu-step-num">${i + 1}</div>
+            <div class="wu-step-body">
+                <div class="wu-step-name">${s.name}</div>
+                <div class="wu-step-desc">${s.desc}</div>
+            </div>
+            <div class="wu-step-badge">${s.syllable}</div>
+        </div>`;
+    }).join('');
+}
+
+async function wuStart() {
+    if (wuActive) return;
+    // Ensure piano is loaded
+    await ensurePianoReady();
+    await Tone.start();
+
+    wuActive  = true;
+    wuStepIdx = 0;
+    document.getElementById('wu-play-btn').textContent = '⏹ 정지';
+    document.getElementById('wu-play-btn').className   = 'btn btn-red';
+    document.getElementById('wu-play-btn').setAttribute('onclick', 'wuStop()');
+    document.getElementById('wu-status').textContent   = '🔥 워밍업 진행 중...';
+    document.getElementById('wu-status').style.display = 'block';
+
+    wuRunStep();
+}
+
+function wuStop() {
+    wuActive = false;
+    clearTimeout(wuTimer);
+    try { if (piano) piano.releaseAll(); } catch(e) {}
+    document.getElementById('wu-play-btn').textContent = '▶️ 워밍업 시작';
+    document.getElementById('wu-play-btn').className   = 'btn btn-green';
+    document.getElementById('wu-play-btn').setAttribute('onclick', 'wuStart()');
+    document.getElementById('wu-status').textContent   = '⏸ 워밍업 정지됨';
+    // Highlight stays where it stopped
+    renderWuSteps();
+}
+
+function wuRunStep() {
+    if (!wuActive || wuStepIdx >= WARMUP_STEPS.length) {
+        // All done
+        wuActive = false;
+        document.getElementById('wu-play-btn').textContent = '▶️ 워밍업 시작';
+        document.getElementById('wu-play-btn').className   = 'btn btn-green';
+        document.getElementById('wu-play-btn').setAttribute('onclick', 'wuStart()');
+        document.getElementById('wu-status').textContent   = '✅ 워밍업 완료!';
+        renderWuSteps();
+        return;
+    }
+
+    const step = WARMUP_STEPS[wuStepIdx];
+    wuNoteIdx = 0;
+    // Build key sequence for this step (all keys, ascending)
+    const keys = wuGetKeys(step.scaleType);
+    wuKeySeq = [];
+    for (let i = 0; i < keys.length; i++) wuKeySeq.push(i);
+    wuKeyIdx = 0;
+
+    renderWuSteps();
+    // Scroll active step into view
+    const activeEl = document.getElementById('wu-s' + wuStepIdx);
+    if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    wuPlayNote();
+}
+
+function wuPlayNote() {
+    if (!wuActive) return;
+
+    const step  = WARMUP_STEPS[wuStepIdx];
+    const sc    = SCALES[step.scaleType];
+    const keys  = wuGetKeys(step.scaleType);
+    const wuBpm = (step.scaleType === '1358s') ? 115 : 115;
+
+    // Finished all notes in this scale?
+    if (wuNoteIdx >= sc.notes.length) {
+        wuNoteIdx = 0;
+        wuKeyIdx++;
+        // Finished all keys for this step?
+        if (wuKeyIdx >= wuKeySeq.length) {
+            // Move to next step
+            wuStepIdx++;
+            wuTimer = setTimeout(wuRunStep, 800); // brief pause between steps
+            return;
+        }
+        // Small pause between keys
+        wuTimer = setTimeout(wuPlayNote, (60000 / wuBpm) * 0.8);
+        return;
+    }
+
+    const rootMidi = keys[wuKeySeq[wuKeyIdx]].midi;
+    const midi     = rootMidi + sc.notes[wuNoteIdx];
+    const tNote    = midiToTone(midi);
+
+    const isSustain  = (wuNoteIdx === sc.sustainIdx);
+    const noteDurSec = isSustain ? sc.sustainSec : (60 / wuBpm) * 0.82;
+    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / wuBpm;
+
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) {}
+
+    // Update status with current info
+    const noteIdxMod = ((midi % 12) + 12) % 12;
+    const noteOct    = Math.floor(midi / 12) - 1;
+    document.getElementById('wu-status').textContent =
+        `🔥 Step ${wuStepIdx + 1}/7 · ${step.syllable} · 키 ${keys[wuKeySeq[wuKeyIdx]].label} · ${NOTE_EN[noteIdxMod]}${noteOct}`;
+
+    wuNoteIdx++;
+    wuTimer = setTimeout(wuPlayNote, waitMs);
 }
 
 // ════════════════════════════════════════════════
@@ -1995,8 +2262,9 @@ function resetPCS() {
 document.addEventListener('DOMContentLoaded', () => {
     renderKeys();
     renderNoteGrid();
+    renderWuSteps();
     // init two-toggle button references correctly
-    const autoBtn = document.querySelector('#exercise-section .two-toggle:first-of-type .ttoggle:first-child');
+    const autoBtn = document.querySelector('#prog-toggle .ttoggle:first-child');
     if (autoBtn) autoBtn.classList.add('active');
 
     // Build C-note reference lines on spectrogram
