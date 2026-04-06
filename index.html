@@ -949,11 +949,43 @@
 
         <!-- 🎯 3. 가벼운 목소리 타입 -->
         <div class="card">
-            <div class="card-label">🎯 3. 가벼운 목소리 타입</div>
-            <div style="font-size:.82rem;color:var(--text2);line-height:1.75;">
+            <div class="card-label">🎯 3. 가벼운 목소리 타입 <span class="routine-badge rb-warm">자동 재생 · 7단계</span></div>
+            <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
                 보다 밀도 있고 안정적인 소리를 만드는 훈련입니다.<br><br>
                 가벼운 소리가 어느 정도 안정된 이후에<br>
                 <strong style="color:var(--text);">단계적으로 접근하는 것</strong>이 중요합니다.
+            </div>
+
+            <!-- 음역 선택 -->
+            <div class="two-toggle" id="lv-voice-toggle" style="margin-bottom:10px;">
+                <button class="vtoggle active" onclick="lvSetVoice('male')">🎵 남성</button>
+                <button class="vtoggle"        onclick="lvSetVoice('female')">🎵 여성</button>
+            </div>
+            <div id="lv-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;"></div>
+
+            <!-- 최저음 / 최고음 설정 -->
+            <div style="display:flex;gap:8px;margin-bottom:6px;">
+                <button class="btn btn-sm btn-outline" id="lv-low-toggle" onclick="lvToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
+                <button class="btn btn-sm btn-outline" id="lv-high-toggle" onclick="lvToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
+            </div>
+            <div id="lv-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
+            <div id="lv-range-picker" style="display:none;margin-bottom:12px;">
+                <div id="lv-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
+                <div id="lv-range-grid" class="wu-note-grid"></div>
+                <div id="lv-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
+            </div>
+
+            <!-- 재생 / 정지 -->
+            <button class="btn btn-green" id="lv-play-btn" onclick="lvStart()" style="width:100%;margin-bottom:10px;">▶️ 루틴 시작</button>
+            <div id="lv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+
+            <!-- step list -->
+            <div id="lv-step-list"></div>
+
+            <!-- 포인트 -->
+            <div style="margin-top:14px;padding:12px;background:rgba(139,92,246,.06);border-radius:10px;font-size:.78rem;color:var(--text2);line-height:1.7;">
+                <strong style="color:var(--purple);">흐름:</strong> Goog → Bub → (닫힘) → Hum → (안정화) → Nay → Nan → Mam → (균형) → Geg → (고정)<br>
+                <strong style="color:var(--text);">가벼운 소리는 "밀도를 더하면서도, 가벼운 메커니즘을 유지하는 것"</strong>
             </div>
         </div>
 
@@ -1549,6 +1581,7 @@ function switchTab(tab) {
     if ((tab === 'exercise' || tab === 'routine') && !piano) initPiano();
     if (tab !== 'routine' && wuActive) wuStop();
     if (tab !== 'routine' && hvActive) hvStop();
+    if (tab !== 'routine' && lvActive) lvStop();
     if (tab !== 'spectrogram' && specRunning) stopSpecMic();
 }
 
@@ -2729,6 +2762,248 @@ function hvPlayNote() {
 }
 
 // ════════════════════════════════════════════════
+// LIGHT VOICE ROUTINE (가벼운 목소리 타입)
+// ════════════════════════════════════════════════
+const LIGHT_STEPS = [
+    { name: 'Goog(꾹) – Arpeggio',   syllable: 'Goog', scaleType: '1358',  desc: '후방 공간을 유지하며, 소리가 새지 않도록 압축합니다' },
+    { name: 'Bub(뻡) – Arpeggio',    syllable: 'Bub',  scaleType: '1358',  desc: '입술 저항으로 깨끗하고 즉각적인 소리 시작을 유도합니다' },
+    { name: 'Hum(허밍) – 5-Tone',    syllable: 'Hum',  scaleType: '5tone', desc: '성대접촉을 강화하며, 불필요한 긴장을 줄이기 위해 턱을 살짝 당겨주세요' },
+    { name: 'Nay(네이) – Arpeggio',  syllable: 'Nay',  scaleType: '1358',  desc: '약간 밝고 날카로운 톤으로, 성대 접촉을 명확하게 만듭니다' },
+    { name: 'Nan(난) – 5-Tone',      syllable: 'Nan',  scaleType: '5tone', desc: '적당한 개방감에서 소리 중심을 일정하게 유지합니다' },
+    { name: 'Mam(맘) – 5-Tone',      syllable: 'Mam',  scaleType: '5tone', desc: '가벼운 메커니즘을 유지하면서 밀도를 더하는 훈련입니다' },
+    { name: 'Geg(껙) – Arpeggio',    syllable: 'Geg',  scaleType: '1358',  desc: '짧고 명확한 발음으로, 성대 닫힘과 안정성을 강화합니다' },
+];
+
+let lvActive = false, lvStepIdx = 0, lvVoice = 'male';
+let lvNoteIdx = 0, lvKeyIdx = 0, lvTimer = null, lvKeySeq = [];
+let lvCustomLow = null, lvCustomHigh = null, lvRangeMode = null;
+
+const LV_DEFAULTS = {
+    male:   { low: 48, high: 55, low1358: 48, high1358: 60 },
+    female: { low: 53, high: 60, low1358: 53, high1358: 65 },
+};
+
+function lvGetEffectiveRange(sType) {
+    const is1358 = (sType === '1358' || sType === '1358s');
+    const d = LV_DEFAULTS[lvVoice];
+    const lo = lvCustomLow !== null ? lvCustomLow : (is1358 ? d.low1358 : d.low);
+    const hi = lvCustomHigh !== null ? lvCustomHigh : (is1358 ? d.high1358 : d.high);
+    return { lo, hi };
+}
+
+function lvBuildKeysFromRange(sType) {
+    const { lo, hi } = lvGetEffectiveRange(sType);
+    const arr = [];
+    for (let m = lo; m <= hi; m++) {
+        const idx = ((m%12)+12)%12, oct = Math.floor(m/12)-1;
+        arr.push({ label: NOTE_EN[idx]+oct, kor: NOTE_KO[idx], midi: m });
+    }
+    return arr.length > 0 ? arr : [{ label: 'C3', kor: '도', midi: 48 }];
+}
+
+function lvSetVoice(v) {
+    lvVoice = v; lvCustomLow = null; lvCustomHigh = null;
+    document.querySelectorAll('#lv-voice-toggle .vtoggle').forEach((b,i) =>
+        b.classList.toggle('active', (i===0&&v==='male')||(i===1&&v==='female'))
+    );
+    lvUpdateRangeDisplay();
+    if (lvRangeMode) lvRenderRangeGrid();
+}
+
+function lvUpdateRangeDisplay() {
+    const isCustom = lvCustomLow !== null || lvCustomHigh !== null;
+    const r = lvGetEffectiveRange('5tone');
+    const lo = WU_ALL_NOTES.find(n=>n.midi===r.lo);
+    const hi = WU_ALL_NOTES.find(n=>n.midi===r.hi);
+    const prefix = isCustom ? '커스텀' : (lvVoice==='male' ? '남성 기본' : '여성 기본');
+    document.getElementById('lv-range-hint').textContent = `${prefix}: ${lo?.label||'?'} ~ ${hi?.label||'?'}`;
+    const dispEl = document.getElementById('lv-range-display');
+    if (isCustom) {
+        const parts = [];
+        if (lvCustomLow !== null) parts.push('최저음: ' + (WU_ALL_NOTES.find(n=>n.midi===lvCustomLow)?.label||''));
+        if (lvCustomHigh !== null) parts.push('최고음: ' + (WU_ALL_NOTES.find(n=>n.midi===lvCustomHigh)?.label||''));
+        dispEl.textContent = parts.join(' · '); dispEl.style.display = 'block';
+    } else { dispEl.style.display = 'none'; }
+}
+
+function lvToggleRange(mode) {
+    if (lvRangeMode === mode) {
+        lvRangeMode = null;
+        document.getElementById('lv-range-picker').style.display = 'none';
+        document.getElementById('lv-low-toggle').classList.remove('toggled');
+        document.getElementById('lv-high-toggle').classList.remove('toggled');
+        return;
+    }
+    lvRangeMode = mode;
+    document.getElementById('lv-low-toggle').classList.toggle('toggled', mode==='low');
+    document.getElementById('lv-high-toggle').classList.toggle('toggled', mode==='high');
+    document.getElementById('lv-range-picker').style.display = 'block';
+    document.getElementById('lv-range-label').textContent = mode==='low' ? '최저음을 선택하세요:' : '최고음을 선택하세요:';
+    document.getElementById('lv-range-warn').style.display = 'none';
+    lvRenderRangeGrid();
+}
+
+function lvRenderRangeGrid() {
+    const grid = document.getElementById('lv-range-grid');
+    const curLow = lvCustomLow !== null ? lvCustomLow : LV_DEFAULTS[lvVoice].low;
+    const curHigh = lvCustomHigh !== null ? lvCustomHigh : LV_DEFAULTS[lvVoice].high1358;
+    grid.innerHTML = WU_ALL_NOTES.map(n => {
+        let cls = 'wu-note-btn';
+        if (lvRangeMode==='low' && lvCustomHigh!==null && n.midi>=lvCustomHigh) cls += ' disabled-note';
+        if (lvRangeMode==='high' && lvCustomLow!==null && n.midi<=lvCustomLow) cls += ' disabled-note';
+        if (lvCustomLow===n.midi || lvCustomHigh===n.midi) cls += ' selected';
+        else if (n.midi>=curLow && n.midi<=curHigh) cls += ' in-range';
+        return `<div class="${cls}" onclick="lvSelectNote(${n.midi})"><div>${n.label}</div><div style="font-size:.62rem;opacity:.7;">${n.kor}</div></div>`;
+    }).join('');
+}
+
+function lvSelectNote(midi) {
+    const warn = document.getElementById('lv-range-warn');
+    warn.style.display = 'none';
+    if (lvRangeMode==='low') {
+        if (lvCustomHigh!==null && midi>=lvCustomHigh) { warn.textContent='최저음은 최고음보다 낮아야 합니다'; warn.style.display='block'; return; }
+        lvCustomLow = midi;
+    } else {
+        if (lvCustomLow!==null && midi<=lvCustomLow) { warn.textContent='최고음은 최저음보다 높아야 합니다'; warn.style.display='block'; return; }
+        lvCustomHigh = midi;
+    }
+    lvUpdateRangeDisplay(); lvRenderRangeGrid();
+}
+
+function renderLvSteps() {
+    const list = document.getElementById('lv-step-list');
+    list.innerHTML = LIGHT_STEPS.map((s,i) => {
+        let cls = 'wu-step';
+        if (lvActive && i < lvStepIdx) cls += ' done';
+        if (lvActive && i === lvStepIdx) cls += ' active';
+        const playIcon = (lvActive && i===lvStepIdx) ? '<div class="wu-step-play-icon">🔊</div>' : '<div class="wu-step-play-icon">▶️</div>';
+        return `<div class="${cls}" id="lv-s${i}" onclick="lvJumpToStep(${i})">${playIcon}<div class="wu-step-num">${i+1}</div><div class="wu-step-body"><div class="wu-step-name">${s.name}</div><div class="wu-step-desc">${s.desc}</div></div><div class="wu-step-badge">${s.syllable}</div></div>`;
+    }).join('');
+}
+
+async function lvJumpToStep(idx) {
+    if (idx < 0 || idx >= LIGHT_STEPS.length) return;
+    if (!lvActive) {
+        await ensurePianoReady(); await Tone.start();
+        lvActive = true; lvStepIdx = idx;
+        document.getElementById('lv-play-btn').textContent = '⏹ 정지';
+        document.getElementById('lv-play-btn').className = 'btn btn-red';
+        document.getElementById('lv-play-btn').setAttribute('onclick','lvStop()');
+        document.getElementById('lv-status').style.display = 'block';
+        lvShowCtrlBar(); lvRunStep();
+    } else {
+        clearTimeout(lvTimer); try{if(piano)piano.releaseAll();}catch(e){}
+        lvStepIdx = idx; lvRunStep();
+    }
+}
+
+function lvShowCtrlBar() {
+    const bar = document.getElementById('lv-ctrl-bar');
+    if (bar) bar.classList.add('visible');
+    document.getElementById('routine-section').style.paddingBottom = '80px';
+}
+function lvHideCtrlBar() {
+    const bar = document.getElementById('lv-ctrl-bar');
+    if (bar) bar.classList.remove('visible');
+    if (!wuActive && !hvActive) document.getElementById('routine-section').style.paddingBottom = '';
+}
+function lvUpdateCtrlBar() {
+    if (!lvActive) { lvHideCtrlBar(); return; }
+    lvShowCtrlBar();
+    const step = LIGHT_STEPS[lvStepIdx];
+    const info = document.getElementById('lv-bar-info');
+    if (info) info.textContent = `Step ${lvStepIdx+1}/${LIGHT_STEPS.length} · ${step.name}`;
+}
+function lvUpdateNavButtons() {
+    const p = document.getElementById('lv-bar-prev');
+    const n = document.getElementById('lv-bar-next');
+    if (p&&n) { p.disabled = !lvActive || lvStepIdx<=0; n.disabled = !lvActive || lvStepIdx>=LIGHT_STEPS.length-1; }
+}
+
+function lvNextStep() {
+    if (!lvActive || lvStepIdx>=LIGHT_STEPS.length-1) return;
+    clearTimeout(lvTimer); try{if(piano)piano.releaseAll();}catch(e){}
+    lvStepIdx++; lvRunStep();
+}
+function lvPrevStep() {
+    if (!lvActive || lvStepIdx<=0) return;
+    clearTimeout(lvTimer); try{if(piano)piano.releaseAll();}catch(e){}
+    lvStepIdx--; lvRunStep();
+}
+
+async function lvStart() {
+    if (lvActive) return;
+    await ensurePianoReady(); await Tone.start();
+    lvActive = true; lvStepIdx = 0;
+    document.getElementById('lv-play-btn').textContent = '⏹ 정지';
+    document.getElementById('lv-play-btn').className = 'btn btn-red';
+    document.getElementById('lv-play-btn').setAttribute('onclick','lvStop()');
+    document.getElementById('lv-status').textContent = '🔥 가벼운 소리 루틴 진행 중...';
+    document.getElementById('lv-status').style.display = 'block';
+    lvUpdateNavButtons(); lvShowCtrlBar(); lvRunStep();
+}
+
+function lvStop() {
+    lvActive = false; clearTimeout(lvTimer);
+    try{if(piano)piano.releaseAll();}catch(e){}
+    document.getElementById('lv-play-btn').textContent = '▶️ 루틴 시작';
+    document.getElementById('lv-play-btn').className = 'btn btn-green';
+    document.getElementById('lv-play-btn').setAttribute('onclick','lvStart()');
+    document.getElementById('lv-status').textContent = '⏸ 루틴 정지됨';
+    lvUpdateNavButtons(); lvHideCtrlBar(); renderLvSteps();
+}
+
+function lvRunStep() {
+    if (!lvActive || lvStepIdx>=LIGHT_STEPS.length) {
+        lvActive = false;
+        document.getElementById('lv-play-btn').textContent = '▶️ 루틴 시작';
+        document.getElementById('lv-play-btn').className = 'btn btn-green';
+        document.getElementById('lv-play-btn').setAttribute('onclick','lvStart()');
+        document.getElementById('lv-status').textContent = '✅ 가벼운 소리 루틴 완료!';
+        lvUpdateNavButtons(); lvHideCtrlBar(); renderLvSteps(); return;
+    }
+    const step = LIGHT_STEPS[lvStepIdx];
+    lvNoteIdx = 0;
+    const keys = lvBuildKeysFromRange(step.scaleType);
+    lvKeySeq = []; for (let i=0;i<keys.length;i++) lvKeySeq.push(i);
+    lvKeyIdx = 0;
+    lvUpdateNavButtons(); lvUpdateCtrlBar(); renderLvSteps();
+    const el = document.getElementById('lv-s'+lvStepIdx);
+    if (el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    lvPlayNote();
+}
+
+function lvPlayNote() {
+    if (!lvActive) return;
+    const step = LIGHT_STEPS[lvStepIdx];
+    const sc = SCALES[step.scaleType];
+    const keys = lvBuildKeysFromRange(step.scaleType);
+    const lvBpm = 115;
+
+    if (lvNoteIdx >= sc.notes.length) {
+        lvNoteIdx = 0; lvKeyIdx++;
+        if (lvKeyIdx >= lvKeySeq.length) { lvStepIdx++; lvTimer = setTimeout(lvRunStep,800); return; }
+        lvTimer = setTimeout(lvPlayNote, (60000/lvBpm)*0.8); return;
+    }
+    const rootMidi = keys[lvKeySeq[lvKeyIdx]].midi;
+    const midi = rootMidi + sc.notes[lvNoteIdx];
+    const tNote = midiToTone(midi);
+    const isSustain = (lvNoteIdx===sc.sustainIdx);
+    const noteDurSec = isSustain ? sc.sustainSec : (60/lvBpm)*0.82;
+    const waitMs = isSustain ? sc.sustainSec*1000+300 : 60000/lvBpm;
+    try{piano.triggerAttackRelease(tNote,noteDurSec);}catch(e){}
+
+    const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
+    const statusText = `🔥 Step ${lvStepIdx+1}/${LIGHT_STEPS.length} · ${step.syllable} · 키 ${keys[lvKeySeq[lvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
+    document.getElementById('lv-status').textContent = statusText;
+    const info = document.getElementById('lv-bar-info');
+    if (info) info.textContent = `${lvStepIdx+1}/${LIGHT_STEPS.length} · ${step.syllable} · ${keys[lvKeySeq[lvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
+
+    lvNoteIdx++;
+    lvTimer = setTimeout(lvPlayNote, waitMs);
+}
+
+// ════════════════════════════════════════════════
 // PITCH CHECK – NOTE GRID  (C3 = MIDI 48 ~ F5 = MIDI 77)
 // ════════════════════════════════════════════════
 
@@ -3031,6 +3306,8 @@ document.addEventListener('DOMContentLoaded', () => {
     wuUpdateRangeDisplay();
     renderHvSteps();
     hvUpdateRangeDisplay();
+    renderLvSteps();
+    lvUpdateRangeDisplay();
     // init two-toggle button references correctly
     const autoBtn = document.querySelector('#prog-toggle .ttoggle:first-child');
     if (autoBtn) autoBtn.classList.add('active');
@@ -3434,6 +3711,12 @@ function updateSpecInfo(freq, db) {
     <div class="wu-ctrl-info" id="hv-bar-info">무거운 소리</div>
     <button class="btn btn-red btn-sm" id="hv-bar-stop" onclick="hvStop()" style="padding:0 16px;">⏹ 정지</button>
     <button class="btn btn-outline btn-sm" id="hv-bar-next" onclick="hvNextStep()" style="padding:0 14px;" disabled>⏭</button>
+</div>
+<div class="wu-ctrl-bar" id="lv-ctrl-bar">
+    <button class="btn btn-outline btn-sm" id="lv-bar-prev" onclick="lvPrevStep()" style="padding:0 14px;" disabled>⏮</button>
+    <div class="wu-ctrl-info" id="lv-bar-info">가벼운 소리</div>
+    <button class="btn btn-red btn-sm" id="lv-bar-stop" onclick="lvStop()" style="padding:0 16px;">⏹ 정지</button>
+    <button class="btn btn-outline btn-sm" id="lv-bar-next" onclick="lvNextStep()" style="padding:0 14px;" disabled>⏭</button>
 </div>
 
 <!-- Scale Description Bottom Sheet -->
