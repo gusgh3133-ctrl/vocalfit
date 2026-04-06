@@ -311,13 +311,25 @@
 
         /* Scale selector */
         .scale-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .scale-box { padding: 12px 6px; text-align: center; background: var(--bg2); border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .15s; }
+        .scale-box { padding: 14px 8px; text-align: center; background: var(--bg2); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all .2s ease; position: relative; }
         .scale-box .sb-name { font-size: .82rem; font-weight: 800; color: var(--text2); line-height: 1.2; }
-        .scale-box .sb-desc { font-size: .62rem; color: var(--muted); margin-top: 4px; line-height: 1.3; }
-        .scale-box.active { background: rgba(139,92,246,.12); border-color: var(--purple); }
+        .scale-box .sb-summary { font-size: .7rem; color: var(--muted); margin-top: 5px; font-weight: 600; letter-spacing: .02em; }
+        .scale-box.active { background: rgba(139,92,246,.13); border-color: var(--purple); box-shadow: 0 0 0 1px rgba(139,92,246,.2); }
         .scale-box.active .sb-name { color: var(--purple); }
-        .scale-box.active .sb-desc { color: var(--purple); opacity: .7; }
+        .scale-box.active .sb-summary { color: var(--purple); opacity: .8; }
         .scale-box:hover:not(.active) { border-color: var(--purple); opacity: .85; }
+        .scale-box:active { transform: scale(.97); }
+
+        /* Bottom Sheet for scale description */
+        .scale-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+        .scale-sheet-overlay.open { opacity: 1; pointer-events: auto; }
+        .scale-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 301; background: var(--bg); border-radius: 20px 20px 0 0; padding: 0 20px 28px; transform: translateY(100%); transition: transform .3s cubic-bezier(.32,.72,.0,1); max-height: 55vh; overflow-y: auto; }
+        .scale-sheet.open { transform: translateY(0); }
+        .scale-sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 16px; }
+        .scale-sheet-title { font-size: 1.05rem; font-weight: 800; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .scale-sheet-title .sheet-badge { font-size: .68rem; font-weight: 700; color: var(--purple); background: rgba(139,92,246,.12); padding: 2px 8px; border-radius: 6px; }
+        .scale-sheet-pattern { font-size: .75rem; color: var(--muted); margin-bottom: 14px; font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: .02em; }
+        .scale-sheet-desc { font-size: .88rem; color: var(--text2); line-height: 1.65; }
         /* Sustain dot */
         .sdot.sustain { border-color: var(--yellow); animation: sustainPulse 0.8s infinite alternate; }
         .sdot.sustain .sdot-kor, .sdot.sustain .sdot-en { color: var(--yellow); }
@@ -444,7 +456,8 @@
             .key-cell { padding: 10px 4px; min-height: 44px; }
             .vtoggle { padding: 11px 6px; }
             .ttoggle { padding: 10px 6px; }
-            .scale-box { padding: 14px 6px; }
+            .scale-box { padding: 14px 8px; }
+            .scale-sheet { padding: 0 16px 24px; max-height: 50vh; }
             /* Mobile: bottom nav visible, top tabs hidden */
             .desk-tabs { display: none !important; }
             .mob-nav { display: flex; }
@@ -489,8 +502,12 @@
             /* Exercise */
             .voice-toggle { max-width: 320px; }
             .scale-selector { gap: 10px; }
-            .scale-box { padding: 16px 8px; }
+            .scale-box { padding: 16px 10px; }
             .scale-box .sb-name { font-size: .9rem; }
+            .scale-box .sb-summary { font-size: .73rem; }
+            .scale-sheet { max-width: 480px; left: 50%; right: auto; transform: translateX(-50%) translateY(100%); border-radius: 20px 20px 0 0; }
+            .scale-sheet.open { transform: translateX(-50%) translateY(0); }
+            .scale-sheet-desc { font-size: .92rem; }
             .key-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
             .key-cell { padding: 10px 6px; font-size: .88rem; }
             .play-note-big { font-size: 5rem; }
@@ -1141,39 +1158,39 @@
             <div class="scale-selector">
                 <div class="scale-box active" id="sb-1.5oct" onclick="setScaleType('1.5oct')">
                     <div class="sb-name">1.5 Octave</div>
-                    <div class="sb-desc">1-3-5-8-10-12★-11-9-7-5-4-2-1</div>
+                    <div class="sb-summary">성구 전환</div>
                 </div>
                 <div class="scale-box" id="sb-2.0oct" onclick="setScaleType('2.0oct')">
                     <div class="sb-name">2.0 Octave</div>
-                    <div class="sb-desc">1-3-5-8-10-12-15-17-19★-18-16-14-12-11-9-7-5-4-2-1</div>
+                    <div class="sb-summary">음역 확장</div>
                 </div>
                 <div class="scale-box" id="sb-1358" onclick="setScaleType('1358')">
                     <div class="sb-name">Arpeggio</div>
-                    <div class="sb-desc">1-3-5-8★-5-3-1</div>
+                    <div class="sb-summary">밀도 형성</div>
                 </div>
                 <div class="scale-box" id="sb-1358s" onclick="setScaleType('1358s')">
-                    <div class="sb-name">Arpeggio Sustain</div>
-                    <div class="sb-desc">1-3-5-8★(서스테인)-5-3-1</div>
+                    <div class="sb-name">Sustain</div>
+                    <div class="sb-summary">유지력 강화</div>
                 </div>
                 <div class="scale-box" id="sb-1358r" onclick="setScaleType('1358r')">
-                    <div class="sb-name">Arpeggio Repeat</div>
-                    <div class="sb-desc">1-3-5-8★×4-5-3-1</div>
+                    <div class="sb-name">Arp. Repeat</div>
+                    <div class="sb-summary">반복 컨트롤</div>
                 </div>
                 <div class="scale-box" id="sb-5tone" onclick="setScaleType('5tone')">
-                    <div class="sb-name">5-Tone Scale</div>
-                    <div class="sb-desc">1-2-3-4-5★-4-3-2-1</div>
+                    <div class="sb-name">5-Tone</div>
+                    <div class="sb-summary">기초 안정</div>
                 </div>
                 <div class="scale-box" id="sb-broken" onclick="setScaleType('broken')">
-                    <div class="sb-name">Broken Pattern</div>
-                    <div class="sb-desc">1-5-3-8★-5-3-1</div>
+                    <div class="sb-name">Broken</div>
+                    <div class="sb-summary">믹스 유지</div>
                 </div>
                 <div class="scale-box" id="sb-1358rd" onclick="setScaleType('1358rd')">
-                    <div class="sb-name">Descending Repeat</div>
-                    <div class="sb-desc">8★×4→5→3→1</div>
+                    <div class="sb-name">Desc. Repeat</div>
+                    <div class="sb-summary">컨트롤 강화</div>
                 </div>
                 <div class="scale-box" id="sb-desc" onclick="setScaleType('desc')">
                     <div class="sb-name">Descending</div>
-                    <div class="sb-desc">8→5→3→1</div>
+                    <div class="sb-summary">두성 유지</div>
                 </div>
             </div>
         </div>
@@ -1290,7 +1307,8 @@
         <div class="ft-biz">
             대표자 : 강현호<br>
             김해 스튜디오 : 김해대로 2387-1, 6층 보컬핏 스튜디오<br>
-            부산 스튜디오 : 부산 수영동 502-11, 247스튜디오, 1R
+            부산 스튜디오 : 부산 수영동 502-11, 247스튜디오, 1R<br>
+            앱문의 : vocalfit@naver.com
         </div>
     </footer>
 
@@ -1829,12 +1847,57 @@ function renderKeyProgRow(sequence, currentSeqPos) {
     }).join('');
 }
 
+// ── Scale description data ──
+const SCALE_DATA = {
+    '1.5oct': { name: '1.5 Octave', summary: '성구 전환', pattern: '1-3-5-8-10-12★-11-9-7-5-4-2-1',
+        description: '성구 전환을 자연스럽게 연결하는 스케일입니다. 흉성에서 두성으로 넘어가는 구간을 부드럽게 만들고 싶은 분들에게 추천합니다.' },
+    '2.0oct': { name: '2.0 Octave', summary: '음역 확장', pattern: '1-3-5-8-10-12-15-17-19★-18-16-14-12-11-9-7-5-4-2-1',
+        description: '넓은 음역을 사용하는 상급자용 스케일입니다. 성구 전환이 안정된 상태에서 전체 음역을 확장하고 싶은 경우에 사용합니다.' },
+    '1358':  { name: 'Arpeggio', summary: '밀도 형성', pattern: '1-3-5-8★-5-3-1',
+        description: '목소리의 밀도와 중심을 잡아주는 훈련입니다. 소리를 단단하게 모으는 감각을 만드는 데 도움이 됩니다.' },
+    '1358s': { name: 'Sustain', summary: '유지력 강화', pattern: '1-3-5-8★(서스테인)-5-3-1',
+        description: '소리를 유지하는 힘과 안정성을 강화하는 훈련입니다. 호흡과 성대 접촉을 일정하게 유지하는 데 도움을 줍니다.' },
+    '1358r': { name: 'Arp. Repeat', summary: '반복 컨트롤', pattern: '1-3-5-8★×4-5-3-1',
+        description: '최고음을 반복하면서 안정적인 컨트롤을 유지하는 훈련입니다. 반복 구간에서 힘이 빠지지 않도록 밀도를 유지합니다.' },
+    '5tone': { name: '5-Tone', summary: '기초 안정', pattern: '1-2-3-4-5★-4-3-2-1',
+        description: '기초 발성과 안정적인 소리 형성에 적합한 스케일입니다. 목소리가 약한 분들, 또는 소리를 더 강하게 만들고 싶은 경우에 추천합니다.' },
+    'broken': { name: 'Broken', summary: '믹스 유지', pattern: '1-5-3-8★-5-3-1',
+        description: '믹스보이스와 성구 전환을 유지하는 고급 훈련입니다. 패턴이 끊어지면서도 연결성을 유지해야 하므로 상급자에게 적합합니다.' },
+    '1358rd': { name: 'Desc. Repeat', summary: '컨트롤 강화', pattern: '8★×4→5→3→1',
+        description: '하행하면서 반복되는 패턴으로, 두성 유지와 성대의 안정적인 컨트롤을 동시에 훈련합니다.' },
+    'desc':  { name: 'Descending', summary: '두성 유지', pattern: '8→5→3→1',
+        description: '두성의 감각을 유지하면서 소리를 아래로 연결하는 훈련입니다. 힘으로 밀지 않고 안정적인 소리를 유지하는 데 중요합니다.' },
+};
+
+let scaleSheetOpen = false;
+
+function openScaleSheet(type) {
+    const d = SCALE_DATA[type];
+    if (!d) return;
+    document.getElementById('scale-sheet-name').textContent = d.name;
+    document.getElementById('scale-sheet-badge').textContent = d.summary;
+    document.getElementById('scale-sheet-pattern').textContent = d.pattern;
+    document.getElementById('scale-sheet-desc').textContent = d.description;
+    document.getElementById('scale-sheet-overlay').classList.add('open');
+    document.getElementById('scale-sheet').classList.add('open');
+    scaleSheetOpen = true;
+}
+
+function closeScaleSheet() {
+    document.getElementById('scale-sheet-overlay').classList.remove('open');
+    document.getElementById('scale-sheet').classList.remove('open');
+    scaleSheetOpen = false;
+}
+
 // 스케일 선택
 function setScaleType(type) {
     scaleType = type;
     ['1.5oct','2.0oct','1358','1358s','1358r','5tone','broken','1358rd','desc'].forEach(t => {
         document.getElementById('sb-' + t).classList.toggle('active', t === type);
     });
+
+    // Open / update bottom sheet
+    openScaleSheet(type);
 
     // 하행 스케일은 기본 BPM 70
     const defaultBpm = (type === 'desc' || type === '1358rd') ? 70 : (type === '2.0oct') ? 150 : 115;
@@ -3371,6 +3434,18 @@ function updateSpecInfo(freq, db) {
     <div class="wu-ctrl-info" id="hv-bar-info">무거운 소리</div>
     <button class="btn btn-red btn-sm" id="hv-bar-stop" onclick="hvStop()" style="padding:0 16px;">⏹ 정지</button>
     <button class="btn btn-outline btn-sm" id="hv-bar-next" onclick="hvNextStep()" style="padding:0 14px;" disabled>⏭</button>
+</div>
+
+<!-- Scale Description Bottom Sheet -->
+<div class="scale-sheet-overlay" id="scale-sheet-overlay" onclick="closeScaleSheet()"></div>
+<div class="scale-sheet" id="scale-sheet">
+    <div class="scale-sheet-handle"></div>
+    <div class="scale-sheet-title">
+        <span id="scale-sheet-name"></span>
+        <span class="sheet-badge" id="scale-sheet-badge"></span>
+    </div>
+    <div class="scale-sheet-pattern" id="scale-sheet-pattern"></div>
+    <div class="scale-sheet-desc" id="scale-sheet-desc"></div>
 </div>
 </body>
 </html>
