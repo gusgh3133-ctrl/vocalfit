@@ -1519,21 +1519,35 @@ const VF = {
     _toastTimer: null,
 };
 
-/** Ensure AudioContext exists & is running. Call from user-gesture handlers. */
+/**
+ * vfEnsureCtx — unlock audio engine from within a user-gesture handler.
+ *
+ * Strategy: Tone.js owns the single AudioContext for the whole app.
+ *   We call Tone.start() first (MUST be within gesture chain, no macrotask delay before this).
+ *   Then we store that context in VF.ctx so mic features can reuse it.
+ *   Result: ONE AudioContext total — piano, routines, mic analysis all share it.
+ */
 async function vfEnsureCtx() {
+    try {
+        // Tone.start() resumes Tone's internal AudioContext.
+        // This MUST be the first await — no setTimeout delays before this call.
+        await Tone.start();
+        // Share Tone's raw AudioContext with all mic/analysis features.
+        const toneRaw = Tone.getContext().rawContext;
+        if (toneRaw) VF.ctx = toneRaw;
+    } catch(e) {
+        console.warn('[VF] Tone.start failed:', e);
+    }
+    // Fallback: if Tone's context unavailable, create our own.
     if (!VF.ctx) {
         VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('[VF] AudioContext created, state:', VF.ctx.state);
+        console.log('[VF] Fallback AudioContext created');
     }
     if (VF.ctx.state === 'suspended') {
-        try {
-            await VF.ctx.resume();
-            console.log('[VF] AudioContext resumed');
-        } catch(e) {
-            console.warn('[VF] AudioContext resume failed:', e);
-        }
+        try { await VF.ctx.resume(); } catch(e) { console.warn('[VF] ctx.resume failed:', e); }
     }
-    VF.unlocked = true;
+    VF.unlocked = (VF.ctx.state === 'running');
+    console.log('[VF] ctx state after ensure:', VF.ctx.state);
     return VF.ctx;
 }
 
@@ -1545,9 +1559,9 @@ async function vfGetMic(fftSize) {
         try {
             VF.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             VF.micSource = VF.ctx.createMediaStreamSource(VF.micStream);
-            console.log('[VF] Mic stream obtained');
+            console.log('[VF] Mic stream obtained, ctx state:', VF.ctx.state);
         } catch(e) {
-            console.error('[VF] getUserMedia failed:', e);
+            console.error('[VF] getUserMedia failed:', e.name, e.message);
             throw e;
         }
     }
@@ -1564,10 +1578,12 @@ function vfReleaseMic() {
     console.log('[VF] Mic released');
 }
 
-/** Safe Tone.start() wrapper — always resume context first. */
+/**
+ * vfToneStart — the single entry point to unlock audio from a button handler.
+ * Call this as the VERY FIRST await in any playback function, before any delays.
+ */
 async function vfToneStart() {
-    await vfEnsureCtx();
-    try { await Tone.start(); } catch(e) { console.warn('[VF] Tone.start failed:', e); }
+    return vfEnsureCtx();
 }
 
 /** Show a brief toast message for audio issues. */
@@ -1581,18 +1597,25 @@ function vfToast(msg, duration) {
     VF._toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 }
 
-/** One-time setup: on first user touch/click, unlock AudioContext. */
+/**
+ * Passive unlock listener: fires on every touch/click so the audio engine
+ * stays running even after iOS auto-suspends on inactivity.
+ */
 function vfInstallUnlockListener() {
     const unlock = async () => {
-        if (!VF.unlocked) {
+        // Always attempt — iOS can re-suspend after inactivity
+        try { await Tone.start(); } catch(e){}
+        if (VF.ctx && VF.ctx.state === 'suspended') {
+            try { await VF.ctx.resume(); } catch(e){}
+        }
+        if (!VF.ctx) {
+            // First touch before any feature has run — bootstrap eagerly
             await vfEnsureCtx();
-            // Also nudge Tone.js
-            try { await vfToneStart(); } catch(e){}
-            console.log('[VF] Audio unlocked via user gesture');
+            console.log('[VF] Audio bootstrapped on first touch');
         }
     };
     document.addEventListener('touchstart', unlock, { once: false, passive: true });
-    document.addEventListener('click', unlock, { once: false, passive: true });
+    document.addEventListener('click',      unlock, { once: false, passive: true });
 }
 vfInstallUnlockListener();
 
@@ -2594,8 +2617,8 @@ async function wuJumpToStep(idx) {
     if (idx < 0 || idx >= WARMUP_STEPS.length) return;
     // If not yet playing, start fresh from this step
     if (!wuActive) {
-        await ensurePianoReady();
         await vfToneStart();
+        await ensurePianoReady();
         wuActive = true;
         wuStepIdx = idx;
         document.getElementById('wu-play-btn').textContent = '⏹ 정지';
@@ -2662,8 +2685,8 @@ function wuPrevStep() {
 
 async function wuStart() {
     if (wuActive) return;
-    await ensurePianoReady();
-    await vfToneStart();
+    await vfToneStart();      // FIRST: unlock audio within gesture chain (no delays)
+    await ensurePianoReady(); // THEN: wait for piano (may have setTimeout delays)
 
     wuActive  = true;
     wuStepIdx = 0;
@@ -2893,7 +2916,7 @@ function renderHvSteps() {
 async function hvJumpToStep(idx) {
     if (idx < 0 || idx >= HEAVY_STEPS.length) return;
     if (!hvActive) {
-        await ensurePianoReady(); await vfToneStart();
+        await vfToneStart(); await ensurePianoReady();
         hvActive = true; hvStepIdx = idx;
         document.getElementById('hv-play-btn').textContent = '⏹ 정지';
         document.getElementById('hv-play-btn').className = 'btn btn-red';
@@ -2942,7 +2965,8 @@ function hvPrevStep() {
 
 async function hvStart() {
     if (hvActive) return;
-    await ensurePianoReady(); await vfToneStart();
+    await vfToneStart();      // FIRST: unlock audio within gesture chain
+    await ensurePianoReady(); // THEN: wait for piano
     hvActive = true; hvStepIdx = 0;
     document.getElementById('hv-play-btn').textContent = '⏹ 정지';
     document.getElementById('hv-play-btn').className = 'btn btn-red';
@@ -3135,7 +3159,7 @@ function renderLvSteps() {
 async function lvJumpToStep(idx) {
     if (idx < 0 || idx >= LIGHT_STEPS.length) return;
     if (!lvActive) {
-        await ensurePianoReady(); await vfToneStart();
+        await vfToneStart(); await ensurePianoReady();
         lvActive = true; lvStepIdx = idx;
         document.getElementById('lv-play-btn').textContent = '⏹ 정지';
         document.getElementById('lv-play-btn').className = 'btn btn-red';
@@ -3184,7 +3208,8 @@ function lvPrevStep() {
 
 async function lvStart() {
     if (lvActive) return;
-    await ensurePianoReady(); await vfToneStart();
+    await vfToneStart();      // FIRST: unlock audio within gesture chain
+    await ensurePianoReady(); // THEN: wait for piano
     lvActive = true; lvStepIdx = 0;
     document.getElementById('lv-play-btn').textContent = '⏹ 정지';
     document.getElementById('lv-play-btn').className = 'btn btn-red';
@@ -3380,11 +3405,12 @@ async function startPitchCheck(midi) {
     resultEl.className      = 'pcs-result';
     document.getElementById('pcs-reset-row').style.display = 'none';
 
-    // Make sure piano is ready
+    // Unlock audio engine first (gesture chain must not be broken before this)
+    await vfToneStart();
+    // Then wait for piano to be ready
     await ensurePianoReady();
 
     // ── Phase 1: play piano 3 s ──
-    await vfToneStart();
     try { piano.triggerAttack(midiToTone(midi)); } catch(e){}
 
     let pianoCD = 3;
@@ -3632,8 +3658,8 @@ function gmPickTarget() {
 
 async function gmPlayReference(midi) {
     try {
-        await ensurePianoReady();
         await vfToneStart();
+        await ensurePianoReady();
         const noteName = midiToTone(midi);
         piano.triggerAttackRelease(noteName, 0.8);
         console.log('[PitchBreaker] Reference tone played:', noteName);
