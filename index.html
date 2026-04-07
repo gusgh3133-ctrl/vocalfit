@@ -332,35 +332,35 @@
         .scale-sheet-desc { font-size: .88rem; color: var(--text2); line-height: 1.65; }
 
         /* ── BRICK GAME ── */
-        .gm-board { position: relative; width: 100%; aspect-ratio: 4/3; background: var(--bg2); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px; }
-        .gm-bricks { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 10px; }
-        .gm-brick { height: 26px; border-radius: 5px; transition: all .2s; position: relative; }
-        .gm-brick.alive { opacity: 1; }
-        .gm-brick.hit { animation: brickHit .35s ease-out forwards; }
-        @keyframes brickHit { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: .6; } 100% { transform: scale(0); opacity: 0; } }
-        .gm-brick.row0 { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
-        .gm-brick.row1 { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
-        .gm-brick.row2 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-        .gm-brick.row3 { background: linear-gradient(135deg, #06b6d4, #0891b2); }
-        .gm-brick.dead { opacity: 0; pointer-events: none; }
-        .gm-target-area { position: absolute; bottom: 0; left: 0; right: 0; padding: 14px; background: linear-gradient(transparent, rgba(17,24,39,.95)); display: flex; align-items: center; justify-content: center; gap: 16px; }
-        .gm-target-note { font-size: 2rem; font-weight: 900; color: var(--text); text-shadow: 0 0 20px rgba(139,92,246,.5); }
-        .gm-your-note { font-size: 1.1rem; font-weight: 700; color: var(--text2); min-width: 60px; text-align: center; }
-        .gm-feedback { font-size: .82rem; font-weight: 800; padding: 3px 10px; border-radius: 6px; min-width: 60px; text-align: center; }
-        .gm-feedback.exact { background: rgba(16,185,129,.2); color: var(--green); }
-        .gm-feedback.high { background: rgba(239,68,68,.15); color: var(--red); }
-        .gm-feedback.low { background: rgba(245,158,11,.15); color: var(--yellow); }
-        .gm-feedback.waiting { background: rgba(139,92,246,.1); color: var(--muted); }
+        /* ── PITCH BREAKER v2 ── */
         .gm-hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .gm-score { font-size: 1rem; font-weight: 800; color: var(--text); }
         .gm-combo { font-size: .85rem; font-weight: 700; color: var(--yellow); }
-        .gm-combo.active { animation: comboPulse .5s ease; }
-        @keyframes comboPulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
-        .gm-result { text-align: center; padding: 24px 16px; }
+        .gm-combo.active { animation: gmComboPop .4s ease; }
+        @keyframes gmComboPop { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+        .gm-counter { text-align: center; font-size: .78rem; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+        .gm-brick-wrap { position: relative; width: 200px; height: 110px; margin: 16px auto 12px; perspective: 600px; }
+        .gm-brick-main { width: 100%; height: 100%; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 6px 24px rgba(139,92,246,.4), inset 0 2px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.2); transition: box-shadow .2s, border .2s; border: 2px solid transparent; }
+        .gm-brick-main.glow { border-color: var(--green); box-shadow: 0 0 35px rgba(16,185,129,.5), inset 0 2px 0 rgba(255,255,255,.12); }
+        .gm-brick-main.breaking { animation: gmBreak .55s ease-out forwards; }
+        @keyframes gmBreak { 0%{transform:scale(1);opacity:1} 20%{transform:scale(1.12);box-shadow:0 0 50px rgba(139,92,246,.9)} 50%{transform:scale(1.05);opacity:.6} 100%{transform:scale(0);opacity:0} }
+        .gm-brick-note { font-size: 2.2rem; font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.3); }
+        .gm-brick-sub { font-size: .68rem; color: rgba(255,255,255,.65); margin-top: 2px; font-weight: 600; }
+        .gm-particle { position: absolute; border-radius: 3px; background: var(--purple); animation: gmPart .5s ease-out forwards; pointer-events: none; }
+        @keyframes gmPart { 0%{transform:translate(-50%,-50%) translate(0,0) scale(1);opacity:1} 100%{transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(0);opacity:0} }
+        .gm-status-text { font-size: 1.1rem; font-weight: 800; text-align: center; margin: 6px 0; min-height: 28px; transition: color .15s; }
+        .gm-status-text.perfect { color: var(--green); }
+        .gm-status-text.close { color: var(--blue); }
+        .gm-status-text.high { color: var(--red); }
+        .gm-status-text.low { color: var(--yellow); }
+        .gm-status-text.silent { color: var(--muted); }
+        .gm-hold-wrap { width: 100%; height: 6px; background: var(--card2); border-radius: 3px; margin: 6px 0 10px; overflow: hidden; }
+        .gm-hold-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--green)); border-radius: 3px; transition: width .08s linear; }
+        .gm-pitch-canvas { width: 100%; height: 48px; border-radius: 10px; display: block; }
+        .gm-result { text-align: center; padding: 20px 16px; }
         .gm-result-title { font-size: 1.3rem; font-weight: 900; color: var(--text); margin-bottom: 6px; }
         .gm-result-score { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
-        .gm-result-combo { font-size: .9rem; color: var(--text2); margin-bottom: 16px; }
-        .gm-arrow { font-size: 1.2rem; }
+        .gm-result-detail { font-size: .85rem; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
 
         /* ── VOCAL FLIGHT GAME ── */
         .fb-mode-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
@@ -1395,8 +1395,14 @@
         <div class="card">
             <div class="card-label">🧱 피치 브레이커</div>
             <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
-                목표 음을 정확하게 맞춰서 벽돌을 깨세요!<br>
-                <strong style="color:var(--text);">마이크로 소리를 내면 음정을 분석합니다.</strong>
+                목표 음정에 맞춰 소리를 내서 벽돌을 깨세요!<br>
+                <strong style="color:var(--text);">±40cent 이내로 0.5초 유지하면 성공!</strong>
+            </div>
+
+            <!-- Voice mode -->
+            <div class="two-toggle" id="gm-voice-toggle" style="margin-bottom:12px;">
+                <button class="vtoggle active" onclick="gmSetVoice('male')">🎵 남성</button>
+                <button class="vtoggle"        onclick="gmSetVoice('female')">🎵 여성</button>
             </div>
 
             <!-- HUD -->
@@ -1405,31 +1411,36 @@
                 <div class="gm-combo" id="gm-combo">COMBO x0</div>
             </div>
 
-            <!-- Game board -->
-            <div class="gm-board" id="gm-board">
-                <div class="gm-bricks" id="gm-bricks"></div>
-                <div class="gm-target-area" id="gm-target-area" style="display:none;">
-                    <div>
-                        <div style="font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px;">TARGET</div>
-                        <div class="gm-target-note" id="gm-target-note">C4</div>
-                    </div>
-                    <div style="font-size:1.2rem;color:var(--border);">→</div>
-                    <div>
-                        <div style="font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px;">YOUR</div>
-                        <div class="gm-your-note" id="gm-your-note">--</div>
-                    </div>
-                    <div class="gm-feedback waiting" id="gm-feedback">대기 중</div>
+            <!-- Counter -->
+            <div class="gm-counter" id="gm-counter" style="display:none;">1 / 10</div>
+
+            <!-- Brick -->
+            <div class="gm-brick-wrap" id="gm-brick-wrap" style="display:none;">
+                <div class="gm-brick-main" id="gm-brick-main">
+                    <div class="gm-brick-note" id="gm-brick-note">C4</div>
+                    <div class="gm-brick-sub">목표 음정</div>
                 </div>
             </div>
 
-            <!-- Start / restart -->
+            <!-- Status -->
+            <div class="gm-status-text silent" id="gm-status-text" style="display:none;">소리를 내세요</div>
+
+            <!-- Hold progress -->
+            <div class="gm-hold-wrap" id="gm-hold-wrap" style="display:none;">
+                <div class="gm-hold-bar" id="gm-hold-bar"></div>
+            </div>
+
+            <!-- Pitch bar -->
+            <canvas id="gm-pitch-canvas" class="gm-pitch-canvas" style="display:none;"></canvas>
+
+            <!-- Start -->
             <button class="btn btn-green" id="gm-start-btn" onclick="gmStart()" style="width:100%;">🎤 게임 시작</button>
 
-            <!-- Result (hidden until game over) -->
+            <!-- Result -->
             <div class="gm-result" id="gm-result" style="display:none;">
                 <div class="gm-result-title">게임 종료!</div>
                 <div class="gm-result-score" id="gm-result-score">0</div>
-                <div class="gm-result-combo" id="gm-result-maxcombo">최대 콤보: 0</div>
+                <div class="gm-result-detail" id="gm-result-detail"></div>
                 <button class="btn btn-purple" onclick="gmRestart()" style="width:100%;">🔄 다시 하기</button>
             </div>
         </div>
@@ -3444,165 +3455,280 @@ function resetPCS() {
 // ════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════
+// PITCH BREAKER v2
 // ════════════════════════════════════════════════
-// PITCH BREAKER GAME
-// ════════════════════════════════════════════════
-const GM_NOTES_EN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const GM_ROWS = 4, GM_COLS = 6;
-const GM_TOTAL = GM_ROWS * GM_COLS;
-// Possible target notes (C3-C5 natural notes)
-const GM_TARGETS = [
-    {note:'C3',midi:48},{note:'D3',midi:50},{note:'E3',midi:52},{note:'F3',midi:53},
-    {note:'G3',midi:55},{note:'A3',midi:57},{note:'B3',midi:59},
-    {note:'C4',midi:60},{note:'D4',midi:62},{note:'E4',midi:64},{note:'F4',midi:65},
-    {note:'G4',midi:67},{note:'A4',midi:69},{note:'B4',midi:71},
-    {note:'C5',midi:72}
-];
+const GM_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const GM_TOTAL_BRICKS = 10;
+const GM_HOLD_FRAMES = 30; // ~0.5s at 60fps
+const GM_CENT_THRESHOLD = 40;
 
+const GM_VOICE_RANGES = {
+    male:   [48,50,52,53,55,57,59,60,62,64,65,67],        // C3-G4
+    female: [55,57,59,60,62,64,65,67,69,71,72,74,76,77],  // G3-F5
+};
+
+let gmVoice = 'male';
 let gmActive = false, gmScore = 0, gmCombo = 0, gmMaxCombo = 0;
-let gmBricks = [], gmTargetIdx = 0, gmBricksLeft = GM_TOTAL;
+let gmBrickIdx = 0, gmTargetMidi = 60, gmLastTarget = -1;
+let gmHoldCount = 0, gmCurrentCents = 0, gmHasPitch = false;
 let gmMicStream = null, gmAudioCtx = null, gmAnalyser = null, gmRafId = null;
-let gmHitCooldown = false;
+let gmPitchCanvas = null, gmPitchCtx = null, gmPcW = 0, gmPcH = 0;
+let gmStartTime = 0;
 
-function gmBuildBricks() {
-    const el = document.getElementById('gm-bricks');
-    gmBricks = [];
-    el.innerHTML = '';
-    for (let r = 0; r < GM_ROWS; r++) {
-        for (let c = 0; c < GM_COLS; c++) {
-            const b = document.createElement('div');
-            b.className = 'gm-brick alive row' + r;
-            b.id = 'gm-b' + (r * GM_COLS + c);
-            el.appendChild(b);
-            gmBricks.push({ el: b, alive: true });
-        }
-    }
-    gmBricksLeft = GM_TOTAL;
+function gmMidiToNoteName(midi) {
+    const n = ((midi % 12) + 12) % 12;
+    const oct = Math.floor(midi / 12) - 1;
+    return GM_NOTE_NAMES[n] + oct;
 }
 
-function gmPickTarget() {
-    const idx = Math.floor(Math.random() * GM_TARGETS.length);
-    gmTargetIdx = idx;
-    document.getElementById('gm-target-note').textContent = GM_TARGETS[idx].note;
-}
-
-function gmFreqToMidi(freq) {
-    return 12 * Math.log2(freq / 440) + 69;
-}
-
-function gmMidiToNote(midi) {
-    const n = Math.round(midi);
-    const name = GM_NOTES_EN[((n % 12) + 12) % 12];
-    const oct = Math.floor(n / 12) - 1;
-    return name + oct;
-}
-
+// Shared autocorrelation (also used by Vocal Flight)
 function gmAutoCorrelate(buf, sampleRate) {
     let SIZE = buf.length;
     let rms = 0;
     for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
     rms = Math.sqrt(rms / SIZE);
     if (rms < 0.01) return -1;
-
     let r1 = 0, r2 = SIZE - 1, thres = 0.2;
     for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < thres) { r1 = i; break; } }
     for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
-    buf = buf.slice(r1, r2);
-    SIZE = buf.length;
-
+    buf = buf.slice(r1, r2); SIZE = buf.length;
     let c = new Array(SIZE).fill(0);
     for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] += buf[j] * buf[j + i];
-
-    let d = 0;
-    while (c[d] > c[d + 1]) d++;
+    let d = 0; while (c[d] > c[d + 1]) d++;
     let maxval = -1, maxpos = -1;
     for (let i = d; i < SIZE; i++) { if (c[i] > maxval) { maxval = c[i]; maxpos = i; } }
-
     let T0 = maxpos;
     let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-    let a = (x1 + x3 - 2 * x2) / 2;
-    let b = (x3 - x1) / 2;
+    let a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
     if (a) T0 = T0 - b / (2 * a);
     return sampleRate / T0;
+}
+
+function gmSetVoice(v) {
+    gmVoice = v;
+    document.querySelectorAll('#gm-voice-toggle .vtoggle').forEach((b,i) =>
+        b.classList.toggle('active', (i===0&&v==='male')||(i===1&&v==='female'))
+    );
+}
+
+function gmPickTarget() {
+    const range = GM_VOICE_RANGES[gmVoice];
+    let midi;
+    do { midi = range[Math.floor(Math.random() * range.length)]; } while (midi === gmLastTarget && range.length > 1);
+    gmLastTarget = midi;
+    gmTargetMidi = midi;
+    gmHoldCount = 0;
+    gmCurrentCents = 0;
+    gmHasPitch = false;
+
+    // Update brick UI
+    const brick = document.getElementById('gm-brick-main');
+    brick.classList.remove('breaking', 'glow');
+    brick.style.display = 'flex';
+    document.getElementById('gm-brick-note').textContent = gmMidiToNoteName(midi);
+    document.getElementById('gm-counter').textContent = (gmBrickIdx + 1) + ' / ' + GM_TOTAL_BRICKS;
+    document.getElementById('gm-hold-bar').style.width = '0%';
+    document.getElementById('gm-status-text').textContent = '소리를 내세요';
+    document.getElementById('gm-status-text').className = 'gm-status-text silent';
+
+    // Play reference tone via piano
+    gmPlayReference(midi);
+}
+
+async function gmPlayReference(midi) {
+    try {
+        await ensurePianoReady();
+        await Tone.start();
+        const noteName = midiToTone(midi);
+        piano.triggerAttackRelease(noteName, 0.8);
+    } catch(e) {}
 }
 
 async function gmStartMic() {
     gmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     gmMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const source = gmAudioCtx.createMediaStreamSource(gmMicStream);
+    const src = gmAudioCtx.createMediaStreamSource(gmMicStream);
     gmAnalyser = gmAudioCtx.createAnalyser();
     gmAnalyser.fftSize = 2048;
-    source.connect(gmAnalyser);
+    src.connect(gmAnalyser);
 }
 
 function gmStopMic() {
     if (gmRafId) { cancelAnimationFrame(gmRafId); gmRafId = null; }
     if (gmMicStream) { gmMicStream.getTracks().forEach(t => t.stop()); gmMicStream = null; }
-    if (gmAudioCtx) { gmAudioCtx.close(); gmAudioCtx = null; }
+    if (gmAudioCtx) { gmAudioCtx.close().catch(()=>{}); gmAudioCtx = null; }
+}
+
+function gmInitPitchCanvas() {
+    gmPitchCanvas = document.getElementById('gm-pitch-canvas');
+    const rect = gmPitchCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    gmPcW = rect.width; gmPcH = rect.height;
+    gmPitchCanvas.width = Math.round(gmPcW * dpr);
+    gmPitchCanvas.height = Math.round(gmPcH * dpr);
+    gmPitchCtx = gmPitchCanvas.getContext('2d');
+    gmPitchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function gmRenderPitchBar() {
+    if (!gmPitchCtx) return;
+    const ctx = gmPitchCtx, w = gmPcW, h = gmPcH;
+    const range = 200; // ±200 cents visible
+    const cx = w / 2;
+
+    // BG
+    ctx.fillStyle = '#1a2234';
+    ctx.fillRect(0, 0, w, h);
+
+    // Close zone (±100 cents)
+    const closeW = (100 / range) * (w / 2);
+    ctx.fillStyle = 'rgba(245,158,11,0.06)';
+    ctx.fillRect(cx - closeW, 0, closeW * 2, h);
+
+    // Perfect zone (±40 cents)
+    const perfW = (GM_CENT_THRESHOLD / range) * (w / 2);
+    ctx.fillStyle = 'rgba(16,185,129,0.12)';
+    ctx.fillRect(cx - perfW, 0, perfW * 2, h);
+
+    // Center target line
+    ctx.strokeStyle = '#ffffff30';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle = '#475569';
+    ctx.font = 'bold 10px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('LOW', 6, h / 2 + 4);
+    ctx.textAlign = 'right'; ctx.fillText('HIGH', w - 6, h / 2 + 4);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = 'bold 11px system-ui';
+    ctx.fillText(gmMidiToNoteName(gmTargetMidi), cx, h - 5);
+
+    // Current pitch indicator
+    if (gmHasPitch) {
+        const clamped = Math.max(-range, Math.min(range, gmCurrentCents));
+        const x = cx + (clamped / range) * (w / 2);
+        const absCents = Math.abs(gmCurrentCents);
+        const color = absCents <= GM_CENT_THRESHOLD ? '#10b981' : absCents <= 100 ? '#f59e0b' : '#ef4444';
+
+        ctx.save();
+        ctx.shadowColor = color; ctx.shadowBlur = 10;
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(x, h / 2, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = color;
+        ctx.font = 'bold 10px system-ui';
+        ctx.textAlign = 'center';
+        const sign = gmCurrentCents >= 0 ? '+' : '';
+        ctx.fillText(sign + Math.round(gmCurrentCents) + '¢', x, 12);
+    }
+}
+
+function gmSpawnParticles() {
+    const wrap = document.getElementById('gm-brick-wrap');
+    for (let i = 0; i < 10; i++) {
+        const p = document.createElement('div');
+        p.className = 'gm-particle';
+        const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.3;
+        const dist = 45 + Math.random() * 35;
+        const size = 6 + Math.random() * 8;
+        p.style.cssText = `width:${size}px;height:${size}px;top:50%;left:50%;--dx:${Math.cos(angle)*dist}px;--dy:${Math.sin(angle)*dist}px;`;
+        const colors = ['#8b5cf6','#06b6d4','#a78bfa','#22d3ee','#7c3aed'];
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        wrap.appendChild(p);
+        setTimeout(() => p.remove(), 550);
+    }
 }
 
 function gmDetectLoop() {
     if (!gmActive) return;
+
     const buf = new Float32Array(gmAnalyser.fftSize);
     gmAnalyser.getFloatTimeDomainData(buf);
     const freq = gmAutoCorrelate(buf, gmAudioCtx.sampleRate);
 
-    const yourEl = document.getElementById('gm-your-note');
-    const fbEl = document.getElementById('gm-feedback');
+    const statusEl = document.getElementById('gm-status-text');
+    const brick = document.getElementById('gm-brick-main');
 
     if (freq > 0) {
-        const midi = gmFreqToMidi(freq);
-        const noteName = gmMidiToNote(midi);
-        yourEl.textContent = noteName;
+        const midi = 12 * Math.log2(freq / 440) + 69;
+        gmCurrentCents = (midi - gmTargetMidi) * 100;
+        gmHasPitch = true;
+        const absCents = Math.abs(gmCurrentCents);
 
-        const target = GM_TARGETS[gmTargetIdx];
-        const diff = midi - target.midi;
+        if (absCents <= GM_CENT_THRESHOLD) {
+            // In perfect zone
+            gmHoldCount++;
+            const pct = Math.min(100, (gmHoldCount / GM_HOLD_FRAMES) * 100);
+            document.getElementById('gm-hold-bar').style.width = pct + '%';
+            brick.classList.add('glow');
 
-        if (Math.abs(diff) < 1.0) {
-            // HIT
-            fbEl.className = 'gm-feedback exact';
-            fbEl.textContent = '정확!';
-            if (!gmHitCooldown) {
-                gmHitCooldown = true;
-                gmScore += 10 + gmCombo * 2;
-                gmCombo++;
-                if (gmCombo > gmMaxCombo) gmMaxCombo = gmCombo;
-                gmBreakBrick();
-                gmUpdateHud();
-                setTimeout(() => { gmHitCooldown = false; }, 600);
-                if (gmBricksLeft <= 0) { gmEnd(); return; }
-                setTimeout(gmPickTarget, 400);
+            if (absCents <= 15) {
+                statusEl.textContent = 'PERFECT!';
+                statusEl.className = 'gm-status-text perfect';
+            } else {
+                statusEl.textContent = 'CLOSE!';
+                statusEl.className = 'gm-status-text close';
             }
-        } else if (diff > 1.0) {
-            fbEl.className = 'gm-feedback high';
-            fbEl.textContent = '높음 ↑';
-            gmCombo = 0;
-            gmUpdateHud();
+
+            if (gmHoldCount >= GM_HOLD_FRAMES) {
+                // SUCCESS
+                gmBrickBreak();
+                gmRenderPitchBar();
+                return;
+            }
         } else {
-            fbEl.className = 'gm-feedback low';
-            fbEl.textContent = '낮음 ↓';
-            gmCombo = 0;
-            gmUpdateHud();
+            gmHoldCount = Math.max(0, gmHoldCount - 2); // slow decay
+            const pct = Math.min(100, (gmHoldCount / GM_HOLD_FRAMES) * 100);
+            document.getElementById('gm-hold-bar').style.width = pct + '%';
+            brick.classList.remove('glow');
+
+            if (gmCurrentCents > 0) {
+                statusEl.textContent = absCents <= 100 ? 'CLOSE ↑' : 'HIGH ↑↑';
+                statusEl.className = absCents <= 100 ? 'gm-status-text close' : 'gm-status-text high';
+            } else {
+                statusEl.textContent = absCents <= 100 ? 'CLOSE ↓' : 'LOW ↓↓';
+                statusEl.className = absCents <= 100 ? 'gm-status-text close' : 'gm-status-text low';
+            }
         }
     } else {
-        yourEl.textContent = '--';
-        fbEl.className = 'gm-feedback waiting';
-        fbEl.textContent = '소리를 내세요';
+        gmHasPitch = false;
+        gmHoldCount = Math.max(0, gmHoldCount - 1);
+        document.getElementById('gm-hold-bar').style.width = Math.min(100, (gmHoldCount / GM_HOLD_FRAMES) * 100) + '%';
+        brick.classList.remove('glow');
+        statusEl.textContent = '소리를 내세요';
+        statusEl.className = 'gm-status-text silent';
     }
 
+    gmRenderPitchBar();
     gmRafId = requestAnimationFrame(gmDetectLoop);
 }
 
-function gmBreakBrick() {
-    // Find a random alive brick
-    const alive = gmBricks.filter(b => b.alive);
-    if (alive.length === 0) return;
-    const pick = alive[Math.floor(Math.random() * alive.length)];
-    pick.alive = false;
-    pick.el.classList.remove('alive');
-    pick.el.classList.add('hit');
-    setTimeout(() => pick.el.classList.add('dead'), 350);
-    gmBricksLeft--;
+function gmBrickBreak() {
+    // Score
+    gmScore += 100 + gmCombo * 20;
+    gmCombo++;
+    if (gmCombo > gmMaxCombo) gmMaxCombo = gmCombo;
+    gmUpdateHud();
+
+    // Animation
+    const brick = document.getElementById('gm-brick-main');
+    brick.classList.remove('glow');
+    brick.classList.add('breaking');
+    gmSpawnParticles();
+
+    gmBrickIdx++;
+    if (gmBrickIdx >= GM_TOTAL_BRICKS) {
+        setTimeout(gmEnd, 700);
+    } else {
+        setTimeout(() => {
+            if (gmActive) gmPickTarget();
+        }, 900);
+    }
 }
 
 function gmUpdateHud() {
@@ -3617,19 +3743,27 @@ function gmUpdateHud() {
 }
 
 async function gmStart() {
-    gmScore = 0; gmCombo = 0; gmMaxCombo = 0; gmHitCooldown = false;
-    gmBuildBricks();
-    gmPickTarget();
+    gmScore = 0; gmCombo = 0; gmMaxCombo = 0; gmBrickIdx = 0;
+    gmHoldCount = 0; gmCurrentCents = 0; gmHasPitch = false; gmLastTarget = -1;
+    gmStartTime = Date.now();
     gmUpdateHud();
 
     document.getElementById('gm-hud').style.display = 'flex';
-    document.getElementById('gm-target-area').style.display = 'flex';
+    document.getElementById('gm-counter').style.display = 'block';
+    document.getElementById('gm-brick-wrap').style.display = 'block';
+    document.getElementById('gm-status-text').style.display = 'block';
+    document.getElementById('gm-hold-wrap').style.display = 'block';
+    document.getElementById('gm-pitch-canvas').style.display = 'block';
     document.getElementById('gm-start-btn').style.display = 'none';
     document.getElementById('gm-result').style.display = 'none';
+    document.getElementById('gm-voice-toggle').style.display = 'none';
+
+    gmInitPitchCanvas();
 
     try {
         await gmStartMic();
         gmActive = true;
+        gmPickTarget();
         gmDetectLoop();
     } catch(e) {
         alert('마이크 접근 권한이 필요합니다.');
@@ -3644,15 +3778,24 @@ function gmStop() {
 
 function gmEnd() {
     gmStop();
-    document.getElementById('gm-target-area').style.display = 'none';
+    const elapsed = ((Date.now() - gmStartTime) / 1000).toFixed(1);
+    document.getElementById('gm-brick-wrap').style.display = 'none';
+    document.getElementById('gm-status-text').style.display = 'none';
+    document.getElementById('gm-hold-wrap').style.display = 'none';
+    document.getElementById('gm-pitch-canvas').style.display = 'none';
+    document.getElementById('gm-counter').style.display = 'none';
+    document.getElementById('gm-hud').style.display = 'none';
+
     document.getElementById('gm-result').style.display = 'block';
     document.getElementById('gm-result-score').textContent = gmScore + '점';
-    document.getElementById('gm-result-maxcombo').textContent = '최대 콤보: ' + gmMaxCombo;
+    document.getElementById('gm-result-detail').textContent =
+        GM_TOTAL_BRICKS + '개 클리어 · 최대 콤보 ' + gmMaxCombo + ' · 소요 시간 ' + elapsed + '초';
 }
 
 function gmRestart() {
     document.getElementById('gm-result').style.display = 'none';
-    gmStart();
+    document.getElementById('gm-voice-toggle').style.display = 'flex';
+    document.getElementById('gm-start-btn').style.display = 'block';
 }
 
 // ════════════════════════════════════════════════
@@ -4026,7 +4169,6 @@ document.addEventListener('DOMContentLoaded', () => {
     hvUpdateRangeDisplay();
     renderLvSteps();
     lvUpdateRangeDisplay();
-    gmBuildBricks();
     // init two-toggle button references correctly
     const autoBtn = document.querySelector('#prog-toggle .ttoggle:first-child');
     if (autoBtn) autoBtn.classList.add('active');
