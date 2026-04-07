@@ -7,11 +7,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         :root {
-            --bg: #0d0d1a; --bg2: #151528; --card: #1e1e35;
+            --bg: #111827; --bg2: #1a2234; --card: #1f2937; --card2: #283548;
             --purple: #8b5cf6; --blue: #06b6d4; --green: #10b981;
             --red: #ef4444; --yellow: #f59e0b;
-            --text: #f1f5f9; --text2: #94a3b8; --muted: #64748b;
-            --border: #2a2a45;
+            --text: #f1f5f9; --text2: #cbd5e1; --muted: #475569;
+            --border: #334155;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -231,7 +231,7 @@
         }
         .pc-note-cell .pnc-en { font-size: .72rem; font-weight: 700; color: var(--text); }
         .pc-note-cell .pnc-ko { font-size: .6rem; color: var(--text2); margin-top: 1px; }
-        .pc-note-cell.sharp { background: #181830; border-color: #252545; }
+        .pc-note-cell.sharp { background: #1a2234; border-color: #2d3a4d; }
         .pc-note-cell.sharp .pnc-en { color: var(--text2); }
         .pc-note-cell:hover:not(.disabled) { border-color: var(--purple); transform: scale(1.05); }
         .pc-note-cell.active { background: var(--blue); border-color: var(--blue); }
@@ -330,6 +330,59 @@
         .scale-sheet-title .sheet-badge { font-size: .68rem; font-weight: 700; color: var(--purple); background: rgba(139,92,246,.12); padding: 2px 8px; border-radius: 6px; }
         .scale-sheet-pattern { font-size: .75rem; color: var(--muted); margin-bottom: 14px; font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: .02em; }
         .scale-sheet-desc { font-size: .88rem; color: var(--text2); line-height: 1.65; }
+
+        /* ── BRICK GAME ── */
+        .gm-board { position: relative; width: 100%; aspect-ratio: 4/3; background: var(--bg2); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px; }
+        .gm-bricks { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 10px; }
+        .gm-brick { height: 26px; border-radius: 5px; transition: all .2s; position: relative; }
+        .gm-brick.alive { opacity: 1; }
+        .gm-brick.hit { animation: brickHit .35s ease-out forwards; }
+        @keyframes brickHit { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: .6; } 100% { transform: scale(0); opacity: 0; } }
+        .gm-brick.row0 { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+        .gm-brick.row1 { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+        .gm-brick.row2 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .gm-brick.row3 { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .gm-brick.dead { opacity: 0; pointer-events: none; }
+        .gm-target-area { position: absolute; bottom: 0; left: 0; right: 0; padding: 14px; background: linear-gradient(transparent, rgba(17,24,39,.95)); display: flex; align-items: center; justify-content: center; gap: 16px; }
+        .gm-target-note { font-size: 2rem; font-weight: 900; color: var(--text); text-shadow: 0 0 20px rgba(139,92,246,.5); }
+        .gm-your-note { font-size: 1.1rem; font-weight: 700; color: var(--text2); min-width: 60px; text-align: center; }
+        .gm-feedback { font-size: .82rem; font-weight: 800; padding: 3px 10px; border-radius: 6px; min-width: 60px; text-align: center; }
+        .gm-feedback.exact { background: rgba(16,185,129,.2); color: var(--green); }
+        .gm-feedback.high { background: rgba(239,68,68,.15); color: var(--red); }
+        .gm-feedback.low { background: rgba(245,158,11,.15); color: var(--yellow); }
+        .gm-feedback.waiting { background: rgba(139,92,246,.1); color: var(--muted); }
+        .gm-hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .gm-score { font-size: 1rem; font-weight: 800; color: var(--text); }
+        .gm-combo { font-size: .85rem; font-weight: 700; color: var(--yellow); }
+        .gm-combo.active { animation: comboPulse .5s ease; }
+        @keyframes comboPulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
+        .gm-result { text-align: center; padding: 24px 16px; }
+        .gm-result-title { font-size: 1.3rem; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+        .gm-result-score { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
+        .gm-result-combo { font-size: .9rem; color: var(--text2); margin-bottom: 16px; }
+        .gm-arrow { font-size: 1.2rem; }
+
+        /* ── VOCAL FLIGHT GAME ── */
+        .fb-mode-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .fb-mode-card { padding: 18px 12px; background: var(--card2); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; text-align: center; transition: all .2s; }
+        .fb-mode-card:hover { border-color: var(--purple); }
+        .fb-mode-card:active { transform: scale(.97); }
+        .fb-mode-card.selected { border-color: var(--purple); background: rgba(139,92,246,.12); }
+        .fb-mode-title { font-size: .92rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+        .fb-mode-desc { font-size: .72rem; color: var(--text2); line-height: 1.5; }
+        .fb-canvas { width: 100%; aspect-ratio: 16/10; border-radius: 14px; display: block; background: var(--bg2); border: 1px solid var(--border); }
+        .fb-hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .fb-score { font-size: 1rem; font-weight: 800; color: var(--text); }
+        .fb-status-badge { font-size: .78rem; font-weight: 700; padding: 3px 10px; border-radius: 6px; transition: all .2s; }
+        .fb-status-badge.stable { background: rgba(16,185,129,.2); color: var(--green); }
+        .fb-status-badge.high { background: rgba(239,68,68,.15); color: var(--red); }
+        .fb-status-badge.low { background: rgba(245,158,11,.15); color: var(--yellow); }
+        .fb-status-badge.silent { background: rgba(139,92,246,.1); color: var(--muted); }
+        .fb-combo { font-size: .82rem; font-weight: 700; color: var(--yellow); min-width: 50px; text-align: right; }
+        .fb-result { text-align: center; padding: 20px 16px; }
+        .fb-result-title { font-size: 1.3rem; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+        .fb-result-score { font-size: 2rem; font-weight: 900; background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
+        .fb-result-detail { font-size: .85rem; color: var(--text2); margin-bottom: 14px; line-height: 1.6; }
         /* Sustain dot */
         .sdot.sustain { border-color: var(--yellow); animation: sustainPulse 0.8s infinite alternate; }
         .sdot.sustain .sdot-kor, .sdot.sustain .sdot-en { color: var(--yellow); }
@@ -581,6 +634,7 @@
         <button class="tab"        onclick="switchTab('exercise')">🎹 발성 연습</button>
         <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
         <button class="tab"        onclick="switchTab('pitch')">🎤 음정 체크</button>
+        <button class="tab"        onclick="switchTab('game')">🧱 미니게임</button>
         <button class="tab"        onclick="switchTab('selfcheck')">🔍 셀프 평가</button>
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
@@ -609,6 +663,7 @@
     <div class="mob-more-overlay" id="mob-more-overlay" onclick="closeMobMore()"></div>
     <div class="mob-more-sheet" id="mob-more-sheet">
         <div class="mob-more-header">메뉴<button class="mob-more-close" onclick="closeMobMore()">✕</button></div>
+        <button class="mob-more-item" onclick="switchTab('game');closeMobMore()">🧱 미니게임</button>
         <button class="mob-more-item" onclick="switchTab('selfcheck');closeMobMore()">🔍 셀프 평가</button>
         <button class="mob-more-item" onclick="switchTab('notes');closeMobMore()">📋 참고사항</button>
         <button class="mob-more-item" onclick="switchTab('studio');closeMobMore()">🏠 스튜디오</button>
@@ -870,7 +925,7 @@
 
         <!-- 🎯 1. 워밍업 -->
         <div class="card">
-            <div class="card-label">🎯 1. 워밍업 <span class="routine-badge rb-warm">자동 재생 · 8단계</span></div>
+            <div class="card-label">🎯 1. 워밍업 <span class="routine-badge rb-warm">자동 재생 · 8단계</span> <span style="font-size:.7rem;color:var(--blue);font-weight:700;">👉 처음이면 이걸로 시작하세요</span></div>
             <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
                 본격적인 발성 전에<br>
                 성대와 호흡을 안정시키는 단계입니다.<br><br>
@@ -1335,6 +1390,94 @@
 
     </section>
 
+    <!-- ══════════════ GAME TAB ══════════════ -->
+    <section id="game-section" class="section">
+        <div class="card">
+            <div class="card-label">🧱 피치 브레이커</div>
+            <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
+                목표 음을 정확하게 맞춰서 벽돌을 깨세요!<br>
+                <strong style="color:var(--text);">마이크로 소리를 내면 음정을 분석합니다.</strong>
+            </div>
+
+            <!-- HUD -->
+            <div class="gm-hud" id="gm-hud" style="display:none;">
+                <div class="gm-score">점수: <span id="gm-score-val">0</span></div>
+                <div class="gm-combo" id="gm-combo">COMBO x0</div>
+            </div>
+
+            <!-- Game board -->
+            <div class="gm-board" id="gm-board">
+                <div class="gm-bricks" id="gm-bricks"></div>
+                <div class="gm-target-area" id="gm-target-area" style="display:none;">
+                    <div>
+                        <div style="font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px;">TARGET</div>
+                        <div class="gm-target-note" id="gm-target-note">C4</div>
+                    </div>
+                    <div style="font-size:1.2rem;color:var(--border);">→</div>
+                    <div>
+                        <div style="font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px;">YOUR</div>
+                        <div class="gm-your-note" id="gm-your-note">--</div>
+                    </div>
+                    <div class="gm-feedback waiting" id="gm-feedback">대기 중</div>
+                </div>
+            </div>
+
+            <!-- Start / restart -->
+            <button class="btn btn-green" id="gm-start-btn" onclick="gmStart()" style="width:100%;">🎤 게임 시작</button>
+
+            <!-- Result (hidden until game over) -->
+            <div class="gm-result" id="gm-result" style="display:none;">
+                <div class="gm-result-title">게임 종료!</div>
+                <div class="gm-result-score" id="gm-result-score">0</div>
+                <div class="gm-result-combo" id="gm-result-maxcombo">최대 콤보: 0</div>
+                <button class="btn btn-purple" onclick="gmRestart()" style="width:100%;">🔄 다시 하기</button>
+            </div>
+        </div>
+
+        <!-- 🐦 Vocal Flight Game -->
+        <div class="card">
+            <div class="card-label">🐦 보컬 플라이트</div>
+            <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
+                소리의 높낮이로 새를 조종하세요!<br>
+                <strong style="color:var(--text);">높은 음 → 위로, 낮은 음 → 아래로</strong>
+            </div>
+
+            <!-- Mode select -->
+            <div class="fb-mode-select" id="fb-mode-select">
+                <div class="fb-mode-card" onclick="fbSelectMode('free')">
+                    <div class="fb-mode-title">🌤️ 자유 비행</div>
+                    <div class="fb-mode-desc">음의 높낮이 감각 익히기<br>장애물을 피하며 비행</div>
+                </div>
+                <div class="fb-mode-card" onclick="fbSelectMode('follow')">
+                    <div class="fb-mode-title">🎯 따라가기</div>
+                    <div class="fb-mode-desc">음정 이동과 안정성 훈련<br>가이드 경로를 따라가세요</div>
+                </div>
+            </div>
+
+            <!-- HUD -->
+            <div class="fb-hud" id="fb-hud" style="display:none;">
+                <div class="fb-score">점수: <span id="fb-score-val">0</span></div>
+                <div class="fb-status-badge silent" id="fb-status">대기 중</div>
+                <div class="fb-combo" id="fb-combo"></div>
+            </div>
+
+            <!-- Canvas -->
+            <canvas id="fb-canvas" class="fb-canvas" style="display:none;"></canvas>
+
+            <!-- Start -->
+            <button class="btn btn-green" id="fb-start-btn" onclick="fbStart()" style="display:none;width:100%;margin-top:10px;">🎤 게임 시작</button>
+
+            <!-- Result -->
+            <div class="fb-result" id="fb-result" style="display:none;">
+                <div class="fb-result-title">비행 종료!</div>
+                <div class="fb-result-score" id="fb-result-score">0점</div>
+                <div class="fb-result-detail" id="fb-result-detail"></div>
+                <button class="btn btn-purple" onclick="fbRestart()" style="width:100%;margin-bottom:8px;">🔄 다시 하기</button>
+                <button class="btn btn-outline" onclick="fbBackToMode()" style="width:100%;">모드 선택으로</button>
+            </div>
+        </div>
+    </section>
+
     <footer class="app-footer">
         <div class="ft-biz">
             대표자 : 강현호<br>
@@ -1559,7 +1702,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['routine', 'exercise', 'spectrogram', 'pitch', 'selfcheck', 'notes', 'studio'];
+const TAB_ORDER = ['routine', 'exercise', 'spectrogram', 'pitch', 'game', 'selfcheck', 'notes', 'studio'];
 function switchTab(tab) {
     currentTab = tab;
     // Desktop tabs
@@ -1572,7 +1715,7 @@ function switchTab(tab) {
         b.classList.toggle('active', t === tab);
     });
     // If tab is in the "more" group, highlight the more button
-    const moreGroup = ['selfcheck', 'notes', 'studio'];
+    const moreGroup = ['game', 'selfcheck', 'notes', 'studio'];
     const moreBtn = document.querySelector('.mob-tab[data-tab="more"]');
     if (moreBtn) moreBtn.classList.toggle('active', moreGroup.includes(tab));
 
@@ -1582,6 +1725,8 @@ function switchTab(tab) {
     if (tab !== 'routine' && wuActive) wuStop();
     if (tab !== 'routine' && hvActive) hvStop();
     if (tab !== 'routine' && lvActive) lvStop();
+    if (tab !== 'game' && gmActive) gmStop();
+    if (tab !== 'game' && fbActive) fbStop();
     if (tab !== 'spectrogram' && specRunning) stopSpecMic();
 }
 
@@ -3299,6 +3444,579 @@ function resetPCS() {
 // ════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// PITCH BREAKER GAME
+// ════════════════════════════════════════════════
+const GM_NOTES_EN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const GM_ROWS = 4, GM_COLS = 6;
+const GM_TOTAL = GM_ROWS * GM_COLS;
+// Possible target notes (C3-C5 natural notes)
+const GM_TARGETS = [
+    {note:'C3',midi:48},{note:'D3',midi:50},{note:'E3',midi:52},{note:'F3',midi:53},
+    {note:'G3',midi:55},{note:'A3',midi:57},{note:'B3',midi:59},
+    {note:'C4',midi:60},{note:'D4',midi:62},{note:'E4',midi:64},{note:'F4',midi:65},
+    {note:'G4',midi:67},{note:'A4',midi:69},{note:'B4',midi:71},
+    {note:'C5',midi:72}
+];
+
+let gmActive = false, gmScore = 0, gmCombo = 0, gmMaxCombo = 0;
+let gmBricks = [], gmTargetIdx = 0, gmBricksLeft = GM_TOTAL;
+let gmMicStream = null, gmAudioCtx = null, gmAnalyser = null, gmRafId = null;
+let gmHitCooldown = false;
+
+function gmBuildBricks() {
+    const el = document.getElementById('gm-bricks');
+    gmBricks = [];
+    el.innerHTML = '';
+    for (let r = 0; r < GM_ROWS; r++) {
+        for (let c = 0; c < GM_COLS; c++) {
+            const b = document.createElement('div');
+            b.className = 'gm-brick alive row' + r;
+            b.id = 'gm-b' + (r * GM_COLS + c);
+            el.appendChild(b);
+            gmBricks.push({ el: b, alive: true });
+        }
+    }
+    gmBricksLeft = GM_TOTAL;
+}
+
+function gmPickTarget() {
+    const idx = Math.floor(Math.random() * GM_TARGETS.length);
+    gmTargetIdx = idx;
+    document.getElementById('gm-target-note').textContent = GM_TARGETS[idx].note;
+}
+
+function gmFreqToMidi(freq) {
+    return 12 * Math.log2(freq / 440) + 69;
+}
+
+function gmMidiToNote(midi) {
+    const n = Math.round(midi);
+    const name = GM_NOTES_EN[((n % 12) + 12) % 12];
+    const oct = Math.floor(n / 12) - 1;
+    return name + oct;
+}
+
+function gmAutoCorrelate(buf, sampleRate) {
+    let SIZE = buf.length;
+    let rms = 0;
+    for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.01) return -1;
+
+    let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+    for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < thres) { r1 = i; break; } }
+    for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
+    buf = buf.slice(r1, r2);
+    SIZE = buf.length;
+
+    let c = new Array(SIZE).fill(0);
+    for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] += buf[j] * buf[j + i];
+
+    let d = 0;
+    while (c[d] > c[d + 1]) d++;
+    let maxval = -1, maxpos = -1;
+    for (let i = d; i < SIZE; i++) { if (c[i] > maxval) { maxval = c[i]; maxpos = i; } }
+
+    let T0 = maxpos;
+    let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+    let a = (x1 + x3 - 2 * x2) / 2;
+    let b = (x3 - x1) / 2;
+    if (a) T0 = T0 - b / (2 * a);
+    return sampleRate / T0;
+}
+
+async function gmStartMic() {
+    gmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    gmMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = gmAudioCtx.createMediaStreamSource(gmMicStream);
+    gmAnalyser = gmAudioCtx.createAnalyser();
+    gmAnalyser.fftSize = 2048;
+    source.connect(gmAnalyser);
+}
+
+function gmStopMic() {
+    if (gmRafId) { cancelAnimationFrame(gmRafId); gmRafId = null; }
+    if (gmMicStream) { gmMicStream.getTracks().forEach(t => t.stop()); gmMicStream = null; }
+    if (gmAudioCtx) { gmAudioCtx.close(); gmAudioCtx = null; }
+}
+
+function gmDetectLoop() {
+    if (!gmActive) return;
+    const buf = new Float32Array(gmAnalyser.fftSize);
+    gmAnalyser.getFloatTimeDomainData(buf);
+    const freq = gmAutoCorrelate(buf, gmAudioCtx.sampleRate);
+
+    const yourEl = document.getElementById('gm-your-note');
+    const fbEl = document.getElementById('gm-feedback');
+
+    if (freq > 0) {
+        const midi = gmFreqToMidi(freq);
+        const noteName = gmMidiToNote(midi);
+        yourEl.textContent = noteName;
+
+        const target = GM_TARGETS[gmTargetIdx];
+        const diff = midi - target.midi;
+
+        if (Math.abs(diff) < 1.0) {
+            // HIT
+            fbEl.className = 'gm-feedback exact';
+            fbEl.textContent = '정확!';
+            if (!gmHitCooldown) {
+                gmHitCooldown = true;
+                gmScore += 10 + gmCombo * 2;
+                gmCombo++;
+                if (gmCombo > gmMaxCombo) gmMaxCombo = gmCombo;
+                gmBreakBrick();
+                gmUpdateHud();
+                setTimeout(() => { gmHitCooldown = false; }, 600);
+                if (gmBricksLeft <= 0) { gmEnd(); return; }
+                setTimeout(gmPickTarget, 400);
+            }
+        } else if (diff > 1.0) {
+            fbEl.className = 'gm-feedback high';
+            fbEl.textContent = '높음 ↑';
+            gmCombo = 0;
+            gmUpdateHud();
+        } else {
+            fbEl.className = 'gm-feedback low';
+            fbEl.textContent = '낮음 ↓';
+            gmCombo = 0;
+            gmUpdateHud();
+        }
+    } else {
+        yourEl.textContent = '--';
+        fbEl.className = 'gm-feedback waiting';
+        fbEl.textContent = '소리를 내세요';
+    }
+
+    gmRafId = requestAnimationFrame(gmDetectLoop);
+}
+
+function gmBreakBrick() {
+    // Find a random alive brick
+    const alive = gmBricks.filter(b => b.alive);
+    if (alive.length === 0) return;
+    const pick = alive[Math.floor(Math.random() * alive.length)];
+    pick.alive = false;
+    pick.el.classList.remove('alive');
+    pick.el.classList.add('hit');
+    setTimeout(() => pick.el.classList.add('dead'), 350);
+    gmBricksLeft--;
+}
+
+function gmUpdateHud() {
+    document.getElementById('gm-score-val').textContent = gmScore;
+    const comboEl = document.getElementById('gm-combo');
+    comboEl.textContent = 'COMBO x' + gmCombo;
+    if (gmCombo >= 2) {
+        comboEl.classList.remove('active');
+        void comboEl.offsetWidth;
+        comboEl.classList.add('active');
+    }
+}
+
+async function gmStart() {
+    gmScore = 0; gmCombo = 0; gmMaxCombo = 0; gmHitCooldown = false;
+    gmBuildBricks();
+    gmPickTarget();
+    gmUpdateHud();
+
+    document.getElementById('gm-hud').style.display = 'flex';
+    document.getElementById('gm-target-area').style.display = 'flex';
+    document.getElementById('gm-start-btn').style.display = 'none';
+    document.getElementById('gm-result').style.display = 'none';
+
+    try {
+        await gmStartMic();
+        gmActive = true;
+        gmDetectLoop();
+    } catch(e) {
+        alert('마이크 접근 권한이 필요합니다.');
+        gmStop();
+    }
+}
+
+function gmStop() {
+    gmActive = false;
+    gmStopMic();
+}
+
+function gmEnd() {
+    gmStop();
+    document.getElementById('gm-target-area').style.display = 'none';
+    document.getElementById('gm-result').style.display = 'block';
+    document.getElementById('gm-result-score').textContent = gmScore + '점';
+    document.getElementById('gm-result-maxcombo').textContent = '최대 콤보: ' + gmMaxCombo;
+}
+
+function gmRestart() {
+    document.getElementById('gm-result').style.display = 'none';
+    gmStart();
+}
+
+// ════════════════════════════════════════════════
+// VOCAL FLIGHT GAME (보컬 플라이트)
+// ════════════════════════════════════════════════
+const FB_MIDI_LO = 43, FB_MIDI_HI = 79;
+const FB_GRAV = 0.35, FB_SMOOTH = 0.14, FB_FALL_MAX = 2;
+
+let fbMode = null, fbActive = false, fbGameOver = false;
+let fbCanvas = null, fbCtx = null, fbW = 0, fbH = 0;
+let fbBirdY = 0, fbBirdVy = 0, fbTargetY = 0;
+let fbSmoothedMidi = 60, fbHasPitch = false;
+let fbObs = [], fbPath = [], fbPathOff = 0, fbObsTimer = 0;
+let fbScore = 0, fbCombo = 0, fbMaxCombo = 0, fbFrames = 0;
+let fbMicStream = null, fbAudioCtx = null, fbAnalyser = null, fbRafId = null;
+let fbSpeed = 2, fbStatus = 'silent';
+
+function fbSelectMode(mode) {
+    fbMode = mode;
+    document.querySelectorAll('.fb-mode-card').forEach((c,i) =>
+        c.classList.toggle('selected', (i===0 && mode==='free') || (i===1 && mode==='follow'))
+    );
+    document.getElementById('fb-start-btn').style.display = 'block';
+    document.getElementById('fb-canvas').style.display = 'block';
+    fbInitCanvas();
+    fbRenderIdle();
+}
+
+function fbInitCanvas() {
+    fbCanvas = document.getElementById('fb-canvas');
+    const rect = fbCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    fbW = rect.width;
+    fbH = rect.height;
+    fbCanvas.width = Math.round(fbW * dpr);
+    fbCanvas.height = Math.round(fbH * dpr);
+    fbCtx = fbCanvas.getContext('2d');
+    fbCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function fbPitchToY(midi) {
+    const ratio = (midi - FB_MIDI_LO) / (FB_MIDI_HI - FB_MIDI_LO);
+    const clamped = Math.max(0.02, Math.min(0.98, ratio));
+    return fbH * (1 - clamped);
+}
+
+function fbRenderIdle() {
+    if (!fbCtx) return;
+    const ctx = fbCtx;
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, fbW, fbH);
+    // Grid
+    ctx.strokeStyle = '#1f293755';
+    ctx.lineWidth = 1;
+    for (let y = 0; y < fbH; y += 28) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(fbW, y); ctx.stroke(); }
+    // Floor/ceiling
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 0, fbW, 3);
+    ctx.fillRect(0, fbH - 3, fbW, 3);
+    // Bird at center
+    fbBirdY = fbH / 2;
+    fbDrawBird(ctx, fbW * 0.18, fbBirdY, '#8b5cf6', 0);
+    // Hint text
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = 'bold 13px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(fbMode === 'free' ? '장애물을 피해 비행하세요!' : '가이드 라인을 따라가세요!', fbW / 2, fbH / 2 + 38);
+}
+
+function fbDrawBird(ctx, x, y, color, frame) {
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 14;
+    // Body
+    const grad = ctx.createRadialGradient(x, y, 2, x, y, 10);
+    grad.addColorStop(0, '#fff');
+    grad.addColorStop(0.4, color);
+    grad.addColorStop(1, color + '66');
+    ctx.beginPath();
+    ctx.arc(x, y, 9, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    // Tail (animated)
+    const wave = Math.sin((frame || 0) * 0.15) * 3;
+    ctx.beginPath();
+    ctx.moveTo(x - 9, y);
+    ctx.lineTo(x - 19, y - 5 + wave);
+    ctx.lineTo(x - 14, y);
+    ctx.lineTo(x - 19, y + 5 - wave);
+    ctx.closePath();
+    ctx.fillStyle = color + 'bb';
+    ctx.fill();
+    ctx.restore();
+}
+
+function fbGeneratePath() {
+    fbPath = [];
+    for (let i = 0; i < 6000; i++) {
+        const t = i / 80;
+        const y = 0.5 + 0.22 * Math.sin(t * 0.6) + 0.12 * Math.sin(t * 1.3 + 2) + 0.08 * Math.sin(t * 2.1 + 5);
+        fbPath.push(Math.max(0.1, Math.min(0.9, y)));
+    }
+}
+
+function fbSpawnObstacle() {
+    const gapH = 80 + Math.random() * 35;
+    const gapY = 35 + Math.random() * (fbH - gapH - 70);
+    fbObs.push({ x: fbW + 20, gapY, gapH, w: 36, passed: false });
+}
+
+async function fbStartMic() {
+    fbAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    fbMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const src = fbAudioCtx.createMediaStreamSource(fbMicStream);
+    fbAnalyser = fbAudioCtx.createAnalyser();
+    fbAnalyser.fftSize = 2048;
+    src.connect(fbAnalyser);
+}
+
+function fbStopMic() {
+    if (fbRafId) { cancelAnimationFrame(fbRafId); fbRafId = null; }
+    if (fbMicStream) { fbMicStream.getTracks().forEach(t => t.stop()); fbMicStream = null; }
+    if (fbAudioCtx) { fbAudioCtx.close().catch(()=>{}); fbAudioCtx = null; }
+}
+
+async function fbStart() {
+    fbScore = 0; fbCombo = 0; fbMaxCombo = 0; fbFrames = 0;
+    fbObs = []; fbPathOff = 0; fbObsTimer = 0;
+    fbSpeed = 2; fbGameOver = false; fbStatus = 'silent';
+    fbSmoothedMidi = 60; fbHasPitch = false; fbBirdVy = 0;
+    if (fbMode === 'follow') fbGeneratePath();
+    fbInitCanvas();
+    fbBirdY = fbH / 2; fbTargetY = fbBirdY;
+    document.getElementById('fb-hud').style.display = 'flex';
+    document.getElementById('fb-start-btn').style.display = 'none';
+    document.getElementById('fb-result').style.display = 'none';
+    document.getElementById('fb-mode-select').style.display = 'none';
+    document.getElementById('fb-canvas').style.display = 'block';
+    fbUpdateHud();
+    try {
+        await fbStartMic();
+        fbActive = true;
+        fbGameLoop();
+    } catch(e) {
+        alert('마이크 접근 권한이 필요합니다.');
+        fbStop();
+    }
+}
+
+function fbStop() {
+    fbActive = false;
+    fbStopMic();
+}
+
+function fbGameLoop() {
+    if (!fbActive) return;
+
+    // Pitch detect (reuse gmAutoCorrelate)
+    const buf = new Float32Array(fbAnalyser.fftSize);
+    fbAnalyser.getFloatTimeDomainData(buf);
+    const freq = gmAutoCorrelate(buf, fbAudioCtx.sampleRate);
+
+    if (freq > 0) {
+        const midi = 12 * Math.log2(freq / 440) + 69;
+        if (midi >= 30 && midi <= 90) {
+            fbSmoothedMidi = fbSmoothedMidi * (1 - FB_SMOOTH) + midi * FB_SMOOTH;
+            fbHasPitch = true;
+            fbTargetY = fbPitchToY(fbSmoothedMidi);
+        }
+    } else {
+        fbHasPitch = false;
+    }
+
+    // Bird movement
+    if (fbHasPitch) {
+        fbBirdY += (fbTargetY - fbBirdY) * 0.12;
+        fbBirdVy = 0;
+    } else {
+        fbBirdVy += FB_GRAV;
+        if (fbBirdVy > FB_FALL_MAX) fbBirdVy = FB_FALL_MAX;
+        fbBirdY += fbBirdVy;
+    }
+    // Clamp
+    if (fbBirdY < 12) { fbBirdY = 12; fbBirdVy = 0; }
+    if (fbBirdY > fbH - 12) { fbBirdY = fbH - 12; fbBirdVy = 0; }
+
+    // Mode update
+    if (fbMode === 'free') fbUpdateFree();
+    else fbUpdateFollow();
+
+    fbFrames++;
+    if (fbFrames % 600 === 0 && fbSpeed < 4) fbSpeed += 0.25;
+
+    fbRender();
+    fbUpdateHud();
+
+    if (!fbGameOver) fbRafId = requestAnimationFrame(fbGameLoop);
+}
+
+function fbUpdateFree() {
+    fbObsTimer++;
+    if (fbObsTimer >= 105) { fbSpawnObstacle(); fbObsTimer = 0; }
+
+    const bx = fbW * 0.18;
+    for (let i = fbObs.length - 1; i >= 0; i--) {
+        const o = fbObs[i];
+        o.x -= fbSpeed;
+        if (!o.passed && o.x + o.w < bx) {
+            o.passed = true;
+            fbScore += 10 + fbCombo;
+            fbCombo++;
+            if (fbCombo > fbMaxCombo) fbMaxCombo = fbCombo;
+        }
+        // Collision
+        if (bx + 8 > o.x && bx - 8 < o.x + o.w) {
+            if (fbBirdY - 8 < o.gapY || fbBirdY + 8 > o.gapY + o.gapH) { fbEndGame(); return; }
+        }
+        if (o.x + o.w < -20) fbObs.splice(i, 1);
+    }
+    // Floor/ceiling death
+    if (fbBirdY <= 12 || fbBirdY >= fbH - 12) {
+        // Only die if stuck at edge with velocity
+        if ((!fbHasPitch && fbBirdVy >= FB_FALL_MAX) || fbBirdY <= 12) {
+            // give a bit of grace
+        }
+    }
+    fbStatus = !fbHasPitch ? 'silent' : 'stable';
+}
+
+function fbUpdateFollow() {
+    fbPathOff += fbSpeed;
+    const bx = fbW * 0.18;
+    const idx = Math.min(Math.floor(fbPathOff + bx), fbPath.length - 1);
+
+    if (idx >= fbPath.length - 50) { fbEndGame(); return; }
+
+    const pathY = fbPath[idx] * fbH;
+    const dist = Math.abs(fbBirdY - pathY);
+    const safe = 35;
+
+    if (!fbHasPitch) {
+        fbStatus = 'silent'; fbCombo = 0;
+    } else if (dist < safe) {
+        fbStatus = 'stable';
+        fbScore += 2;
+        fbCombo++;
+        if (fbCombo > fbMaxCombo) fbMaxCombo = fbCombo;
+        if (fbCombo > 0 && fbCombo % 60 === 0) fbScore += 20;
+    } else if (fbBirdY < pathY) {
+        fbStatus = 'high'; fbCombo = 0;
+    } else {
+        fbStatus = 'low'; fbCombo = 0;
+    }
+}
+
+function fbRender() {
+    const ctx = fbCtx;
+    // BG
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, fbW, fbH);
+    // Grid
+    ctx.strokeStyle = '#1f293744';
+    ctx.lineWidth = 1;
+    for (let y = 0; y < fbH; y += 28) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(fbW, y); ctx.stroke(); }
+    // Floor / ceiling
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 0, fbW, 3);
+    ctx.fillRect(0, fbH - 3, fbW, 3);
+
+    const bx = fbW * 0.18;
+
+    if (fbMode === 'free') {
+        // Obstacles
+        for (const o of fbObs) {
+            const g1 = ctx.createLinearGradient(o.x, 0, o.x + o.w, 0);
+            g1.addColorStop(0, '#4c1d95'); g1.addColorStop(1, '#6d28d9');
+            ctx.fillStyle = g1;
+            ctx.fillRect(o.x, 0, o.w, o.gapY);
+            ctx.fillRect(o.x, o.gapY + o.gapH, o.w, fbH - o.gapY - o.gapH);
+            // Gap edge glow
+            ctx.strokeStyle = '#8b5cf640';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(o.x, o.gapY); ctx.lineTo(o.x + o.w, o.gapY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(o.x, o.gapY + o.gapH); ctx.lineTo(o.x + o.w, o.gapY + o.gapH); ctx.stroke();
+        }
+    } else {
+        // Follow path
+        const ps = Math.floor(fbPathOff);
+        // Safe zone band
+        ctx.fillStyle = 'rgba(139,92,246,0.06)';
+        ctx.beginPath();
+        for (let px = 0; px <= fbW; px += 3) {
+            const pi = Math.min(ps + px, fbPath.length - 1);
+            const py = fbPath[pi] * fbH;
+            if (px === 0) ctx.moveTo(px, py - 35); else ctx.lineTo(px, py - 35);
+        }
+        for (let px = fbW; px >= 0; px -= 3) {
+            const pi = Math.min(ps + px, fbPath.length - 1);
+            const py = fbPath[pi] * fbH;
+            ctx.lineTo(px, py + 35);
+        }
+        ctx.closePath();
+        ctx.fill();
+        // Path line
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        for (let px = 0; px <= fbW; px += 3) {
+            const pi = Math.min(ps + px, fbPath.length - 1);
+            const py = fbPath[pi] * fbH;
+            if (px === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // Bird
+    const bc = fbStatus === 'stable' ? '#10b981' : fbStatus === 'high' ? '#ef4444' : fbStatus === 'low' ? '#f59e0b' : '#8b5cf6';
+    fbDrawBird(ctx, bx, fbBirdY, bc, fbFrames);
+}
+
+function fbUpdateHud() {
+    document.getElementById('fb-score-val').textContent = fbScore;
+    const s = document.getElementById('fb-status');
+    if (fbStatus === 'stable')      { s.className = 'fb-status-badge stable'; s.textContent = '안정적'; }
+    else if (fbStatus === 'high')   { s.className = 'fb-status-badge high';   s.textContent = '너무 높음 ↑'; }
+    else if (fbStatus === 'low')    { s.className = 'fb-status-badge low';    s.textContent = '너무 낮음 ↓'; }
+    else                            { s.className = 'fb-status-badge silent'; s.textContent = '소리를 내세요'; }
+
+    const c = document.getElementById('fb-combo');
+    if (fbMode === 'follow' && fbCombo >= 30) c.textContent = '안정 ' + (fbCombo / 60).toFixed(1) + 's';
+    else if (fbMode === 'free' && fbCombo > 0) c.textContent = 'x' + fbCombo;
+    else c.textContent = '';
+}
+
+function fbEndGame() {
+    fbGameOver = true;
+    fbStop();
+    document.getElementById('fb-hud').style.display = 'none';
+    document.getElementById('fb-canvas').style.display = 'none';
+    document.getElementById('fb-result').style.display = 'block';
+    document.getElementById('fb-result-score').textContent = fbScore + '점';
+    const det = fbMode === 'free'
+        ? '장애물 통과: ' + fbObs.filter(o => o.passed).length + '개\n최대 콤보: ' + fbMaxCombo
+        : '최대 안정 유지: ' + (fbMaxCombo / 60).toFixed(1) + '초\n비행 시간: ' + (fbFrames / 60).toFixed(1) + '초';
+    document.getElementById('fb-result-detail').textContent = det;
+}
+
+function fbRestart() {
+    document.getElementById('fb-result').style.display = 'none';
+    fbStart();
+}
+
+function fbBackToMode() {
+    document.getElementById('fb-result').style.display = 'none';
+    document.getElementById('fb-canvas').style.display = 'none';
+    document.getElementById('fb-start-btn').style.display = 'none';
+    document.getElementById('fb-hud').style.display = 'none';
+    document.getElementById('fb-mode-select').style.display = 'grid';
+    document.querySelectorAll('.fb-mode-card').forEach(c => c.classList.remove('selected'));
+    fbMode = null;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     renderKeys();
     renderNoteGrid();
@@ -3308,6 +4026,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hvUpdateRangeDisplay();
     renderLvSteps();
     lvUpdateRangeDisplay();
+    gmBuildBricks();
     // init two-toggle button references correctly
     const autoBtn = document.querySelector('#prog-toggle .ttoggle:first-child');
     if (autoBtn) autoBtn.classList.add('active');
