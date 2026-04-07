@@ -3647,6 +3647,13 @@ function gmSpawnParticles() {
 function gmDetectLoop() {
     if (!gmActive) return;
 
+    // During brick-break transition, keep loop alive but skip detection
+    if (gmTransition) {
+        gmRenderPitchBar();
+        gmRafId = requestAnimationFrame(gmDetectLoop);
+        return;
+    }
+
     const buf = new Float32Array(gmAnalyser.fftSize);
     gmAnalyser.getFloatTimeDomainData(buf);
     const freq = gmAutoCorrelate(buf, gmAudioCtx.sampleRate);
@@ -3676,10 +3683,9 @@ function gmDetectLoop() {
             }
 
             if (gmHoldCount >= GM_HOLD_FRAMES) {
-                // SUCCESS
+                // SUCCESS — enter transition, keep loop alive
+                gmTransition = true;
                 gmBrickBreak();
-                gmRenderPitchBar();
-                return;
             }
         } else {
             gmHoldCount = Math.max(0, gmHoldCount - 2); // slow decay
@@ -3726,7 +3732,10 @@ function gmBrickBreak() {
         setTimeout(gmEnd, 700);
     } else {
         setTimeout(() => {
-            if (gmActive) gmPickTarget();
+            if (gmActive) {
+                gmPickTarget();
+                gmTransition = false;
+            }
         }, 900);
     }
 }
@@ -3745,6 +3754,7 @@ function gmUpdateHud() {
 async function gmStart() {
     gmScore = 0; gmCombo = 0; gmMaxCombo = 0; gmBrickIdx = 0;
     gmHoldCount = 0; gmCurrentCents = 0; gmHasPitch = false; gmLastTarget = -1;
+    gmTransition = false;
     gmStartTime = Date.now();
     gmUpdateHud();
 
@@ -3803,6 +3813,8 @@ function gmRestart() {
 // ════════════════════════════════════════════════
 const FB_MIDI_LO = 43, FB_MIDI_HI = 79;
 const FB_GRAV = 0.35, FB_SMOOTH = 0.14, FB_FALL_MAX = 2;
+
+let gmTransition = false;
 
 let fbMode = null, fbActive = false, fbGameOver = false;
 let fbCanvas = null, fbCtx = null, fbW = 0, fbH = 0;
