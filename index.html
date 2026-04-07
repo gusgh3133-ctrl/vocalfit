@@ -33,7 +33,7 @@
         .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
 
         /* Mobile bottom nav */
-        .mob-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 300; display: flex; background: var(--card); border-top: 1px solid var(--border); padding: 6px 0 env(safe-area-inset-bottom, 8px); box-shadow: 0 -2px 16px rgba(0,0,0,.35); }
+        .mob-nav { position: sticky; top: 0; left: 0; right: 0; z-index: 300; display: flex; background: var(--card); border-bottom: 1px solid var(--border); padding: env(safe-area-inset-top, 0) 0 6px; box-shadow: 0 2px 16px rgba(0,0,0,.35); }
         .mob-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; background: none; border: none; color: var(--text2); cursor: pointer; transition: color .2s; -webkit-tap-highlight-color: transparent; }
         .mob-tab.active { color: var(--purple); }
         .mob-icon { font-size: 1.2rem; line-height: 1; }
@@ -42,15 +42,15 @@
         /* Mobile more sheet */
         .mob-more-overlay { position: fixed; inset: 0; z-index: 310; background: rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .25s; }
         .mob-more-overlay.open { opacity: 1; pointer-events: auto; }
-        .mob-more-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 320; background: var(--card); border-radius: 18px 18px 0 0; padding: 0 0 env(safe-area-inset-bottom, 12px); transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
+        .mob-more-sheet { position: fixed; top: 0; left: 0; right: 0; z-index: 320; background: var(--card); border-radius: 0 0 18px 18px; padding: env(safe-area-inset-top, 0) 0 12px; transform: translateY(-100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
         .mob-more-sheet.open { transform: translateY(0); }
         .mob-more-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 10px; font-size: .9rem; font-weight: 700; color: var(--text); }
         .mob-more-close { background: none; border: none; color: var(--text2); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
         .mob-more-item { display: block; width: 100%; text-align: left; padding: 14px 20px; background: none; border: none; border-top: 1px solid var(--border); color: var(--text); font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .15s; }
         .mob-more-item:active { background: rgba(139,92,246,.1); }
 
-        /* Body padding for mobile bottom nav */
-        body { padding-bottom: 72px; }
+        /* Body padding (no longer needed for bottom nav) */
+        body { padding-bottom: 0; }
 
         /* ── SELF ASSESSMENT ── */
         .sa-intro { font-size: .82rem; color: var(--text2); line-height: 1.75; text-align: center; padding: 4px 0 8px; }
@@ -451,6 +451,10 @@
         .app-footer .ft-biz  { font-size: .72rem; color: var(--muted); line-height: 1.9; }
         .app-footer .ft-name { font-size: .7rem; color: var(--muted); margin-top: 6px; }
 
+        /* Audio toast */
+        .vf-audio-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); z-index: 9999; background: var(--card2); color: var(--text); padding: 12px 20px; border-radius: 12px; font-size: .82rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.5); border: 1px solid var(--border); opacity: 0; transition: all .3s ease; pointer-events: none; white-space: nowrap; }
+        .vf-audio-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         /* Label badge */
         .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .68rem; font-weight: 700; background: rgba(6,182,212,.15); color: var(--blue); border: 1px solid rgba(6,182,212,.3); margin-left: 6px; vertical-align: middle; }
 
@@ -514,8 +518,8 @@
             /* Mobile: bottom nav visible, top tabs hidden */
             .desk-tabs { display: none !important; }
             .mob-nav { display: flex; }
-            /* Warmup ctrl bar sits above the bottom nav */
-            .wu-ctrl-bar { bottom: 62px; }
+            /* Warmup ctrl bar at bottom (nav is now on top) */
+            .wu-ctrl-bar { bottom: 0; }
         }
 
         /* ── RESPONSIVE: Desktop / Tablet (768px+) ── */
@@ -640,7 +644,7 @@
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
     </nav>
 
-    <!-- Mobile bottom nav -->
+    <!-- Mobile top nav -->
     <nav class="mob-nav" id="mob-nav">
         <button class="mob-tab active" data-tab="routine" onclick="switchTab('routine')">
             <span class="mob-icon">🎯</span><span class="mob-label">루틴</span>
@@ -1500,7 +1504,98 @@
 
 </div>
 
+<div id="vf-audio-toast" class="vf-audio-toast"></div>
+
 <script>
+// ════════════════════════════════════════════════
+// SHARED AUDIO MANAGER
+// Single AudioContext + mic stream, reused across all features
+// ════════════════════════════════════════════════
+const VF = {
+    ctx: null,           // single AudioContext
+    micStream: null,     // single mic MediaStream
+    micSource: null,     // MediaStreamSourceNode
+    unlocked: false,     // user gesture received?
+    _toastTimer: null,
+};
+
+/** Ensure AudioContext exists & is running. Call from user-gesture handlers. */
+async function vfEnsureCtx() {
+    if (!VF.ctx) {
+        VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('[VF] AudioContext created, state:', VF.ctx.state);
+    }
+    if (VF.ctx.state === 'suspended') {
+        try {
+            await VF.ctx.resume();
+            console.log('[VF] AudioContext resumed');
+        } catch(e) {
+            console.warn('[VF] AudioContext resume failed:', e);
+        }
+    }
+    VF.unlocked = true;
+    return VF.ctx;
+}
+
+/** Get or create a mic stream + AnalyserNode. Returns { stream, analyser }. */
+async function vfGetMic(fftSize) {
+    fftSize = fftSize || 2048;
+    await vfEnsureCtx();
+    if (!VF.micStream || !VF.micStream.active) {
+        try {
+            VF.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            VF.micSource = VF.ctx.createMediaStreamSource(VF.micStream);
+            console.log('[VF] Mic stream obtained');
+        } catch(e) {
+            console.error('[VF] getUserMedia failed:', e);
+            throw e;
+        }
+    }
+    const analyser = VF.ctx.createAnalyser();
+    analyser.fftSize = fftSize;
+    VF.micSource.connect(analyser);
+    return { stream: VF.micStream, analyser: analyser, sampleRate: VF.ctx.sampleRate };
+}
+
+/** Release mic stream (call when no feature needs it). */
+function vfReleaseMic() {
+    if (VF.micSource) { try { VF.micSource.disconnect(); } catch(e){} VF.micSource = null; }
+    if (VF.micStream) { VF.micStream.getTracks().forEach(t => t.stop()); VF.micStream = null; }
+    console.log('[VF] Mic released');
+}
+
+/** Safe Tone.start() wrapper — always resume context first. */
+async function vfToneStart() {
+    await vfEnsureCtx();
+    try { await Tone.start(); } catch(e) { console.warn('[VF] Tone.start failed:', e); }
+}
+
+/** Show a brief toast message for audio issues. */
+function vfToast(msg, duration) {
+    duration = duration || 2500;
+    const el = document.getElementById('vf-audio-toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(VF._toastTimer);
+    VF._toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+/** One-time setup: on first user touch/click, unlock AudioContext. */
+function vfInstallUnlockListener() {
+    const unlock = async () => {
+        if (!VF.unlocked) {
+            await vfEnsureCtx();
+            // Also nudge Tone.js
+            try { await vfToneStart(); } catch(e){}
+            console.log('[VF] Audio unlocked via user gesture');
+        }
+    };
+    document.addEventListener('touchstart', unlock, { once: false, passive: true });
+    document.addEventListener('click', unlock, { once: false, passive: true });
+}
+vfInstallUnlockListener();
+
 // ════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════
@@ -1772,28 +1867,28 @@ async function toggleMic() { isMicOn ? stopMic() : await startMic(); }
 
 async function startMic() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
-        audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
-        analyser  = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        micSource = audioCtx.createMediaStreamSource(stream);
-        micSource.connect(analyser);
+        const mic = await vfGetMic(2048);
+        audioCtx  = VF.ctx;
+        analyser  = mic.analyser;
+        micSource = VF.micSource;
         isMicOn = true;
         document.getElementById('mic-btn').textContent = '⏹ 마이크 정지';
         document.getElementById('mic-btn').className   = 'btn btn-red';
         document.getElementById('mic-dot').classList.add('on');
         document.getElementById('mic-label').textContent = '마이크 켜짐 – 소리를 내보세요';
         pitchTimer = setInterval(detectPitch, 60);
+        console.log('[Pitch] Mic started via shared manager');
     } catch(e) {
-        alert('마이크 권한이 필요합니다.\n브라우저에서 마이크 허용 후 다시 시도하세요.');
+        console.error('[Pitch] Mic start failed:', e);
+        vfToast('마이크 권한이 필요합니다. 브라우저에서 허용해 주세요.');
     }
 }
 
 function stopMic() {
     clearInterval(pitchTimer);
-    if (micSource) micSource.disconnect();
-    if (audioCtx)  audioCtx.close();
-    micSource = audioCtx = analyser = null;
+    if (analyser) { try { analyser.disconnect(); } catch(e){} }
+    analyser = null;
+    // Don't close shared audioCtx or mic — other features may use them
     isMicOn = false;
     document.getElementById('mic-btn').textContent = '🎤 마이크 시작';
     document.getElementById('mic-btn').className   = 'btn btn-purple';
@@ -2180,7 +2275,7 @@ async function toggleEx() {
 }
 
 async function startEx() {
-    await Tone.start();
+    await vfToneStart();
 
     // 처음 시작인지 이어서 시작인지 구분
     const isResume = (progSequence.length > 0 && document.getElementById('play-card').style.display !== 'none');
@@ -2500,7 +2595,7 @@ async function wuJumpToStep(idx) {
     // If not yet playing, start fresh from this step
     if (!wuActive) {
         await ensurePianoReady();
-        await Tone.start();
+        await vfToneStart();
         wuActive = true;
         wuStepIdx = idx;
         document.getElementById('wu-play-btn').textContent = '⏹ 정지';
@@ -2568,7 +2663,7 @@ function wuPrevStep() {
 async function wuStart() {
     if (wuActive) return;
     await ensurePianoReady();
-    await Tone.start();
+    await vfToneStart();
 
     wuActive  = true;
     wuStepIdx = 0;
@@ -2653,7 +2748,7 @@ function wuPlayNote() {
     const noteDurSec = isSustain ? sc.sustainSec : (60 / wuBpm) * 0.82;
     const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / wuBpm;
 
-    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) {}
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) { console.warn('[WU] piano play failed:', e); }
 
     const noteIdxMod = ((midi % 12) + 12) % 12;
     const noteOct    = Math.floor(midi / 12) - 1;
@@ -2798,7 +2893,7 @@ function renderHvSteps() {
 async function hvJumpToStep(idx) {
     if (idx < 0 || idx >= HEAVY_STEPS.length) return;
     if (!hvActive) {
-        await ensurePianoReady(); await Tone.start();
+        await ensurePianoReady(); await vfToneStart();
         hvActive = true; hvStepIdx = idx;
         document.getElementById('hv-play-btn').textContent = '⏹ 정지';
         document.getElementById('hv-play-btn').className = 'btn btn-red';
@@ -2847,7 +2942,7 @@ function hvPrevStep() {
 
 async function hvStart() {
     if (hvActive) return;
-    await ensurePianoReady(); await Tone.start();
+    await ensurePianoReady(); await vfToneStart();
     hvActive = true; hvStepIdx = 0;
     document.getElementById('hv-play-btn').textContent = '⏹ 정지';
     document.getElementById('hv-play-btn').className = 'btn btn-red';
@@ -2905,7 +3000,7 @@ function hvPlayNote() {
     const isSustain = (hvNoteIdx===sc.sustainIdx);
     const noteDurSec = isSustain ? sc.sustainSec : (60/hvBpm)*0.82;
     const waitMs = isSustain ? sc.sustainSec*1000+300 : 60000/hvBpm;
-    try{piano.triggerAttackRelease(tNote,noteDurSec);}catch(e){}
+    try{piano.triggerAttackRelease(tNote,noteDurSec);}catch(e){ console.warn('[Routine] piano play failed:', e); }
 
     const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
     const statusText = `🔥 Step ${hvStepIdx+1}/${HEAVY_STEPS.length} · ${step.syllable} · 키 ${keys[hvKeySeq[hvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
@@ -3040,7 +3135,7 @@ function renderLvSteps() {
 async function lvJumpToStep(idx) {
     if (idx < 0 || idx >= LIGHT_STEPS.length) return;
     if (!lvActive) {
-        await ensurePianoReady(); await Tone.start();
+        await ensurePianoReady(); await vfToneStart();
         lvActive = true; lvStepIdx = idx;
         document.getElementById('lv-play-btn').textContent = '⏹ 정지';
         document.getElementById('lv-play-btn').className = 'btn btn-red';
@@ -3089,7 +3184,7 @@ function lvPrevStep() {
 
 async function lvStart() {
     if (lvActive) return;
-    await ensurePianoReady(); await Tone.start();
+    await ensurePianoReady(); await vfToneStart();
     lvActive = true; lvStepIdx = 0;
     document.getElementById('lv-play-btn').textContent = '⏹ 정지';
     document.getElementById('lv-play-btn').className = 'btn btn-red';
@@ -3147,7 +3242,7 @@ function lvPlayNote() {
     const isSustain = (lvNoteIdx===sc.sustainIdx);
     const noteDurSec = isSustain ? sc.sustainSec : (60/lvBpm)*0.82;
     const waitMs = isSustain ? sc.sustainSec*1000+300 : 60000/lvBpm;
-    try{piano.triggerAttackRelease(tNote,noteDurSec);}catch(e){}
+    try{piano.triggerAttackRelease(tNote,noteDurSec);}catch(e){ console.warn('[Routine] piano play failed:', e); }
 
     const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
     const statusText = `🔥 Step ${lvStepIdx+1}/${LIGHT_STEPS.length} · ${step.syllable} · 키 ${keys[lvKeySeq[lvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
@@ -3289,7 +3384,7 @@ async function startPitchCheck(midi) {
     await ensurePianoReady();
 
     // ── Phase 1: play piano 3 s ──
-    await Tone.start();
+    await vfToneStart();
     try { piano.triggerAttack(midiToTone(midi)); } catch(e){}
 
     let pianoCD = 3;
@@ -3318,15 +3413,16 @@ async function _pcsStartRecording() {
     cdEl.textContent    = '3';
     phaseEl.textContent = '🎤 지금 같은 음을 내보세요!';
 
-    // Open mic
+    // Open mic via shared manager
     try {
-        pcsMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        pcsMicCtx    = new (window.AudioContext || window.webkitAudioContext)();
-        pcsMicAn     = pcsMicCtx.createAnalyser();
-        pcsMicAn.fftSize = 2048;
-        pcsMicSrc    = pcsMicCtx.createMediaStreamSource(pcsMicStream);
-        pcsMicSrc.connect(pcsMicAn);
+        const mic = await vfGetMic(2048);
+        pcsMicStream = mic.stream;
+        pcsMicCtx    = VF.ctx;
+        pcsMicAn     = mic.analyser;
+        pcsMicSrc    = VF.micSource;
+        console.log('[SelfCheck] Mic started via shared manager');
     } catch(e) {
+        console.error('[SelfCheck] Mic failed:', e);
         phaseEl.textContent = '❌ 마이크 권한이 필요합니다. 브라우저에서 허용 후 다시 시도하세요.';
         cdEl.textContent = '!';
         cdEl.style.color = 'var(--red)';
@@ -3341,7 +3437,7 @@ async function _pcsStartRecording() {
         if (!pcsMicAn) return;
         const buf = new Float32Array(pcsMicAn.fftSize);
         pcsMicAn.getFloatTimeDomainData(buf);
-        const freq = autoCorrelate(buf, pcsMicCtx.sampleRate);
+        const freq = autoCorrelate(buf, VF.ctx.sampleRate);
         if (freq && freq > 60 && freq < 1400) pcsSamples.push(freq);
     }, 80);
 
@@ -3362,10 +3458,9 @@ async function _pcsStartRecording() {
 
 function _pcsCleanupMic() {
     clearInterval(pcsSampleTmr);
-    if (pcsMicSrc)    { try { pcsMicSrc.disconnect(); } catch(e){} }
-    if (pcsMicCtx)    { try { pcsMicCtx.close(); } catch(e){} }
-    if (pcsMicStream) { try { pcsMicStream.getTracks().forEach(t => t.stop()); } catch(e){} }
-    pcsMicStream = pcsMicCtx = pcsMicAn = pcsMicSrc = null;
+    if (pcsMicAn) { try { pcsMicAn.disconnect(); } catch(e){} }
+    // Don't close shared ctx or stop shared mic stream
+    pcsMicStream = null; pcsMicCtx = null; pcsMicAn = null; pcsMicSrc = null;
 }
 
 // ── Phase 3: analyze & show result ──
@@ -3538,25 +3633,25 @@ function gmPickTarget() {
 async function gmPlayReference(midi) {
     try {
         await ensurePianoReady();
-        await Tone.start();
+        await vfToneStart();
         const noteName = midiToTone(midi);
         piano.triggerAttackRelease(noteName, 0.8);
-    } catch(e) {}
+        console.log('[PitchBreaker] Reference tone played:', noteName);
+    } catch(e) { console.warn('[PitchBreaker] Reference tone failed:', e); }
 }
 
 async function gmStartMic() {
-    gmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    gmMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const src = gmAudioCtx.createMediaStreamSource(gmMicStream);
-    gmAnalyser = gmAudioCtx.createAnalyser();
-    gmAnalyser.fftSize = 2048;
-    src.connect(gmAnalyser);
+    const mic = await vfGetMic(2048);
+    gmAudioCtx = VF.ctx;
+    gmMicStream = mic.stream;
+    gmAnalyser = mic.analyser;
+    console.log('[PitchBreaker] Mic started via shared manager');
 }
 
 function gmStopMic() {
     if (gmRafId) { cancelAnimationFrame(gmRafId); gmRafId = null; }
-    if (gmMicStream) { gmMicStream.getTracks().forEach(t => t.stop()); gmMicStream = null; }
-    if (gmAudioCtx) { gmAudioCtx.close().catch(()=>{}); gmAudioCtx = null; }
+    if (gmAnalyser) { try { gmAnalyser.disconnect(); } catch(e){} gmAnalyser = null; }
+    // Don't close shared ctx or stop shared mic
 }
 
 function gmInitPitchCanvas() {
@@ -3776,7 +3871,7 @@ async function gmStart() {
         gmPickTarget();
         gmDetectLoop();
     } catch(e) {
-        alert('마이크 접근 권한이 필요합니다.');
+        vfToast('마이크 권한이 필요합니다. 브라우저에서 허용해 주세요.');
         gmStop();
     }
 }
@@ -3919,18 +4014,17 @@ function fbSpawnObstacle() {
 }
 
 async function fbStartMic() {
-    fbAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    fbMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const src = fbAudioCtx.createMediaStreamSource(fbMicStream);
-    fbAnalyser = fbAudioCtx.createAnalyser();
-    fbAnalyser.fftSize = 2048;
-    src.connect(fbAnalyser);
+    const mic = await vfGetMic(2048);
+    fbAudioCtx = VF.ctx;
+    fbMicStream = mic.stream;
+    fbAnalyser = mic.analyser;
+    console.log('[VocalFlight] Mic started via shared manager');
 }
 
 function fbStopMic() {
     if (fbRafId) { cancelAnimationFrame(fbRafId); fbRafId = null; }
-    if (fbMicStream) { fbMicStream.getTracks().forEach(t => t.stop()); fbMicStream = null; }
-    if (fbAudioCtx) { fbAudioCtx.close().catch(()=>{}); fbAudioCtx = null; }
+    if (fbAnalyser) { try { fbAnalyser.disconnect(); } catch(e){} fbAnalyser = null; }
+    // Don't close shared ctx or stop shared mic
 }
 
 async function fbStart() {
@@ -3952,7 +4046,7 @@ async function fbStart() {
         fbActive = true;
         fbGameLoop();
     } catch(e) {
-        alert('마이크 접근 권한이 필요합니다.');
+        vfToast('마이크 권한이 필요합니다. 브라우저에서 허용해 주세요.');
         fbStop();
     }
 }
@@ -4296,14 +4390,14 @@ async function toggleSpecMic() {
 
 async function startSpecMic() {
     try {
-        specStream   = await navigator.mediaDevices.getUserMedia({ audio: true });
-        specCtx      = new (window.AudioContext || window.webkitAudioContext)();
-        specAnalyser = specCtx.createAnalyser();
-        specAnalyser.fftSize           = SPEC_FFT;
+        const mic = await vfGetMic(SPEC_FFT);
+        specCtx      = VF.ctx;
+        specAnalyser = mic.analyser;
         specAnalyser.smoothingTimeConstant = SPEC_SMOOTH;
-        specSource   = specCtx.createMediaStreamSource(specStream);
-        specSource.connect(specAnalyser);
+        specStream   = mic.stream;
+        specSource   = VF.micSource;
         specRunning  = true;
+        console.log('[Spec] Mic started via shared manager');
 
         document.getElementById('spec-mic-dot').classList.add('on');
         document.getElementById('spec-mic-label').textContent = '듣는 중';
@@ -4325,7 +4419,8 @@ async function startSpecMic() {
 
         specDrawLoop();
     } catch(e) {
-        alert('마이크 접근이 거부되었거나 지원되지 않습니다.\n' + e.message);
+        console.error('[Spec] Mic failed:', e);
+        vfToast('마이크 권한이 필요합니다. 브라우저에서 허용해 주세요.');
     }
 }
 
@@ -4333,10 +4428,9 @@ function stopSpecMic() {
     specRunning = false;
     specStopTime = Date.now();
     if (specRafId) { cancelAnimationFrame(specRafId); specRafId = null; }
-    if (specSource) { try { specSource.disconnect(); } catch(e){} specSource = null; }
-    if (specCtx)    { specCtx.close(); specCtx = null; }
-    if (specStream) { specStream.getTracks().forEach(t => t.stop()); specStream = null; }
-    specAnalyser = null;
+    if (specAnalyser) { try { specAnalyser.disconnect(); } catch(e){} }
+    specAnalyser = null; specSource = null; specStream = null;
+    // Don't close shared ctx or stop shared mic
 
     document.getElementById('spec-mic-dot').classList.remove('on');
     document.getElementById('spec-mic-label').textContent = '정지됨';
