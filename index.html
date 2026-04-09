@@ -1525,95 +1525,107 @@
 
 <script>
 // ════════════════════════════════════════════════
-// SHARED AUDIO MANAGER  v3
-// One AudioContext for the entire app (Tone.js + mic + analysis).
+// SHARED AUDIO MANAGER  v4
+// ── Key design ──────────────────────────────────
+// 1. VF.ctx is created IMMEDIATELY (before any user gesture).
+//    On iOS it starts 'suspended' — that is expected.
+// 2. Tone.setContext(VF.ctx) makes Tone.js use the SAME AudioContext.
+//    This is the only reliable way to ensure piano notes play on the
+//    same context that we resume/unlock.
+// 3. unlock = ctx.resume() + silent buffer, both in the gesture handler.
 // ════════════════════════════════════════════════
 const VF = {
-    ctx: null,           // shared raw AudioContext (= Tone's internal ctx after unlock)
-    micStream: null,     // single MediaStream — reused across all mic features
-    micSource: null,     // MediaStreamSourceNode on shared ctx
-    unlocked: false,     // true once audio engine confirmed running
+    ctx: null,           // THE one AudioContext for the whole app
+    micStream: null,     // single MediaStream reused across features
+    micSource: null,     // MediaStreamSourceNode
+    unlocked: false,
     _toastTimer: null,
     _unlockInProgress: false,
 };
 
-/**
- * _vfRawCtx — get the raw AudioContext from Tone.js.
- * Tone.js creates its own ctx on load; we piggy-back on it so there is
- * exactly ONE AudioContext in the entire app.
- */
-function _vfRawCtx() {
+// ── Create the shared AudioContext immediately ──────────────────────
+// iOS starts it in 'suspended'; that's fine — we resume on first gesture.
+(function _vfInitCtx() {
     try {
-        // Tone.js 14.x: Tone.getContext().rawContext is the BaseAudioContext
-        const raw = Tone.getContext().rawContext;
-        if (raw) return raw;
-    } catch(e) {}
-    return null;
-}
+        VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('[VF] AudioContext created at init, state:', VF.ctx.state);
+    } catch(e) {
+        console.error('[VF] AudioContext creation failed:', e);
+        return;
+    }
+    // ── Tell Tone.js to use the SAME AudioContext ───────────────────
+    // Must happen BEFORE initPiano() creates the Sampler.
+    // Tone.setContext() accepts a raw AudioContext and wraps it internally.
+    try {
+        Tone.setContext(VF.ctx);
+        console.log('[VF] Tone.setContext(VF.ctx) OK — one AudioContext for everything');
+    } catch(e) {
+        console.warn('[VF] Tone.setContext failed (Tone.js may not support it):', e.message);
+    }
+}());
 
 /**
- * vfEnsureCtx  — THE audio unlock entry point.
+ * vfEnsureCtx — unlock the audio engine from within a user-gesture handler.
  *
- * MUST be the FIRST await in every button-click handler (no macrotask
- * delays before this call — iOS breaks the gesture chain otherwise).
+ * MUST be the FIRST await in every play/mic button handler.
+ * No macrotask delays (setTimeout) before this call or iOS will block it.
  *
- * Three-step iOS/Android unlock sequence:
- *   1. Tone.start()  → resumes Tone's internal AudioContext
- *   2. ctx.resume()  → extra safety for Android & some iOS builds
- *   3. Silent-buffer → confirmed iOS Audio Session unlock trick
+ * Unlock sequence:
+ *   1. ctx.resume()       — the standard Web Audio unlock
+ *   2. Tone.start()       — backup: also resumes via Tone's wrapper
+ *   3. silent AudioBuffer — iOS Safari needs an *actual* node.start()
+ *                           inside the gesture to open the Audio Session
  */
 async function vfEnsureCtx() {
-    console.log('[VF] vfEnsureCtx called');
+    console.log('[VF] vfEnsureCtx — ctx.state:', VF.ctx ? VF.ctx.state : 'NO CTX',
+                '| __audioUnlocked:', window.__audioUnlocked);
 
-    // ── Step 1: Tone.start() — Tone's internal ctx ──────────────────
-    try {
-        await Tone.start();
-        console.log('[VF] Tone.start() OK');
-    } catch(e) {
-        console.warn('[VF] Tone.start() failed:', e.name, e.message);
-    }
-
-    // ── Step 2: Adopt Tone's raw AudioContext as VF.ctx ─────────────
-    const toneRaw = _vfRawCtx();
-    if (toneRaw) {
-        VF.ctx = toneRaw;
-        console.log('[VF] Using Tone rawContext, state:', VF.ctx.state);
-    } else if (!VF.ctx) {
+    if (!VF.ctx) {
+        // Fallback: ctx wasn't created at init (very rare)
         VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        console.warn('[VF] Fallback AudioContext created, state:', VF.ctx.state);
+        console.warn('[VF] Late-created fallback AudioContext');
     }
 
-    // ── Step 3: ctx.resume() ────────────────────────────────────────
+    // ── 1. ctx.resume() ─────────────────────────────────────────────
     if (VF.ctx.state === 'suspended') {
         try {
             await VF.ctx.resume();
-            console.log('[VF] ctx.resume() OK, state:', VF.ctx.state);
+            console.log('[VF] ctx.resume() OK — state now:', VF.ctx.state);
         } catch(e) {
             console.warn('[VF] ctx.resume() failed:', e.name, e.message);
         }
     }
 
-    // ── Step 4: Silent-buffer playback ──────────────────────────────
-    // iOS Safari requires an actual AudioBufferSourceNode.start() call
-    // inside the gesture to fully open the Audio Session.
+    // ── 2. Tone.start() ─────────────────────────────────────────────
     try {
-        const silentBuf = VF.ctx.createBuffer(1, 1, VF.ctx.sampleRate);
-        const silentSrc = VF.ctx.createBufferSource();
-        silentSrc.buffer = silentBuf;
-        silentSrc.connect(VF.ctx.destination);
-        silentSrc.start(0);
-        console.log('[VF] Silent buffer played — iOS Audio Session opened');
+        await Tone.start();
+        console.log('[VF] Tone.start() OK — Tone ctx state:', Tone.context?.state);
+    } catch(e) {
+        console.warn('[VF] Tone.start() failed:', e.name, e.message);
+    }
+
+    // ── 3. Silent AudioBuffer — iOS Audio Session unlock ────────────
+    // iOS Safari requires AudioBufferSourceNode.start() from within
+    // the gesture to fully open the Audio Session. ctx.resume() alone
+    // is not sufficient on many iOS versions.
+    try {
+        const buf = VF.ctx.createBuffer(1, 1, VF.ctx.sampleRate);
+        const src = VF.ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(VF.ctx.destination);
+        src.start(0);
+        console.log('[VF] Silent buffer played — iOS Audio Session open');
     } catch(e) {
         console.warn('[VF] Silent buffer failed:', e.name, e.message);
     }
 
     VF.unlocked = (VF.ctx.state === 'running');
-    console.log('[VF] ctx.state =', VF.ctx.state, '| window.__audioUnlocked =', VF.unlocked);
     window.__audioUnlocked = VF.unlocked;
+    console.log('[VF] after unlock — ctx.state:', VF.ctx.state,
+                '| Tone.context.state:', Tone.context?.state,
+                '| unlocked:', VF.unlocked);
 
-    // Sync banner whenever we confirm unlock
     if (VF.unlocked) _vfMarkBannerReady();
-
     return VF.ctx;
 }
 
@@ -2140,7 +2152,7 @@ function getRangeHint() {
 
 function setVoice(v) {
     voice = v; keyIdx = 0;
-    document.querySelectorAll('.vtoggle').forEach((b,i) =>
+    document.querySelectorAll('.voice-toggle .vtoggle').forEach((b,i) =>
         b.classList.toggle('active', (i===0&&v==='male')||(i===1&&v==='female'))
     );
     document.getElementById('range-hint').textContent = getRangeHint();
