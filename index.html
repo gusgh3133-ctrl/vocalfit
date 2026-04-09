@@ -677,7 +677,7 @@
     <!-- 🔊 Sound unlock banner (mobile only) -->
     <div class="snd-banner" id="snd-banner">
         <span class="snd-banner-hint">처음 사용 시 <strong>소리 켜기</strong>를 눌러주세요</span>
-        <button class="snd-unlock-btn" id="snd-unlock-btn" onclick="vfSoundUnlock()">🔊 소리 켜기</button>
+        <button class="snd-unlock-btn" id="snd-unlock-btn">🔊 소리 켜기</button>
     </div>
 
     <!-- Mobile more menu overlay -->
@@ -1552,39 +1552,66 @@ function _vfRawCtx() {
 }
 
 /**
- * vfEnsureCtx
- * MUST be the FIRST await inside any button-click handler.
- * No setTimeout/macrotask delays before calling this — iOS gesture chain.
+ * vfEnsureCtx  — THE audio unlock entry point.
+ *
+ * MUST be the FIRST await in every button-click handler (no macrotask
+ * delays before this call — iOS breaks the gesture chain otherwise).
+ *
+ * Three-step iOS/Android unlock sequence:
+ *   1. Tone.start()  → resumes Tone's internal AudioContext
+ *   2. ctx.resume()  → extra safety for Android & some iOS builds
+ *   3. Silent-buffer → confirmed iOS Audio Session unlock trick
  */
 async function vfEnsureCtx() {
-    // 1. Unlock Tone.js's AudioContext via Tone.start()
-    //    (this is the call iOS requires to come from within a user gesture)
+    console.log('[VF] vfEnsureCtx called');
+
+    // ── Step 1: Tone.start() — Tone's internal ctx ──────────────────
     try {
         await Tone.start();
-        console.log('[VF] Tone.start() done');
+        console.log('[VF] Tone.start() OK');
     } catch(e) {
         console.warn('[VF] Tone.start() failed:', e.name, e.message);
     }
 
-    // 2. Adopt Tone's underlying AudioContext as VF.ctx
+    // ── Step 2: Adopt Tone's raw AudioContext as VF.ctx ─────────────
     const toneRaw = _vfRawCtx();
     if (toneRaw) {
         VF.ctx = toneRaw;
+        console.log('[VF] Using Tone rawContext, state:', VF.ctx.state);
     } else if (!VF.ctx) {
-        // Fallback only — should not normally happen
         VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        console.warn('[VF] Created fallback AudioContext');
+        console.warn('[VF] Fallback AudioContext created, state:', VF.ctx.state);
     }
 
-    // 3. Explicitly resume if still suspended (extra safety for Android)
+    // ── Step 3: ctx.resume() ────────────────────────────────────────
     if (VF.ctx.state === 'suspended') {
-        try { await VF.ctx.resume(); } catch(e) { console.warn('[VF] resume() failed:', e); }
+        try {
+            await VF.ctx.resume();
+            console.log('[VF] ctx.resume() OK, state:', VF.ctx.state);
+        } catch(e) {
+            console.warn('[VF] ctx.resume() failed:', e.name, e.message);
+        }
+    }
+
+    // ── Step 4: Silent-buffer playback ──────────────────────────────
+    // iOS Safari requires an actual AudioBufferSourceNode.start() call
+    // inside the gesture to fully open the Audio Session.
+    try {
+        const silentBuf = VF.ctx.createBuffer(1, 1, VF.ctx.sampleRate);
+        const silentSrc = VF.ctx.createBufferSource();
+        silentSrc.buffer = silentBuf;
+        silentSrc.connect(VF.ctx.destination);
+        silentSrc.start(0);
+        console.log('[VF] Silent buffer played — iOS Audio Session opened');
+    } catch(e) {
+        console.warn('[VF] Silent buffer failed:', e.name, e.message);
     }
 
     VF.unlocked = (VF.ctx.state === 'running');
-    console.log('[VF] ctx.state =', VF.ctx.state, '| unlocked =', VF.unlocked);
+    console.log('[VF] ctx.state =', VF.ctx.state, '| window.__audioUnlocked =', VF.unlocked);
+    window.__audioUnlocked = VF.unlocked;
 
-    // Sync banner UI whenever we successfully unlock
+    // Sync banner whenever we confirm unlock
     if (VF.unlocked) _vfMarkBannerReady();
 
     return VF.ctx;
@@ -1657,33 +1684,39 @@ function vfToast(msg, duration) {
 }
 
 /**
- * vfSoundUnlock — called by the explicit "🔊 소리 켜기" button.
- * Also auto-called on first play press of routines/exercise.
+ * vfSoundUnlock — called by the "🔊 소리 켜기" button (click + touchend).
+ * Also auto-called at the start of every routine/exercise play handler.
  */
-async function vfSoundUnlock() {
-    if (VF._unlockInProgress) return;
+async function vfSoundUnlock(e) {
+    if (e) e.preventDefault(); // prevent ghost-click after touchend
+    console.log('[VF] 소리 켜기 button tapped, __audioUnlocked =', window.__audioUnlocked);
+
+    if (VF._unlockInProgress) { console.log('[VF] unlock already in progress'); return; }
     VF._unlockInProgress = true;
 
-    const btn  = document.getElementById('snd-unlock-btn');
-    const banner = document.getElementById('snd-banner');
-    if (btn) { btn.textContent = '⏳ 준비 중...'; btn.classList.add('loading'); }
+    const btn    = document.getElementById('snd-unlock-btn');
+    const hint   = document.querySelector('.snd-banner-hint');
+    if (btn) { btn.textContent = '⏳ 준비 중...'; btn.classList.add('loading'); btn.disabled = true; }
 
     try {
-        await vfEnsureCtx();
-        await ensurePianoReady();
-    } catch(e) {
-        console.warn('[VF] Sound unlock error:', e);
+        await vfEnsureCtx();          // silent buffer + Tone.start + ctx.resume
+        await ensurePianoReady();     // preload piano samples
+    } catch(err) {
+        console.warn('[VF] vfSoundUnlock error:', err);
     }
 
     VF._unlockInProgress = false;
+    console.log('[VF] after unlock — ctx.state:', VF.ctx?.state, '| unlocked:', VF.unlocked);
 
     if (VF.unlocked) {
-        _vfMarkBannerReady(); // updates banner + fades it out
-        console.log('[VF] Sound unlock SUCCESS');
+        _vfMarkBannerReady();         // green button + fade banner
+        console.log('[VF] 소리 활성화 완료 ✅');
     } else {
-        if (btn) { btn.textContent = '🔊 소리 켜기'; btn.classList.remove('loading'); }
+        // Reset button so user can retry
+        if (btn)  { btn.textContent = '🔊 소리 켜기'; btn.classList.remove('loading'); btn.disabled = false; }
+        if (hint) { hint.innerHTML = '❌ <strong>활성화 실패</strong> — 다시 눌러주세요'; }
         vfToast('🔇 무음 모드 해제 후 다시 시도해 주세요');
-        console.warn('[VF] Sound unlock FAILED — ctx still:', VF.ctx?.state);
+        console.warn('[VF] 소리 활성화 실패 ❌ ctx.state:', VF.ctx?.state);
     }
 }
 
@@ -2769,8 +2802,11 @@ function wuPrevStep() {
 
 async function wuStart() {
     if (wuActive) return;
+    console.log('[WU] play routine clicked — ctx.state:', VF.ctx?.state, 'unlocked:', window.__audioUnlocked);
     await vfToneStart();      // FIRST: unlock audio within gesture chain (no delays)
+    console.log('[WU] after vfToneStart — ctx.state:', VF.ctx?.state);
     await ensurePianoReady(); // THEN: wait for piano (may have setTimeout delays)
+    console.log('[WU] piano ready, starting routine');
 
     wuActive  = true;
     wuStepIdx = 0;
@@ -2855,7 +2891,8 @@ function wuPlayNote() {
     const noteDurSec = isSustain ? sc.sustainSec : (60 / wuBpm) * 0.82;
     const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / wuBpm;
 
-    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) { console.warn('[WU] piano play failed:', e); }
+    console.log('[WU] play note', tNote, '| ctx.state:', VF.ctx?.state, '| readyState:', typeof piano !== 'undefined' ? 'piano OK' : 'no piano');
+    try { piano.triggerAttackRelease(tNote, noteDurSec); console.log('[WU] triggerAttackRelease OK'); } catch(e) { console.warn('[WU] piano play failed:', e.name, e.message); }
 
     const noteIdxMod = ((midi % 12) + 12) % 12;
     const noteOct    = Math.floor(midi / 12) - 1;
@@ -4391,6 +4428,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Build C-note reference lines on spectrogram
     buildSpecOverlay();
+
+    // ── 🔊 Sound unlock button: click + touchend (iOS requires touchend) ──
+    const sndBtn = document.getElementById('snd-unlock-btn');
+    if (sndBtn) {
+        sndBtn.addEventListener('click',    vfSoundUnlock, { passive: false });
+        sndBtn.addEventListener('touchend', vfSoundUnlock, { passive: false });
+    }
+    console.log('[VF] Sound unlock button wired (click + touchend)');
 });
 
 // ════════════════════════════════════════════════
