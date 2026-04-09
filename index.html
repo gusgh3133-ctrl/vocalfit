@@ -455,6 +455,15 @@
         .vf-audio-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); z-index: 9999; background: var(--card2); color: var(--text); padding: 12px 20px; border-radius: 12px; font-size: .82rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.5); border: 1px solid var(--border); opacity: 0; transition: all .3s ease; pointer-events: none; white-space: nowrap; }
         .vf-audio-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+        /* 🔊 Sound unlock banner */
+        .snd-banner { display: none; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; background: rgba(245,158,11,.12); border-bottom: 1px solid rgba(245,158,11,.25); }
+        .snd-banner-hint { font-size: .75rem; color: var(--yellow); line-height: 1.4; flex: 1; }
+        .snd-banner-hint strong { color: var(--yellow); }
+        .snd-unlock-btn { flex-shrink: 0; padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--yellow); background: transparent; color: var(--yellow); font-size: .8rem; font-weight: 700; cursor: pointer; transition: all .2s; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+        .snd-unlock-btn:active { background: rgba(245,158,11,.15); }
+        .snd-unlock-btn.ready { border-color: var(--green); color: var(--green); background: rgba(16,185,129,.08); }
+        .snd-unlock-btn.loading { opacity: .6; pointer-events: none; }
+
         /* Label badge */
         .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .68rem; font-weight: 700; background: rgba(6,182,212,.15); color: var(--blue); border: 1px solid rgba(6,182,212,.3); margin-left: 6px; vertical-align: middle; }
 
@@ -520,6 +529,8 @@
             .mob-nav { display: flex; }
             /* Warmup ctrl bar at bottom (nav is now on top) */
             .wu-ctrl-bar { bottom: 0; }
+            /* Show sound banner on mobile only */
+            .snd-banner { display: flex; }
         }
 
         /* ── RESPONSIVE: Desktop / Tablet (768px+) ── */
@@ -662,6 +673,12 @@
             <span class="mob-icon">☰</span><span class="mob-label">더보기</span>
         </button>
     </nav>
+
+    <!-- 🔊 Sound unlock banner (mobile only) -->
+    <div class="snd-banner" id="snd-banner">
+        <span class="snd-banner-hint">처음 사용 시 <strong>소리 켜기</strong>를 눌러주세요</span>
+        <button class="snd-unlock-btn" id="snd-unlock-btn" onclick="vfSoundUnlock()">🔊 소리 켜기</button>
+    </div>
 
     <!-- Mobile more menu overlay -->
     <div class="mob-more-overlay" id="mob-more-overlay" onclick="closeMobMore()"></div>
@@ -1508,50 +1525,101 @@
 
 <script>
 // ════════════════════════════════════════════════
-// SHARED AUDIO MANAGER
-// Single AudioContext + mic stream, reused across all features
+// SHARED AUDIO MANAGER  v3
+// One AudioContext for the entire app (Tone.js + mic + analysis).
 // ════════════════════════════════════════════════
 const VF = {
-    ctx: null,           // single AudioContext
-    micStream: null,     // single mic MediaStream
-    micSource: null,     // MediaStreamSourceNode
-    unlocked: false,     // user gesture received?
+    ctx: null,           // shared raw AudioContext (= Tone's internal ctx after unlock)
+    micStream: null,     // single MediaStream — reused across all mic features
+    micSource: null,     // MediaStreamSourceNode on shared ctx
+    unlocked: false,     // true once audio engine confirmed running
     _toastTimer: null,
+    _unlockInProgress: false,
 };
 
 /**
- * vfEnsureCtx — unlock audio engine from within a user-gesture handler.
- *
- * Strategy: Tone.js owns the single AudioContext for the whole app.
- *   We call Tone.start() first (MUST be within gesture chain, no macrotask delay before this).
- *   Then we store that context in VF.ctx so mic features can reuse it.
- *   Result: ONE AudioContext total — piano, routines, mic analysis all share it.
+ * _vfRawCtx — get the raw AudioContext from Tone.js.
+ * Tone.js creates its own ctx on load; we piggy-back on it so there is
+ * exactly ONE AudioContext in the entire app.
+ */
+function _vfRawCtx() {
+    try {
+        // Tone.js 14.x: Tone.getContext().rawContext is the BaseAudioContext
+        const raw = Tone.getContext().rawContext;
+        if (raw) return raw;
+    } catch(e) {}
+    return null;
+}
+
+/**
+ * vfEnsureCtx
+ * MUST be the FIRST await inside any button-click handler.
+ * No setTimeout/macrotask delays before calling this — iOS gesture chain.
  */
 async function vfEnsureCtx() {
+    // 1. Unlock Tone.js's AudioContext via Tone.start()
+    //    (this is the call iOS requires to come from within a user gesture)
     try {
-        // Tone.start() resumes Tone's internal AudioContext.
-        // This MUST be the first await — no setTimeout delays before this call.
         await Tone.start();
-        // Share Tone's raw AudioContext with all mic/analysis features.
-        const toneRaw = Tone.getContext().rawContext;
-        if (toneRaw) VF.ctx = toneRaw;
+        console.log('[VF] Tone.start() done');
     } catch(e) {
-        console.warn('[VF] Tone.start failed:', e);
+        console.warn('[VF] Tone.start() failed:', e.name, e.message);
     }
-    // Fallback: if Tone's context unavailable, create our own.
-    if (!VF.ctx) {
+
+    // 2. Adopt Tone's underlying AudioContext as VF.ctx
+    const toneRaw = _vfRawCtx();
+    if (toneRaw) {
+        VF.ctx = toneRaw;
+    } else if (!VF.ctx) {
+        // Fallback only — should not normally happen
         VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('[VF] Fallback AudioContext created');
+        console.warn('[VF] Created fallback AudioContext');
     }
+
+    // 3. Explicitly resume if still suspended (extra safety for Android)
     if (VF.ctx.state === 'suspended') {
-        try { await VF.ctx.resume(); } catch(e) { console.warn('[VF] ctx.resume failed:', e); }
+        try { await VF.ctx.resume(); } catch(e) { console.warn('[VF] resume() failed:', e); }
     }
+
     VF.unlocked = (VF.ctx.state === 'running');
-    console.log('[VF] ctx state after ensure:', VF.ctx.state);
+    console.log('[VF] ctx.state =', VF.ctx.state, '| unlocked =', VF.unlocked);
+
+    // Sync banner UI whenever we successfully unlock
+    if (VF.unlocked) _vfMarkBannerReady();
+
     return VF.ctx;
 }
 
-/** Get or create a mic stream + AnalyserNode. Returns { stream, analyser }. */
+/** Silently mark the sound banner as ready (called after successful unlock). */
+function _vfMarkBannerReady() {
+    const btn    = document.getElementById('snd-unlock-btn');
+    const banner = document.getElementById('snd-banner');
+    if (!btn || btn.classList.contains('ready')) return; // already done
+    btn.textContent = '✅ 소리 준비됨';
+    btn.classList.remove('loading');
+    btn.classList.add('ready');
+    btn.disabled = true;
+    if (banner) {
+        setTimeout(() => {
+            banner.style.opacity = '0';
+            banner.style.transition = 'opacity .5s';
+            setTimeout(() => { banner.style.display = 'none'; }, 550);
+        }, 1200);
+    }
+}
+
+/**
+ * vfToneStart — alias used by all play handlers.
+ * MUST be the first await — call BEFORE ensurePianoReady().
+ */
+async function vfToneStart() {
+    return vfEnsureCtx();
+}
+
+/**
+ * vfGetMic — shared mic stream + fresh AnalyserNode.
+ * Reuses the existing MediaStream across rounds/features.
+ */
 async function vfGetMic(fftSize) {
     fftSize = fftSize || 2048;
     await vfEnsureCtx();
@@ -1559,7 +1627,7 @@ async function vfGetMic(fftSize) {
         try {
             VF.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             VF.micSource = VF.ctx.createMediaStreamSource(VF.micStream);
-            console.log('[VF] Mic stream obtained, ctx state:', VF.ctx.state);
+            console.log('[VF] Mic stream obtained, ctx.state =', VF.ctx.state);
         } catch(e) {
             console.error('[VF] getUserMedia failed:', e.name, e.message);
             throw e;
@@ -1568,27 +1636,18 @@ async function vfGetMic(fftSize) {
     const analyser = VF.ctx.createAnalyser();
     analyser.fftSize = fftSize;
     VF.micSource.connect(analyser);
-    return { stream: VF.micStream, analyser: analyser, sampleRate: VF.ctx.sampleRate };
+    return { stream: VF.micStream, analyser, sampleRate: VF.ctx.sampleRate };
 }
 
-/** Release mic stream (call when no feature needs it). */
 function vfReleaseMic() {
     if (VF.micSource) { try { VF.micSource.disconnect(); } catch(e){} VF.micSource = null; }
     if (VF.micStream) { VF.micStream.getTracks().forEach(t => t.stop()); VF.micStream = null; }
     console.log('[VF] Mic released');
 }
 
-/**
- * vfToneStart — the single entry point to unlock audio from a button handler.
- * Call this as the VERY FIRST await in any playback function, before any delays.
- */
-async function vfToneStart() {
-    return vfEnsureCtx();
-}
-
-/** Show a brief toast message for audio issues. */
+/** Toast message (non-blocking) */
 function vfToast(msg, duration) {
-    duration = duration || 2500;
+    duration = duration || 2800;
     const el = document.getElementById('vf-audio-toast');
     if (!el) return;
     el.textContent = msg;
@@ -1598,26 +1657,51 @@ function vfToast(msg, duration) {
 }
 
 /**
- * Passive unlock listener: fires on every touch/click so the audio engine
- * stays running even after iOS auto-suspends on inactivity.
+ * vfSoundUnlock — called by the explicit "🔊 소리 켜기" button.
+ * Also auto-called on first play press of routines/exercise.
  */
-function vfInstallUnlockListener() {
-    const unlock = async () => {
-        // Always attempt — iOS can re-suspend after inactivity
-        try { await Tone.start(); } catch(e){}
-        if (VF.ctx && VF.ctx.state === 'suspended') {
-            try { await VF.ctx.resume(); } catch(e){}
-        }
-        if (!VF.ctx) {
-            // First touch before any feature has run — bootstrap eagerly
-            await vfEnsureCtx();
-            console.log('[VF] Audio bootstrapped on first touch');
-        }
-    };
-    document.addEventListener('touchstart', unlock, { once: false, passive: true });
-    document.addEventListener('click',      unlock, { once: false, passive: true });
+async function vfSoundUnlock() {
+    if (VF._unlockInProgress) return;
+    VF._unlockInProgress = true;
+
+    const btn  = document.getElementById('snd-unlock-btn');
+    const banner = document.getElementById('snd-banner');
+    if (btn) { btn.textContent = '⏳ 준비 중...'; btn.classList.add('loading'); }
+
+    try {
+        await vfEnsureCtx();
+        await ensurePianoReady();
+    } catch(e) {
+        console.warn('[VF] Sound unlock error:', e);
+    }
+
+    VF._unlockInProgress = false;
+
+    if (VF.unlocked) {
+        _vfMarkBannerReady(); // updates banner + fades it out
+        console.log('[VF] Sound unlock SUCCESS');
+    } else {
+        if (btn) { btn.textContent = '🔊 소리 켜기'; btn.classList.remove('loading'); }
+        vfToast('🔇 무음 모드 해제 후 다시 시도해 주세요');
+        console.warn('[VF] Sound unlock FAILED — ctx still:', VF.ctx?.state);
+    }
 }
-vfInstallUnlockListener();
+
+/**
+ * Passive background listener — keeps audio running if iOS re-suspends.
+ * Does NOT replace the explicit button; just a safety net.
+ */
+(function vfInstallPassiveUnlock() {
+    const nudge = () => {
+        // Fire-and-forget — just nudge, don't block UI
+        if (VF.ctx && VF.ctx.state === 'suspended') {
+            VF.ctx.resume().catch(() => {});
+        }
+        try { Tone.start().catch(() => {}); } catch(e) {}
+    };
+    document.addEventListener('touchstart', nudge, { passive: true });
+    document.addEventListener('click',      nudge, { passive: true });
+}());
 
 // ════════════════════════════════════════════════
 // STATE
