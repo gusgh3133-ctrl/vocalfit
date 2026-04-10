@@ -132,8 +132,9 @@
         .wu-note-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
         .wu-note-btn { min-width: 46px; padding: 7px 4px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--card2); color: var(--text2); font-size: .72rem; font-weight: 700; text-align: center; cursor: pointer; transition: all .2s; line-height: 1.3; }
         .wu-note-btn:active { transform: scale(.93); }
-        .wu-note-btn.selected { background: var(--purple); color: #fff; border-color: var(--purple); box-shadow: 0 0 8px rgba(139,92,246,.3); }
-        .wu-note-btn.in-range { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.3); }
+        @keyframes selectedPulse { 0%,100% { box-shadow: 0 0 10px 2px rgba(6,182,212,.8), 0 0 24px 4px rgba(6,182,212,.4); } 50% { box-shadow: 0 0 18px 4px rgba(6,182,212,1), 0 0 36px 8px rgba(6,182,212,.6); } }
+        .wu-note-btn.selected { background: #06b6d4; color: #000; border: 3px solid #fff; box-shadow: 0 0 14px 3px rgba(6,182,212,.9), 0 0 28px 6px rgba(6,182,212,.5); font-weight: 900; transform: scale(1.18); animation: selectedPulse 1.2s ease-in-out infinite; z-index: 1; position: relative; }
+        .wu-note-btn.in-range { background: rgba(6,182,212,.12); border-color: rgba(6,182,212,.35); color: var(--text); }
         .wu-note-btn.disabled-note { opacity: .3; cursor: default; pointer-events: none; }
 
         /* ── Booking Modal ── */
