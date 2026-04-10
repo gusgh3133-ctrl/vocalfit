@@ -662,6 +662,7 @@
     <header class="header">
         <h1>보컬핏 스튜디오</h1>
         <p>Vocal Training System</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">test version</p>
     </header>
 
     <!-- Desktop top nav -->
@@ -981,10 +982,10 @@
             <div style="font-size:.72rem;color:var(--text2);margin-top:6px;text-align:center;">워밍업 · 무거운 목소리 · 가벼운 목소리 모든 루틴에 공통 적용</div>
         </div>
 
-        <!-- ① 워밍업 accordion -->
+        <!-- ① 워밍업 1 accordion -->
         <div class="card accordion-item">
             <div class="accordion-header" onclick="toggleAccordion('wu')">
-                <span class="accordion-title">🎯 1. 워밍업
+                <span class="accordion-title">🎯 1. 워밍업 1
                     <span class="routine-badge rb-warm" style="margin-left:6px;">자동 재생 · 8단계</span>
                     <span style="font-size:.7rem;color:var(--blue);font-weight:700;margin-left:6px;">👉 처음이면 여기서 시작</span>
                 </span>
@@ -1022,10 +1023,50 @@
             </div>
         </div>
 
-        <!-- ② 무거운 목소리 accordion -->
+        <!-- ① 워밍업 2 accordion -->
+        <div class="card accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion('wu2')">
+                <span class="accordion-title">🎯 2. 워밍업 2
+                    <span class="routine-badge rb-warm" style="margin-left:6px;">자동 재생 · 10단계</span>
+                </span>
+                <span class="accordion-arrow" id="wu2-arrow">▶</span>
+            </div>
+            <div class="accordion-body" id="wu2-body">
+                <div class="accordion-desc">
+                    워밍업2는 목소리가 가볍거나, 약한 타입에게 추천드립니다.<br>
+                    <strong style="color:var(--text);">소리에 힘을 실어주는 연습</strong>에 집중합니다.
+                </div>
+
+                <!-- 음역 선택 -->
+                <div class="two-toggle" id="wu2-voice-toggle" style="margin-bottom:10px;">
+                    <button class="vtoggle active" onclick="wu2SetVoice('male')">🎵 남성</button>
+                    <button class="vtoggle"        onclick="wu2SetVoice('female')">🎵 여성</button>
+                </div>
+                <div id="wu2-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;">남성 기본: C3 ~ G3 / Arpeggio: C3 ~ C4</div>
+
+                <!-- 최저음 / 최고음 설정 -->
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <button class="btn btn-sm btn-outline" id="wu2-low-toggle" onclick="wu2ToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
+                    <button class="btn btn-sm btn-outline" id="wu2-high-toggle" onclick="wu2ToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
+                </div>
+                <div id="wu2-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
+                <div id="wu2-range-picker" style="display:none;margin-bottom:12px;">
+                    <div id="wu2-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
+                    <div id="wu2-range-grid" class="wu-note-grid"></div>
+                    <div id="wu2-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
+                </div>
+
+                <!-- 재생 / 정지 -->
+                <button class="btn btn-green" id="wu2-play-btn" onclick="wu2Start()" style="width:100%;margin-bottom:10px;">▶️ 워밍업 2 시작</button>
+                <div id="wu2-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="wu2-step-list"></div>
+            </div>
+        </div>
+
+        <!-- ③ 무거운 목소리 accordion -->
         <div class="card accordion-item">
             <div class="accordion-header" onclick="toggleAccordion('hv')">
-                <span class="accordion-title">🎯 2. 무거운 목소리
+                <span class="accordion-title">🎯 3. 무거운 목소리
                     <span class="routine-badge rb-warm" style="margin-left:6px;">자동 재생 · 7단계</span>
                 </span>
                 <span class="accordion-arrow" id="hv-arrow">▶</span>
@@ -1071,7 +1112,7 @@
         <!-- ③ 가벼운 목소리 accordion -->
         <div class="card accordion-item">
             <div class="accordion-header" onclick="toggleAccordion('lv')">
-                <span class="accordion-title">🎯 3. 가벼운 목소리
+                <span class="accordion-title">🎯 4. 가벼운 목소리
                     <span class="routine-badge rb-warm" style="margin-left:6px;">자동 재생 · 7단계</span>
                 </span>
                 <span class="accordion-arrow" id="lv-arrow">▶</span>
@@ -1113,7 +1154,7 @@
             </div>
         </div>
 
-        <!-- ④ 웜다운 accordion -->
+        <!-- ⑤ 웜다운 accordion -->
         <div class="card accordion-item">
             <div class="accordion-header" onclick="toggleAccordion('cooldown')">
                 <span class="accordion-title">웜다운 <span class="routine-badge rb-cool" style="margin-left:6px;">🧊 3분</span></span>
@@ -2063,9 +2104,10 @@ function switchTab(tab) {
     // Tone.setContext()가 gesture 이후에 실행되므로 그 전에 Sampler를
     // 생성하면 iOS에서 잘못된 AudioContext를 사용하게 됨.
     // piano는 각 play handler → ensurePianoReady()에서 자동 초기화됨.
-    if (tab !== 'routine' && wuActive) wuStop();
-    if (tab !== 'routine' && hvActive) hvStop();
-    if (tab !== 'routine' && lvActive) lvStop();
+    if (tab !== 'routine' && wuActive)  wuStop();
+    if (tab !== 'routine' && wu2Active) wu2Stop();
+    if (tab !== 'routine' && hvActive)  hvStop();
+    if (tab !== 'routine' && lvActive)  lvStop();
     if (tab !== 'game' && gmActive) gmStop();
     if (tab !== 'game' && fbActive) fbStop();
     if (tab !== 'spectrogram' && specRunning) stopSpecMic();
@@ -3078,6 +3120,338 @@ function wuPlayNote() {
 
     wuNoteIdx++;
     wuTimer = setTimeout(wuPlayNote, waitMs);
+}
+
+// ════════════════════════════════════════════════
+// WARMUP 2 ROUTINE (가볍거나 약한 목소리 타입)
+// ════════════════════════════════════════════════
+const WARMUP2_STEPS = [
+    { name: 'Goo(구) – 1.5 Octave',     syllable: 'Goo',  scaleType: '1.5oct', desc: '성대접촉을 유지하며, 성구전환을 하는 연습입니다' },
+    { name: 'Bub(뻡) – 1.5 Octave',     syllable: 'Bub',  scaleType: '1.5oct', desc: '공기의 흐름을 증가시키며, 성구전환을 하는 연습입니다' },
+    { name: 'Goog(꾹) – Arpeggio',      syllable: 'Goog', scaleType: '1358',   desc: '목소리를 좀 더 또렷하게 만드는 연습입니다' },
+    { name: 'Bub(뻡) – Arpeggio',       syllable: 'Bub',  scaleType: '1358',   desc: '공기의 흐름을 증가시키며, 목소리를 유지하는 연습입니다' },
+    { name: 'Nay(네이) – Arpeggio',     syllable: 'Nay',  scaleType: '1358',   desc: '얇은 성대패턴과 접촉을 유지하는 연습입니다' },
+    { name: 'Mam(맘) – Arpeggio',       syllable: 'Mam',  scaleType: '1358',   desc: '강하게 소리를 시도해보는 연습입니다' },
+    { name: 'Goog(꾹) – 1.5 Octave',   syllable: 'Goog', scaleType: '1.5oct', desc: '다시 성대접촉과 성구전환을 강화하는 연습입니다' },
+    { name: 'Bub(뻡) – Arp. Sustain',   syllable: 'Bub',  scaleType: '1358s',  desc: '강한 성대접촉을 유지하는 연습입니다' },
+    { name: 'Mum(멈) – Arp. Sustain',   syllable: 'Mum',  scaleType: '1358s',  desc: '공기의 흐름을 증가시키기 때문에 난이도가 올라갑니다(어려울 수 있습니다)' },
+    { name: 'Goo(구) – 1.5 Octave',     syllable: 'Goo',  scaleType: '1.5oct', desc: '마무리 입니다.(처음과 어떻게 달라졌는지 느껴보세요)' },
+];
+
+// Warmup 2 state
+let wu2Active    = false;
+let wu2StepIdx   = 0;
+let wu2Voice     = 'male';
+let wu2NoteIdx   = 0;
+let wu2KeyIdx    = 0;
+let wu2Timer     = null;
+let wu2KeySeq    = [];
+let wu2CustomLow  = null;
+let wu2CustomHigh = null;
+let wu2RangeMode  = null;
+
+const WU2_DEFAULTS = {
+    male:   { low: 48, high: 55, low1358: 48, high1358: 60 },
+    female: { low: 53, high: 60, low1358: 53, high1358: 65 },
+};
+
+function wu2GetEffectiveRange(sType) {
+    const is1358 = (sType === '1358' || sType === '1358s');
+    const def = WU2_DEFAULTS[wu2Voice];
+    const lo = wu2CustomLow  !== null ? wu2CustomLow  : (is1358 ? def.low1358 : def.low);
+    const hi = wu2CustomHigh !== null ? wu2CustomHigh : (is1358 ? def.high1358 : def.high);
+    return { lo, hi };
+}
+
+function wu2BuildKeysFromRange(sType) {
+    const { lo, hi } = wu2GetEffectiveRange(sType);
+    const arr = [];
+    for (let m = lo; m <= hi; m++) {
+        const idx = ((m % 12) + 12) % 12;
+        const oct = Math.floor(m / 12) - 1;
+        arr.push({ label: NOTE_EN[idx] + oct, kor: NOTE_KO[idx], midi: m });
+    }
+    return arr.length > 0 ? arr : [{ label: 'C3', kor: '도', midi: 48 }];
+}
+
+function wu2SetVoice(v) {
+    wu2Voice = v;
+    wu2CustomLow = null;
+    wu2CustomHigh = null;
+    document.querySelectorAll('#wu2-voice-toggle .vtoggle').forEach((b, i) => {
+        b.classList.remove('active');
+        if ((i === 0 && v === 'male') || (i === 1 && v === 'female')) b.classList.add('active');
+    });
+    wu2UpdateRangeDisplay();
+    if (wu2RangeMode) wu2RenderRangeGrid();
+}
+
+function wu2UpdateRangeDisplay() {
+    const r15 = wu2GetEffectiveRange('1.5oct');
+    const rAr = wu2GetEffectiveRange('1358');
+    const lo15 = WU_ALL_NOTES.find(n => n.midi === r15.lo);
+    const hi15 = WU_ALL_NOTES.find(n => n.midi === r15.hi);
+    const loAr = WU_ALL_NOTES.find(n => n.midi === rAr.lo);
+    const hiAr = WU_ALL_NOTES.find(n => n.midi === rAr.hi);
+    const isCustom = wu2CustomLow !== null || wu2CustomHigh !== null;
+    const prefix = isCustom ? '커스텀' : (wu2Voice === 'male' ? '남성 기본' : '여성 기본');
+    document.getElementById('wu2-range-hint').textContent =
+        `${prefix}: ${lo15?.label || '?'} ~ ${hi15?.label || '?'} / Arp: ${loAr?.label || '?'} ~ ${hiAr?.label || '?'}`;
+    const dispEl = document.getElementById('wu2-range-display');
+    if (isCustom) {
+        const lo = wu2CustomLow !== null ? WU_ALL_NOTES.find(n => n.midi === wu2CustomLow) : null;
+        const hi = wu2CustomHigh !== null ? WU_ALL_NOTES.find(n => n.midi === wu2CustomHigh) : null;
+        const parts = [];
+        if (lo) parts.push('최저음: ' + lo.label);
+        if (hi) parts.push('최고음: ' + hi.label);
+        dispEl.textContent = parts.join(' · ');
+        dispEl.style.display = 'block';
+    } else {
+        dispEl.style.display = 'none';
+    }
+}
+
+function wu2ToggleRange(mode) {
+    if (wu2RangeMode === mode) {
+        wu2RangeMode = null;
+        document.getElementById('wu2-range-picker').style.display = 'none';
+        document.getElementById('wu2-low-toggle').classList.remove('toggled');
+        document.getElementById('wu2-high-toggle').classList.remove('toggled');
+        return;
+    }
+    wu2RangeMode = mode;
+    document.getElementById('wu2-low-toggle').classList.toggle('toggled', mode === 'low');
+    document.getElementById('wu2-high-toggle').classList.toggle('toggled', mode === 'high');
+    document.getElementById('wu2-range-picker').style.display = 'block';
+    document.getElementById('wu2-range-label').textContent =
+        mode === 'low' ? '최저음을 선택하세요:' : '최고음을 선택하세요:';
+    document.getElementById('wu2-range-warn').style.display = 'none';
+    wu2RenderRangeGrid();
+}
+
+function wu2RenderRangeGrid() {
+    const grid = document.getElementById('wu2-range-grid');
+    const curLow  = wu2CustomLow  !== null ? wu2CustomLow  : WU2_DEFAULTS[wu2Voice].low;
+    const curHigh = wu2CustomHigh !== null ? wu2CustomHigh : WU2_DEFAULTS[wu2Voice].high1358;
+    grid.innerHTML = WU_ALL_NOTES.map(n => {
+        let cls = 'wu-note-btn';
+        if (wu2RangeMode === 'low'  && wu2CustomHigh !== null && n.midi >= wu2CustomHigh) cls += ' disabled-note';
+        if (wu2RangeMode === 'high' && wu2CustomLow  !== null && n.midi <= wu2CustomLow)  cls += ' disabled-note';
+        if (wu2CustomLow === n.midi || wu2CustomHigh === n.midi) cls += ' selected';
+        else if (n.midi >= curLow && n.midi <= curHigh) cls += ' in-range';
+        return `<div class="${cls}" onclick="wu2SelectNote(${n.midi})">
+            <div>${n.label}</div>
+            <div style="font-size:.62rem;opacity:.7;">${n.kor}</div>
+        </div>`;
+    }).join('');
+}
+
+function wu2SelectNote(midi) {
+    const warn = document.getElementById('wu2-range-warn');
+    warn.style.display = 'none';
+    if (wu2RangeMode === 'low') {
+        if (wu2CustomHigh !== null && midi >= wu2CustomHigh) {
+            warn.textContent = '최저음은 최고음보다 낮아야 합니다';
+            warn.style.display = 'block'; return;
+        }
+        wu2CustomLow = midi;
+    } else if (wu2RangeMode === 'high') {
+        if (wu2CustomLow !== null && midi <= wu2CustomLow) {
+            warn.textContent = '최고음은 최저음보다 높아야 합니다';
+            warn.style.display = 'block'; return;
+        }
+        wu2CustomHigh = midi;
+    }
+    wu2UpdateRangeDisplay();
+    wu2RenderRangeGrid();
+}
+
+function renderWu2Steps() {
+    const list = document.getElementById('wu2-step-list');
+    list.innerHTML = WARMUP2_STEPS.map((s, i) => {
+        let cls = 'wu-step';
+        if (wu2Active && i < wu2StepIdx)  cls += ' done';
+        if (wu2Active && i === wu2StepIdx) cls += ' active';
+        const playIcon = (wu2Active && i === wu2StepIdx)
+            ? '<div class="wu-step-play-icon">🔊</div>' : '<div class="wu-step-play-icon">▶️</div>';
+        return `<div class="${cls}" id="wu2-s${i}" onclick="wu2JumpToStep(${i})">
+            ${playIcon}
+            <div class="wu-step-num">${i + 1}</div>
+            <div class="wu-step-body">
+                <div class="wu-step-name">${s.name}</div>
+                <div class="wu-step-desc">${s.desc}</div>
+            </div>
+            <div class="wu-step-badge">${s.syllable}</div>
+        </div>`;
+    }).join('');
+}
+
+async function wu2JumpToStep(idx) {
+    if (idx < 0 || idx >= WARMUP2_STEPS.length) return;
+    if (!wu2Active) {
+        await vfToneStart();
+        await ensurePianoReady();
+        wu2Active = true;
+        wu2StepIdx = idx;
+        document.getElementById('wu2-play-btn').textContent = '⏹ 정지';
+        document.getElementById('wu2-play-btn').className   = 'btn btn-red';
+        document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Stop()');
+        document.getElementById('wu2-status').style.display = 'block';
+        wu2ShowCtrlBar();
+        wu2RunStep();
+    } else {
+        clearTimeout(wu2Timer);
+        try { if (piano) piano.releaseAll(); } catch(e) {}
+        wu2StepIdx = idx;
+        wu2RunStep();
+    }
+}
+
+function wu2UpdateNavButtons() {
+    const barPrev = document.getElementById('wu2-bar-prev');
+    const barNext = document.getElementById('wu2-bar-next');
+    if (barPrev && barNext) {
+        if (wu2Active) {
+            barPrev.disabled = (wu2StepIdx <= 0);
+            barNext.disabled = (wu2StepIdx >= WARMUP2_STEPS.length - 1);
+        } else {
+            barPrev.disabled = true;
+            barNext.disabled = true;
+        }
+    }
+}
+
+function wu2ShowCtrlBar() {
+    document.getElementById('wu2-ctrl-bar').classList.add('visible');
+    document.getElementById('routine-section').style.paddingBottom = '80px';
+}
+function wu2HideCtrlBar() {
+    document.getElementById('wu2-ctrl-bar').classList.remove('visible');
+    if (!wuActive && !hvActive && !lvActive) document.getElementById('routine-section').style.paddingBottom = '';
+}
+function wu2UpdateCtrlBar() {
+    if (!wu2Active) { wu2HideCtrlBar(); return; }
+    wu2ShowCtrlBar();
+    const step = WARMUP2_STEPS[wu2StepIdx];
+    document.getElementById('wu2-bar-info').textContent =
+        `Step ${wu2StepIdx + 1}/${WARMUP2_STEPS.length} · ${step.name}`;
+}
+
+function wu2NextStep() {
+    if (!wu2Active || wu2StepIdx >= WARMUP2_STEPS.length - 1) return;
+    clearTimeout(wu2Timer);
+    try { if (piano) piano.releaseAll(); } catch(e) {}
+    wu2StepIdx++;
+    wu2RunStep();
+}
+
+function wu2PrevStep() {
+    if (!wu2Active || wu2StepIdx <= 0) return;
+    clearTimeout(wu2Timer);
+    try { if (piano) piano.releaseAll(); } catch(e) {}
+    wu2StepIdx--;
+    wu2RunStep();
+}
+
+async function wu2Start() {
+    if (wu2Active) return;
+    await vfToneStart();
+    await ensurePianoReady();
+    wu2Active  = true;
+    wu2StepIdx = 0;
+    document.getElementById('wu2-play-btn').textContent = '⏹ 정지';
+    document.getElementById('wu2-play-btn').className   = 'btn btn-red';
+    document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Stop()');
+    document.getElementById('wu2-status').textContent   = '🔥 워밍업 2 진행 중...';
+    document.getElementById('wu2-status').style.display = 'block';
+    wu2UpdateNavButtons();
+    wu2ShowCtrlBar();
+    wu2RunStep();
+}
+
+function wu2Stop() {
+    wu2Active = false;
+    clearTimeout(wu2Timer);
+    try { if (piano) piano.releaseAll(); } catch(e) {}
+    document.getElementById('wu2-play-btn').textContent = '▶️ 워밍업 2 시작';
+    document.getElementById('wu2-play-btn').className   = 'btn btn-green';
+    document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Start()');
+    document.getElementById('wu2-status').textContent   = '⏸ 워밍업 2 정지됨';
+    wu2UpdateNavButtons();
+    wu2HideCtrlBar();
+    renderWu2Steps();
+}
+
+function wu2RunStep() {
+    if (!wu2Active || wu2StepIdx >= WARMUP2_STEPS.length) {
+        wu2Active = false;
+        document.getElementById('wu2-play-btn').textContent = '▶️ 워밍업 2 시작';
+        document.getElementById('wu2-play-btn').className   = 'btn btn-green';
+        document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Start()');
+        document.getElementById('wu2-status').textContent   = '✅ 워밍업 2 완료!';
+        wu2UpdateNavButtons();
+        wu2HideCtrlBar();
+        renderWu2Steps();
+        return;
+    }
+    const step = WARMUP2_STEPS[wu2StepIdx];
+    wu2NoteIdx = 0;
+    const keys = wu2BuildKeysFromRange(step.scaleType);
+    wu2KeySeq = [];
+    for (let i = 0; i < keys.length; i++) wu2KeySeq.push(i);
+    wu2KeyIdx = 0;
+    wu2UpdateNavButtons();
+    wu2UpdateCtrlBar();
+    renderWu2Steps();
+    const activeEl = document.getElementById('wu2-s' + wu2StepIdx);
+    if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    wu2PlayNote();
+}
+
+function wu2PlayNote() {
+    if (!wu2Active) return;
+    const step   = WARMUP2_STEPS[wu2StepIdx];
+    const sc     = SCALES[step.scaleType];
+    const keys   = wu2BuildKeysFromRange(step.scaleType);
+    const wu2Bpm = ROUTINE_BPM;
+
+    if (wu2NoteIdx >= sc.notes.length) {
+        wu2NoteIdx = 0;
+        const prevKeySeqIdx = wu2KeyIdx;
+        wu2KeyIdx++;
+        if (wu2KeyIdx >= wu2KeySeq.length) {
+            wu2StepIdx++;
+            wu2Timer = setTimeout(wu2RunStep, 800);
+            return;
+        }
+        const fromMidi = keys[wu2KeySeq[prevKeySeqIdx]].midi;
+        const toMidi   = keys[wu2KeySeq[wu2KeyIdx]].midi;
+        document.getElementById('wu2-status').textContent =
+            `🎵 ${keys[wu2KeySeq[prevKeySeqIdx]].label} → ${keys[wu2KeySeq[wu2KeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => {
+            if (wu2Active) wu2PlayNote();
+        }, () => wu2Active);
+        return;
+    }
+
+    const rootMidi  = keys[wu2KeySeq[wu2KeyIdx]].midi;
+    const midi      = rootMidi + sc.notes[wu2NoteIdx];
+    const tNote     = midiToTone(midi);
+    const isSustain = (wu2NoteIdx === sc.sustainIdx);
+    const noteDurSec = isSustain ? sc.sustainSec : (60 / wu2Bpm) * 0.82;
+    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / wu2Bpm;
+
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) { console.warn('[WU2] piano play failed:', e.name, e.message); }
+
+    const noteIdxMod = ((midi % 12) + 12) % 12;
+    const noteOct    = Math.floor(midi / 12) - 1;
+    const statusText = `🔥 Step ${wu2StepIdx + 1}/${WARMUP2_STEPS.length} · ${step.syllable} · 키 ${keys[wu2KeySeq[wu2KeyIdx]].label} · ${NOTE_EN[noteIdxMod]}${noteOct}`;
+    document.getElementById('wu2-status').textContent = statusText;
+    document.getElementById('wu2-bar-info').textContent =
+        `${wu2StepIdx + 1}/${WARMUP2_STEPS.length} · ${step.syllable} · ${keys[wu2KeySeq[wu2KeyIdx]].label} · ${NOTE_EN[noteIdxMod]}${noteOct}`;
+
+    wu2NoteIdx++;
+    wu2Timer = setTimeout(wu2PlayNote, waitMs);
 }
 
 // ════════════════════════════════════════════════
@@ -4613,6 +4987,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNoteGrid();
     renderWuSteps();
     wuUpdateRangeDisplay();
+    renderWu2Steps();
+    wu2UpdateRangeDisplay();
     renderHvSteps();
     hvUpdateRangeDisplay();
     renderLvSteps();
@@ -5016,12 +5392,19 @@ function updateSpecInfo(freq, db) {
 })();
 </script>
 
-<!-- Warmup sticky control bar -->
+<!-- Warmup 1 sticky control bar -->
 <div class="wu-ctrl-bar" id="wu-ctrl-bar">
     <button class="btn btn-outline btn-sm" id="wu-bar-prev" onclick="wuPrevStep()" style="padding:0 14px;" disabled>⏮</button>
-    <div class="wu-ctrl-info" id="wu-bar-info">워밍업</div>
+    <div class="wu-ctrl-info" id="wu-bar-info">워밍업 1</div>
     <button class="btn btn-red btn-sm" id="wu-bar-stop" onclick="wuStop()" style="padding:0 16px;">⏹ 정지</button>
     <button class="btn btn-outline btn-sm" id="wu-bar-next" onclick="wuNextStep()" style="padding:0 14px;" disabled>⏭</button>
+</div>
+<!-- Warmup 2 sticky control bar -->
+<div class="wu-ctrl-bar" id="wu2-ctrl-bar">
+    <button class="btn btn-outline btn-sm" id="wu2-bar-prev" onclick="wu2PrevStep()" style="padding:0 14px;" disabled>⏮</button>
+    <div class="wu-ctrl-info" id="wu2-bar-info">워밍업 2</div>
+    <button class="btn btn-red btn-sm" id="wu2-bar-stop" onclick="wu2Stop()" style="padding:0 16px;">⏹ 정지</button>
+    <button class="btn btn-outline btn-sm" id="wu2-bar-next" onclick="wu2NextStep()" style="padding:0 14px;" disabled>⏭</button>
 </div>
 <div class="wu-ctrl-bar" id="hv-ctrl-bar">
     <button class="btn btn-outline btn-sm" id="hv-bar-prev" onclick="hvPrevStep()" style="padding:0 14px;" disabled>⏮</button>
