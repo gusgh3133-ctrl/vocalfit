@@ -1775,7 +1775,19 @@ async function vfGetMic(fftSize) {
                 }
             });
             VF.micSource = VF.ctx.createMediaStreamSource(VF.micStream);
-            console.log('[VF] Mic stream obtained, ctx.state =', VF.ctx.state);
+
+            // ── iOS 덕킹 방지 트릭 ───────────────────────────────────────
+            // mic → gain(0) → destination 으로 무음 연결해두면
+            // iOS가 "녹음+재생이 같은 세션"으로 인식 → 피아노 볼륨 덕킹 안 함
+            if (!VF.micDuckGuard) {
+                VF.micDuckGuard = VF.ctx.createGain();
+                VF.micDuckGuard.gain.value = 0; // 완전 무음
+                VF.micSource.connect(VF.micDuckGuard);
+                VF.micDuckGuard.connect(VF.ctx.destination);
+            }
+            // ────────────────────────────────────────────────────────────
+
+            console.log('[VF] Mic stream obtained + duck guard connected, ctx.state =', VF.ctx.state);
         } catch(e) {
             console.error('[VF] getUserMedia failed:', e.name, e.message);
             throw e;
