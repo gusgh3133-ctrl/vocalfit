@@ -305,7 +305,7 @@
         .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--blue)); border-radius: 2px; transition: width .4s; }
 
         .voice-toggle { display: flex; background: var(--bg2); border-radius: 10px; padding: 4px; gap: 4px; }
-        .vtoggle { flex: 1; padding: 9px 6px; background: none; border: none; border-radius: 7px; color: var(--text2); font-size: .88rem; font-weight: 500; cursor: pointer; transition: all .15s; }
+        .vtoggle { flex: 1; padding: 9px 6px; background: none; border: none; border-radius: 7px; color: var(--text2); font-size: .88rem; font-weight: 500; cursor: pointer; transition: background .15s, color .15s; -webkit-tap-highlight-color: transparent; outline: none; }
         .vtoggle.active { background: var(--purple); color: #fff; }
         .range-hint { font-size: .75rem; color: var(--muted); margin-top: 7px; }
 
@@ -1530,44 +1530,25 @@
 
 <script>
 // ════════════════════════════════════════════════
-// SHARED AUDIO MANAGER  v4
-// ── Key design ──────────────────────────────────
-// 1. VF.ctx is created IMMEDIATELY (before any user gesture).
-//    On iOS it starts 'suspended' — that is expected.
-// 2. Tone.setContext(VF.ctx) makes Tone.js use the SAME AudioContext.
-//    This is the only reliable way to ensure piano notes play on the
-//    same context that we resume/unlock.
-// 3. unlock = ctx.resume() + silent buffer, both in the gesture handler.
+// SHARED AUDIO MANAGER  v5
+// ── Key design (iOS Safari 수정) ─────────────────
+// 1. VF.ctx는 페이지 로드 시점에 절대 생성하지 않는다.
+//    iOS Safari는 user-gesture 밖에서 생성된 AudioContext를
+//    resume() 해도 Audio Session을 열지 않는 경우가 있다.
+// 2. AudioContext 생성 → resume() → silent buffer → Tone.setContext()
+//    → piano 초기화까지 전부 사용자 제스처 안에서 실행된다.
+// 3. Tone.setContext()는 AudioContext 생성 직후에만 호출한다.
 // ════════════════════════════════════════════════
 const VF = {
-    ctx: null,           // THE one AudioContext for the whole app
+    ctx: null,           // THE one AudioContext for the whole app (gesture 내 생성)
     micStream: null,     // single MediaStream reused across features
     micSource: null,     // MediaStreamSourceNode
     unlocked: false,
     _toastTimer: null,
     _unlockInProgress: false,
 };
-
-// ── Create the shared AudioContext immediately ──────────────────────
-// iOS starts it in 'suspended'; that's fine — we resume on first gesture.
-(function _vfInitCtx() {
-    try {
-        VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('[VF] AudioContext created at init, state:', VF.ctx.state);
-    } catch(e) {
-        console.error('[VF] AudioContext creation failed:', e);
-        return;
-    }
-    // ── Tell Tone.js to use the SAME AudioContext ───────────────────
-    // Must happen BEFORE initPiano() creates the Sampler.
-    // Tone.setContext() accepts a raw AudioContext and wraps it internally.
-    try {
-        Tone.setContext(VF.ctx);
-        console.log('[VF] Tone.setContext(VF.ctx) OK — one AudioContext for everything');
-    } catch(e) {
-        console.warn('[VF] Tone.setContext failed (Tone.js may not support it):', e.message);
-    }
-}());
+// _vfInitCtx IIFE 제거: AudioContext를 페이지 로드 시점에 생성하지 않음
+// (이전에는 이 시점 생성이 iOS Safari audio unlock 실패의 원인이었음)
 
 /**
  * vfEnsureCtx — unlock the audio engine from within a user-gesture handler.
@@ -1575,58 +1556,85 @@ const VF = {
  * MUST be the FIRST await in every play/mic button handler.
  * No macrotask delays (setTimeout) before this call or iOS will block it.
  *
- * Unlock sequence:
- *   1. ctx.resume()       — the standard Web Audio unlock
- *   2. Tone.start()       — backup: also resumes via Tone's wrapper
- *   3. silent AudioBuffer — iOS Safari needs an *actual* node.start()
- *                           inside the gesture to open the Audio Session
+ * ✅ iOS Safari 수정 (v5) — 전체 시퀀스가 user-gesture 안에서 실행됨:
+ *   1. AudioContext 생성  (gesture 내 생성 → iOS Audio Session 정상 열림)
+ *   2. ctx.resume()       (suspended 상태 해제)
+ *   3. silent AudioBuffer (실제 node.start() 호출 → Audio Session 확실히 열림)
+ *   4. Tone.setContext()  (Tone.js가 동일한 AudioContext 사용하도록 연결)
+ *   5. piano / sampler 초기화는 이후 ensurePianoReady()에서 수행
  */
 async function vfEnsureCtx() {
-    console.log('[VF] vfEnsureCtx — ctx.state:', VF.ctx ? VF.ctx.state : 'NO CTX',
+    console.log('[VF] vfEnsureCtx — ctx:', VF.ctx ? VF.ctx.state : '미생성',
                 '| __audioUnlocked:', window.__audioUnlocked);
 
+    // ── STEP 1: AudioContext 생성 (user-gesture 내부에서) ───────────
+    // 핵심 수정: 페이지 로드 시점에 생성하면 iOS Safari가 Audio Session을
+    // 열지 않는다. 반드시 이 함수가 gesture handler에서 직접 호출될 때 생성.
     if (!VF.ctx) {
-        // Fallback: ctx wasn't created at init (very rare)
-        VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        console.warn('[VF] Late-created fallback AudioContext');
-    }
-
-    // ── 1. ctx.resume() ─────────────────────────────────────────────
-    if (VF.ctx.state === 'suspended') {
         try {
-            await VF.ctx.resume();
-            console.log('[VF] ctx.resume() OK — state now:', VF.ctx.state);
+            VF.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('[VF] ✅ AudioContext 생성 (gesture 내), state:', VF.ctx.state);
         } catch(e) {
-            console.warn('[VF] ctx.resume() failed:', e.name, e.message);
+            console.error('[VF] ❌ AudioContext 생성 실패:', e);
+            return null;
         }
     }
 
-    // ── 2. Tone.start() ─────────────────────────────────────────────
-    try {
-        await Tone.start();
-        console.log('[VF] Tone.start() OK — Tone ctx state:', Tone.context?.state);
-    } catch(e) {
-        console.warn('[VF] Tone.start() failed:', e.name, e.message);
+    // ── STEP 2: ctx.resume() ────────────────────────────────────────
+    if (VF.ctx.state === 'suspended') {
+        try {
+            await VF.ctx.resume();
+            console.log('[VF] ✅ ctx.resume() — state:', VF.ctx.state);
+        } catch(e) {
+            console.warn('[VF] ⚠️ ctx.resume() 실패:', e.name, e.message);
+        }
     }
 
-    // ── 3. Silent AudioBuffer — iOS Audio Session unlock ────────────
-    // iOS Safari requires AudioBufferSourceNode.start() from within
-    // the gesture to fully open the Audio Session. ctx.resume() alone
-    // is not sufficient on many iOS versions.
+    // ── STEP 3: Silent AudioBuffer — iOS Audio Session unlock ───────
+    // iOS Safari는 gesture 내에서 실제 AudioBufferSourceNode.start()가
+    // 있어야 Audio Session이 완전히 열린다. resume() 만으로는 부족.
     try {
         const buf = VF.ctx.createBuffer(1, 1, VF.ctx.sampleRate);
         const src = VF.ctx.createBufferSource();
         src.buffer = buf;
         src.connect(VF.ctx.destination);
         src.start(0);
-        console.log('[VF] Silent buffer played — iOS Audio Session open');
+        console.log('[VF] ✅ Silent buffer 재생 — iOS Audio Session 열림');
     } catch(e) {
-        console.warn('[VF] Silent buffer failed:', e.name, e.message);
+        console.warn('[VF] ⚠️ Silent buffer 실패:', e.name, e.message);
+    }
+
+    // ── STEP 4: Tone.setContext(VF.ctx) ─────────────────────────────
+    // AudioContext 생성 직후에 한 번만 호출.
+    // 이미 연결돼 있으면 건너뜀 (piano 재초기화 방지).
+    const toneRaw = Tone.context?.rawContext ?? Tone.context?._context;
+    if (toneRaw !== VF.ctx) {
+        try {
+            Tone.setContext(VF.ctx);
+            console.log('[VF] ✅ Tone.setContext(VF.ctx) — Tone ctx state:', Tone.context?.state);
+            // 기존 piano가 잘못된 context로 생성됐을 수 있으니 리셋
+            if (piano) {
+                try { piano.dispose(); } catch(_) {}
+                piano = null;
+                pianoReady = false;
+                console.log('[VF] ⚠️ Piano 리셋 — 올바른 context로 재초기화 예정');
+            }
+        } catch(e) {
+            console.warn('[VF] ⚠️ Tone.setContext 실패:', e.name, e.message);
+        }
+    }
+
+    // ── STEP 5 (별도): Tone.start() — Tone 내부 context 재확인 ──────
+    try {
+        await Tone.start();
+        console.log('[VF] ✅ Tone.start() — Tone ctx state:', Tone.context?.state);
+    } catch(e) {
+        console.warn('[VF] ⚠️ Tone.start() 실패:', e.name, e.message);
     }
 
     VF.unlocked = (VF.ctx.state === 'running');
     window.__audioUnlocked = VF.unlocked;
-    console.log('[VF] after unlock — ctx.state:', VF.ctx.state,
+    console.log('[VF] 최종 상태 — ctx.state:', VF.ctx.state,
                 '| Tone.context.state:', Tone.context?.state,
                 '| unlocked:', VF.unlocked);
 
@@ -1984,7 +1992,10 @@ function switchTab(tab) {
 
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tab + '-section').classList.add('active');
-    if ((tab === 'exercise' || tab === 'routine') && !piano) initPiano();
+    // ✅ v5: initPiano()를 여기서 호출하지 않음.
+    // Tone.setContext()가 gesture 이후에 실행되므로 그 전에 Sampler를
+    // 생성하면 iOS에서 잘못된 AudioContext를 사용하게 됨.
+    // piano는 각 play handler → ensurePianoReady()에서 자동 초기화됨.
     if (tab !== 'routine' && wuActive) wuStop();
     if (tab !== 'routine' && hvActive) hvStop();
     if (tab !== 'routine' && lvActive) lvStop();
@@ -2157,9 +2168,14 @@ function getRangeHint() {
 
 function setVoice(v) {
     voice = v; keyIdx = 0;
-    document.querySelectorAll('.voice-toggle .vtoggle').forEach((b,i) =>
-        b.classList.toggle('active', (i===0&&v==='male')||(i===1&&v==='female'))
-    );
+    // ✅ 버그 수정: toggle() 대신 remove+add를 명시적으로 사용.
+    // iOS Safari에서 classList.toggle(token, force)이 렌더링되지 않는
+    // 경우가 있어 active 색상이 사라지는 현상 방지.
+    document.querySelectorAll('.voice-toggle .vtoggle').forEach((b, i) => {
+        b.classList.remove('active');
+        const shouldBeActive = (i === 0 && v === 'male') || (i === 1 && v === 'female');
+        if (shouldBeActive) b.classList.add('active');
+    });
     document.getElementById('range-hint').textContent = getRangeHint();
     renderKeys();
 }
@@ -2427,12 +2443,14 @@ let seqPos       = 0;
 let pingPongDir  = 1;  // 1 = 순방향(올라가며), -1 = 역방향(내려오며)
 
 async function toggleEx() {
-    if (!pianoReady) { alert('피아노가 아직 로딩 중입니다. 잠시만 기다려주세요.'); return; }
+    // ✅ v5: pianoReady guard 제거 — startEx()에서 ensurePianoReady()가
+    // audio unlock 이후 자동으로 piano를 초기화함.
     isPlaying ? stopEx() : await startEx();
 }
 
 async function startEx() {
-    await vfToneStart();
+    await vfToneStart();           // 1) AudioContext 생성 + unlock (gesture 체인 유지)
+    await ensurePianoReady();      // 2) Tone.setContext() 이후 piano 초기화
 
     // 처음 시작인지 이어서 시작인지 구분
     const isResume = (progSequence.length > 0 && document.getElementById('play-card').style.display !== 'none');
