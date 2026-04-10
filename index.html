@@ -1769,7 +1769,7 @@ async function vfGetMic(fftSize) {
         try {
             VF.micStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
-                    echoCancellation:   false,  // iOS 덕킹 방지
+                    echoCancellation:   true,   // true = iOS 스피커 라우팅 유지 (끄면 이어폰 스피커로 바뀌어 작아짐)
                     noiseSuppression:   false,  // 노이즈 억제 끔
                     autoGainControl:    false,  // 자동 게인 끔 → 피아노 볼륨 유지
                 }
