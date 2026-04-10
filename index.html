@@ -405,6 +405,27 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--purple); border-radius: 50%; cursor: pointer; }
         .bpm-val { min-width: 60px; text-align: right; color: var(--purple); font-weight: 700; font-size: .88rem; }
 
+        /* ── 전역 BPM 컨트롤 ── */
+        .routine-bpm-card { padding: 12px 16px; }
+        .routine-bpm-row { display: flex; align-items: center; gap: 8px; }
+        .routine-bpm-label { font-size: .82rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+        .routine-bpm-btn { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg2); color: var(--text); font-size: 1.1rem; font-weight: 700; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; outline: none; transition: background .1s; }
+        .routine-bpm-btn:active { background: var(--border); }
+        .routine-bpm-val { font-size: .9rem; font-weight: 700; color: var(--purple); white-space: nowrap; min-width: 58px; text-align: right; }
+        #routine-bpm-slider { flex: 1; accent-color: var(--purple); }
+
+        /* ── Accordion ── */
+        .accordion-item { padding: 0 !important; overflow: hidden; }
+        .accordion-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 14px 16px; user-select: none; -webkit-tap-highlight-color: transparent; gap: 8px; min-height: 52px; }
+        .accordion-header:active { background: rgba(139,92,246,.05); }
+        .accordion-title { flex: 1; font-size: .88rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+        .accordion-arrow { font-size: .8rem; color: var(--text2); transition: transform .22s; flex-shrink: 0; }
+        .accordion-arrow.open { transform: rotate(90deg); color: var(--purple); }
+        .accordion-body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+        .accordion-body.open { display: block; }
+        .accordion-desc { font-size: .82rem; color: var(--text2); line-height: 1.75; margin: 12px 0 14px; }
+        .accordion-point { margin-top: 14px; padding: 12px; background: rgba(139,92,246,.06); border-radius: 10px; font-size: .78rem; color: var(--text2); line-height: 1.7; }
+
         /* Key progression bar */
         .key-prog-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
         .kprog-item {
@@ -938,153 +959,180 @@
             🔇 소리가 안 나오면 <strong style="color:var(--yellow);">음정</strong> 탭 → <strong style="color:var(--yellow);">마이크 켜기</strong> 후 다시 시도해주세요
         </div>
 
-        <!-- 🔥 보컬 루틴 전체 설명 -->
+        <!-- 🔥 보컬 루틴 설명 -->
         <div class="card">
             <div class="card-label">🔥 보컬 루틴</div>
             <div style="font-size:.85rem;color:var(--text2);line-height:1.8;">
-                보컬 루틴은<br>
-                목 상태와 목적에 맞게 선택해서 사용하는 훈련 구조입니다.<br><br>
-                무작정 연습하는 것이 아니라,<br>
+                목 상태와 목적에 맞게 선택해서 사용하는 훈련 구조입니다.<br>
                 <strong style="color:var(--text);">현재 필요한 방향에 맞게 접근하는 것</strong>이 중요합니다.
             </div>
         </div>
 
-        <!-- 🎯 1. 워밍업 -->
-        <div class="card">
-            <div class="card-label">🎯 1. 워밍업 <span class="routine-badge rb-warm">자동 재생 · 8단계</span> <span style="font-size:.7rem;color:var(--blue);font-weight:700;">👉 처음이면 이걸로 시작하세요</span></div>
-            <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
-                본격적인 발성 전에<br>
-                성대와 호흡을 안정시키는 단계입니다.<br><br>
-                무리하게 소리를 내기보다<br>
-                <strong style="color:var(--text);">편안하고 가볍게 시작하는 것</strong>이 중요합니다.
+        <!-- 🎚 전역 빠르기 컨트롤 -->
+        <div class="card routine-bpm-card">
+            <div style="font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:.03em;">🎚 전체 루틴 빠르기</div>
+            <div class="routine-bpm-row">
+                <button class="routine-bpm-btn" onclick="setRoutineBpm(ROUTINE_BPM - 5)">−</button>
+                <input type="range" id="routine-bpm-slider" min="50" max="120" value="90" step="5"
+                       oninput="setRoutineBpm(+this.value)" style="flex:1;accent-color:var(--purple);">
+                <button class="routine-bpm-btn" onclick="setRoutineBpm(ROUTINE_BPM + 5)">+</button>
+                <span id="routine-bpm-display" class="routine-bpm-val">90 BPM</span>
             </div>
-
-            <!-- 음역 선택 (프리셋) -->
-            <div class="two-toggle" id="wu-voice-toggle" style="margin-bottom:10px;">
-                <button class="vtoggle active" onclick="wuSetVoice('male')">🎵 남성</button>
-                <button class="vtoggle"        onclick="wuSetVoice('female')">🎵 여성</button>
-            </div>
-            <div id="wu-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;">남성 기본: C3 ~ G3 / Arpeggio: C3 ~ C4</div>
-
-            <!-- 최저음 / 최고음 설정 -->
-            <div style="display:flex;gap:8px;margin-bottom:6px;">
-                <button class="btn btn-sm btn-outline" id="wu-low-toggle" onclick="wuToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
-                <button class="btn btn-sm btn-outline" id="wu-high-toggle" onclick="wuToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
-            </div>
-            <div id="wu-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
-            <div id="wu-range-picker" style="display:none;margin-bottom:12px;">
-                <div id="wu-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
-                <div id="wu-range-grid" class="wu-note-grid"></div>
-                <div id="wu-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
-            </div>
-
-            <!-- 재생 / 정지 -->
-            <button class="btn btn-green" id="wu-play-btn" onclick="wuStart()" style="width:100%;margin-bottom:10px;">▶️ 워밍업 시작</button>
-            <div id="wu-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
-
-            <!-- 8-step list -->
-            <div id="wu-step-list"></div>
+            <div style="font-size:.72rem;color:var(--text2);margin-top:6px;text-align:center;">워밍업 · 무거운 목소리 · 가벼운 목소리 모든 루틴에 공통 적용</div>
         </div>
 
-        <!-- 🎯 2. 무거운 목소리 타입 -->
-        <div class="card">
-            <div class="card-label">🎯 2. 무거운 목소리 타입 <span class="routine-badge rb-warm">자동 재생 · 7단계</span></div>
-            <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
-                보다 밀도 있고 안정적인 소리를 만드는 훈련입니다.<br><br>
-                소리를 억지로 누르거나 밀어붙이기보다<br>
-                <strong style="color:var(--text);">성대가 자연스럽게 닫히는 느낌을 만드는 것</strong>이 중요합니다.
+        <!-- ① 워밍업 accordion -->
+        <div class="card accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion('wu')">
+                <span class="accordion-title">🎯 1. 워밍업
+                    <span class="routine-badge rb-warm" style="margin-left:6px;">자동 재생 · 8단계</span>
+                    <span style="font-size:.7rem;color:var(--blue);font-weight:700;margin-left:6px;">👉 처음이면 여기서 시작</span>
+                </span>
+                <span class="accordion-arrow" id="wu-arrow">▶</span>
             </div>
+            <div class="accordion-body" id="wu-body">
+                <div class="accordion-desc">
+                    본격적인 발성 전에 성대와 호흡을 안정시키는 단계입니다.<br>
+                    <strong style="color:var(--text);">편안하고 가볍게 시작하는 것</strong>이 중요합니다.
+                </div>
 
-            <!-- 음역 선택 -->
-            <div class="two-toggle" id="hv-voice-toggle" style="margin-bottom:10px;">
-                <button class="vtoggle active" onclick="hvSetVoice('male')">🎵 남성</button>
-                <button class="vtoggle"        onclick="hvSetVoice('female')">🎵 여성</button>
-            </div>
-            <div id="hv-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;">남성 기본: C3 ~ G3 / Arpeggio: C3 ~ C4</div>
+                <!-- 음역 선택 -->
+                <div class="two-toggle" id="wu-voice-toggle" style="margin-bottom:10px;">
+                    <button class="vtoggle active" onclick="wuSetVoice('male')">🎵 남성</button>
+                    <button class="vtoggle"        onclick="wuSetVoice('female')">🎵 여성</button>
+                </div>
+                <div id="wu-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;">남성 기본: C3 ~ G3 / Arpeggio: C3 ~ C4</div>
 
-            <!-- 최저음 / 최고음 설정 -->
-            <div style="display:flex;gap:8px;margin-bottom:6px;">
-                <button class="btn btn-sm btn-outline" id="hv-low-toggle" onclick="hvToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
-                <button class="btn btn-sm btn-outline" id="hv-high-toggle" onclick="hvToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
-            </div>
-            <div id="hv-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
-            <div id="hv-range-picker" style="display:none;margin-bottom:12px;">
-                <div id="hv-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
-                <div id="hv-range-grid" class="wu-note-grid"></div>
-                <div id="hv-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
-            </div>
+                <!-- 최저음 / 최고음 설정 -->
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <button class="btn btn-sm btn-outline" id="wu-low-toggle" onclick="wuToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
+                    <button class="btn btn-sm btn-outline" id="wu-high-toggle" onclick="wuToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
+                </div>
+                <div id="wu-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
+                <div id="wu-range-picker" style="display:none;margin-bottom:12px;">
+                    <div id="wu-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
+                    <div id="wu-range-grid" class="wu-note-grid"></div>
+                    <div id="wu-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
+                </div>
 
-            <!-- 재생 / 정지 -->
-            <button class="btn btn-green" id="hv-play-btn" onclick="hvStart()" style="width:100%;margin-bottom:10px;">▶️ 루틴 시작</button>
-            <div id="hv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
-
-            <!-- step list -->
-            <div id="hv-step-list"></div>
-
-            <!-- 포인트 -->
-            <div style="margin-top:14px;padding:12px;background:rgba(139,92,246,.06);border-radius:10px;font-size:.78rem;color:var(--text2);line-height:1.7;">
-                <strong style="color:var(--purple);">포인트:</strong> 가볍게 → 닫힘 → 유지 → 확장<br>
-                <strong style="color:var(--text);">무거운 소리는 "밀어서 만드는 게 아니라, 닫힘을 유지하는 것"</strong>
+                <!-- 재생 / 정지 -->
+                <button class="btn btn-green" id="wu-play-btn" onclick="wuStart()" style="width:100%;margin-bottom:10px;">▶️ 워밍업 시작</button>
+                <div id="wu-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="wu-step-list"></div>
             </div>
         </div>
 
-        <!-- 🎯 3. 가벼운 목소리 타입 -->
-        <div class="card">
-            <div class="card-label">🎯 3. 가벼운 목소리 타입 <span class="routine-badge rb-warm">자동 재생 · 7단계</span></div>
-            <div style="font-size:.82rem;color:var(--text2);line-height:1.75;margin-bottom:14px;">
-                보다 밀도 있고 안정적인 소리를 만드는 훈련입니다.<br><br>
-                가벼운 소리가 어느 정도 안정된 이후에<br>
-                <strong style="color:var(--text);">단계적으로 접근하는 것</strong>이 중요합니다.
+        <!-- ② 무거운 목소리 accordion -->
+        <div class="card accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion('hv')">
+                <span class="accordion-title">🎯 2. 무거운 목소리
+                    <span class="routine-badge rb-warm" style="margin-left:6px;">자동 재생 · 7단계</span>
+                </span>
+                <span class="accordion-arrow" id="hv-arrow">▶</span>
             </div>
+            <div class="accordion-body" id="hv-body">
+                <div class="accordion-desc">
+                    보다 밀도 있고 안정적인 소리를 만드는 훈련입니다.<br>
+                    소리를 억지로 누르거나 밀어붙이기보다<br>
+                    <strong style="color:var(--text);">성대가 자연스럽게 닫히는 느낌을 만드는 것</strong>이 중요합니다.
+                </div>
 
-            <!-- 음역 선택 -->
-            <div class="two-toggle" id="lv-voice-toggle" style="margin-bottom:10px;">
-                <button class="vtoggle active" onclick="lvSetVoice('male')">🎵 남성</button>
-                <button class="vtoggle"        onclick="lvSetVoice('female')">🎵 여성</button>
-            </div>
-            <div id="lv-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;"></div>
+                <!-- 음역 선택 -->
+                <div class="two-toggle" id="hv-voice-toggle" style="margin-bottom:10px;">
+                    <button class="vtoggle active" onclick="hvSetVoice('male')">🎵 남성</button>
+                    <button class="vtoggle"        onclick="hvSetVoice('female')">🎵 여성</button>
+                </div>
+                <div id="hv-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;">남성 기본: C3 ~ G3 / Arpeggio: C3 ~ C4</div>
 
-            <!-- 최저음 / 최고음 설정 -->
-            <div style="display:flex;gap:8px;margin-bottom:6px;">
-                <button class="btn btn-sm btn-outline" id="lv-low-toggle" onclick="lvToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
-                <button class="btn btn-sm btn-outline" id="lv-high-toggle" onclick="lvToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
-            </div>
-            <div id="lv-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
-            <div id="lv-range-picker" style="display:none;margin-bottom:12px;">
-                <div id="lv-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
-                <div id="lv-range-grid" class="wu-note-grid"></div>
-                <div id="lv-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
-            </div>
+                <!-- 최저음 / 최고음 설정 -->
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <button class="btn btn-sm btn-outline" id="hv-low-toggle" onclick="hvToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
+                    <button class="btn btn-sm btn-outline" id="hv-high-toggle" onclick="hvToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
+                </div>
+                <div id="hv-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
+                <div id="hv-range-picker" style="display:none;margin-bottom:12px;">
+                    <div id="hv-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
+                    <div id="hv-range-grid" class="wu-note-grid"></div>
+                    <div id="hv-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
+                </div>
 
-            <!-- 재생 / 정지 -->
-            <button class="btn btn-green" id="lv-play-btn" onclick="lvStart()" style="width:100%;margin-bottom:10px;">▶️ 루틴 시작</button>
-            <div id="lv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <!-- 재생 / 정지 -->
+                <button class="btn btn-green" id="hv-play-btn" onclick="hvStart()" style="width:100%;margin-bottom:10px;">▶️ 루틴 시작</button>
+                <div id="hv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="hv-step-list"></div>
 
-            <!-- step list -->
-            <div id="lv-step-list"></div>
-
-            <!-- 포인트 -->
-            <div style="margin-top:14px;padding:12px;background:rgba(139,92,246,.06);border-radius:10px;font-size:.78rem;color:var(--text2);line-height:1.7;">
-                <strong style="color:var(--purple);">흐름:</strong> Goog → Bub → (닫힘) → Hum → (안정화) → Nay → Nan → Mam → (균형) → Geg → (고정)<br>
-                <strong style="color:var(--text);">가벼운 소리는 "밀도를 더하면서도, 가벼운 메커니즘을 유지하는 것"</strong>
-            </div>
-        </div>
-
-        <!-- 웜다운 -->
-        <div class="card">
-            <div class="card-label">웜다운 <span class="routine-badge rb-cool">🧊 3분</span></div>
-            <div class="routine-step">
-                <div class="step-num">1</div>
-                <div class="step-body">
-                    <div class="step-title">낮은 허밍으로 마무리</div>
-                    <div class="step-desc">무리하지 않는 편안한 음역대에서 "음~" 허밍 3~5분. 성대 피로를 풀어줍니다.</div>
+                <div class="accordion-point">
+                    <strong style="color:var(--purple);">포인트:</strong> 가볍게 → 닫힘 → 유지 → 확장<br>
+                    <strong style="color:var(--text);">무거운 소리는 "밀어서 만드는 게 아니라, 닫힘을 유지하는 것"</strong>
                 </div>
             </div>
-            <div class="routine-step">
-                <div class="step-num">2</div>
-                <div class="step-body">
-                    <div class="step-title">수분 보충 &amp; 침묵</div>
-                    <div class="step-desc">미지근한 물을 마시고 5분간 말을 자제합니다. 성대 점막 회복에 도움이 됩니다.</div>
+        </div>
+
+        <!-- ③ 가벼운 목소리 accordion -->
+        <div class="card accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion('lv')">
+                <span class="accordion-title">🎯 3. 가벼운 목소리
+                    <span class="routine-badge rb-warm" style="margin-left:6px;">자동 재생 · 7단계</span>
+                </span>
+                <span class="accordion-arrow" id="lv-arrow">▶</span>
+            </div>
+            <div class="accordion-body" id="lv-body">
+                <div class="accordion-desc">
+                    가벼운 소리가 어느 정도 안정된 이후에<br>
+                    <strong style="color:var(--text);">단계적으로 접근하는 것</strong>이 중요합니다.
+                </div>
+
+                <!-- 음역 선택 -->
+                <div class="two-toggle" id="lv-voice-toggle" style="margin-bottom:10px;">
+                    <button class="vtoggle active" onclick="lvSetVoice('male')">🎵 남성</button>
+                    <button class="vtoggle"        onclick="lvSetVoice('female')">🎵 여성</button>
+                </div>
+                <div id="lv-range-hint" style="font-size:.75rem;color:var(--text2);margin-bottom:8px;text-align:center;"></div>
+
+                <!-- 최저음 / 최고음 설정 -->
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <button class="btn btn-sm btn-outline" id="lv-low-toggle" onclick="lvToggleRange('low')" style="flex:1;">🔽 최저음 설정</button>
+                    <button class="btn btn-sm btn-outline" id="lv-high-toggle" onclick="lvToggleRange('high')" style="flex:1;">🔼 최고음 설정</button>
+                </div>
+                <div id="lv-range-display" style="font-size:.78rem;color:var(--purple);text-align:center;margin-bottom:8px;font-weight:700;"></div>
+                <div id="lv-range-picker" style="display:none;margin-bottom:12px;">
+                    <div id="lv-range-label" style="font-size:.75rem;color:var(--text2);margin-bottom:6px;text-align:center;"></div>
+                    <div id="lv-range-grid" class="wu-note-grid"></div>
+                    <div id="lv-range-warn" style="font-size:.72rem;color:var(--red);text-align:center;margin-top:4px;display:none;"></div>
+                </div>
+
+                <!-- 재생 / 정지 -->
+                <button class="btn btn-green" id="lv-play-btn" onclick="lvStart()" style="width:100%;margin-bottom:10px;">▶️ 루틴 시작</button>
+                <div id="lv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="lv-step-list"></div>
+
+                <div class="accordion-point">
+                    <strong style="color:var(--purple);">흐름:</strong> Goog → Bub → Hum → Nay → Nan → Mam → Geg<br>
+                    <strong style="color:var(--text);">가벼운 소리는 "밀도를 더하면서도, 가벼운 메커니즘을 유지하는 것"</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- ④ 웜다운 accordion -->
+        <div class="card accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion('cooldown')">
+                <span class="accordion-title">웜다운 <span class="routine-badge rb-cool" style="margin-left:6px;">🧊 3분</span></span>
+                <span class="accordion-arrow" id="cooldown-arrow">▶</span>
+            </div>
+            <div class="accordion-body" id="cooldown-body">
+                <div class="routine-step" style="margin-top:12px;">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <div class="step-title">낮은 허밍으로 마무리</div>
+                        <div class="step-desc">무리하지 않는 편안한 음역대에서 "음~" 허밍 3~5분. 성대 피로를 풀어줍니다.</div>
+                    </div>
+                </div>
+                <div class="routine-step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <div class="step-title">수분 보충 &amp; 침묵</div>
+                        <div class="step-desc">미지근한 물을 마시고 5분간 말을 자제합니다. 성대 점막 회복에 도움이 됩니다.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2615,6 +2663,72 @@ const WU_ALL_NOTES = (function() {
     return arr;
 })();
 
+// ════════════════════════════════════════════════
+// GLOBAL ROUTINE BPM
+// 모든 루틴(워밍업/무거운/가벼운)이 공통으로 참조하는 전역 BPM
+// ════════════════════════════════════════════════
+let ROUTINE_BPM = 90; // 기본값 90 BPM (범위: 50~120)
+
+function setRoutineBpm(val) {
+    ROUTINE_BPM = Math.max(50, Math.min(120, Math.round(val)));
+    const slider  = document.getElementById('routine-bpm-slider');
+    const display = document.getElementById('routine-bpm-display');
+    if (slider)  slider.value          = ROUTINE_BPM;
+    if (display) display.textContent   = ROUTINE_BPM + ' BPM';
+    console.log('[BPM] ROUTINE_BPM →', ROUTINE_BPM);
+}
+
+// ════════════════════════════════════════════════
+// CHORD TRANSITION HELPER
+// 키 전환 시 "현재 키 코드 → 다음 키 코드" 아르페지오 재생 후 콜백
+// 상행/하행 모두 동일 구조: fromMidi 코드 → toMidi 코드 → cb()
+// ════════════════════════════════════════════════
+/**
+ * @param {number}   fromMidi  현재 키 루트 MIDI
+ * @param {number}   toMidi    다음 키 루트 MIDI
+ * @param {Function} cb        완료 후 호출할 콜백
+ * @param {Function} isActive  () => boolean — 루틴 활성 여부
+ */
+function playChordTransition(fromMidi, toMidi, cb, isActive) {
+    const bpm      = ROUTINE_BPM;
+    const CHORD    = [0, 4, 7];                        // 장3화음 (루트·장3도·완전5도)
+    const noteDur  = (60 / bpm) * 0.85;          // 코드 울림 길이 (초)
+    const chordGap = Math.round(60000 / bpm);    // 두 코드 사이 간격: 정확히 1박 (ms)
+    const postGap  = Math.round(60000 / bpm);    // 전환 후 루틴 재개 전 간격: 정확히 1박 (ms)
+
+    // 도-미-솔 동시에 쾅! 피아노 코드처럼
+    function playChord(rootMidi) {
+        if (!isActive()) return;
+        CHORD.forEach(interval => {
+            const tNote = midiToTone(rootMidi + interval);
+            try { piano.triggerAttackRelease(tNote, noteDur); } catch(e) {}
+        });
+    }
+
+    // 현재 키 코드 쾅 → (chordGap) → 다음 키 코드 쾅 → (postGap) → cb
+    playChord(fromMidi);
+    setTimeout(() => {
+        if (!isActive()) return;
+        playChord(toMidi);
+        setTimeout(() => {
+            if (!isActive()) return;
+            cb();
+        }, postGap);
+    }, chordGap);
+}
+
+// ════════════════════════════════════════════════
+// ACCORDION TOGGLE
+// ════════════════════════════════════════════════
+function toggleAccordion(id) {
+    const body  = document.getElementById(id + '-body');
+    const arrow = document.getElementById(id + '-arrow');
+    if (!body) return;
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    if (arrow) arrow.classList.toggle('open', !isOpen);
+}
+
 // Warmup state
 let wuActive    = false;
 let wuStepIdx   = 0;
@@ -2923,17 +3037,25 @@ function wuPlayNote() {
     const step  = WARMUP_STEPS[wuStepIdx];
     const sc    = SCALES[step.scaleType];
     const keys  = wuBuildKeysFromRange(step.scaleType);
-    const wuBpm = 115;
+    const wuBpm = ROUTINE_BPM; // ✅ 전역 BPM 사용
 
     if (wuNoteIdx >= sc.notes.length) {
         wuNoteIdx = 0;
+        const prevKeySeqIdx = wuKeyIdx; // 전환 전 키 인덱스 보존
         wuKeyIdx++;
         if (wuKeyIdx >= wuKeySeq.length) {
             wuStepIdx++;
             wuTimer = setTimeout(wuRunStep, 800);
             return;
         }
-        wuTimer = setTimeout(wuPlayNote, (60000 / wuBpm) * 0.8);
+        // ✅ 키 전환: 이전 키 코드 → 다음 키 코드 → 루틴 재개
+        const fromMidi = keys[wuKeySeq[prevKeySeqIdx]].midi;
+        const toMidi   = keys[wuKeySeq[wuKeyIdx]].midi;
+        document.getElementById('wu-status').textContent =
+            `🎵 ${keys[wuKeySeq[prevKeySeqIdx]].label} → ${keys[wuKeySeq[wuKeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => {
+            if (wuActive) wuPlayNote();
+        }, () => wuActive);
         return;
     }
 
@@ -2945,8 +3067,7 @@ function wuPlayNote() {
     const noteDurSec = isSustain ? sc.sustainSec : (60 / wuBpm) * 0.82;
     const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / wuBpm;
 
-    console.log('[WU] play note', tNote, '| ctx.state:', VF.ctx?.state, '| readyState:', typeof piano !== 'undefined' ? 'piano OK' : 'no piano');
-    try { piano.triggerAttackRelease(tNote, noteDurSec); console.log('[WU] triggerAttackRelease OK'); } catch(e) { console.warn('[WU] piano play failed:', e.name, e.message); }
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) { console.warn('[WU] piano play failed:', e.name, e.message); }
 
     const noteIdxMod = ((midi % 12) + 12) % 12;
     const noteOct    = Math.floor(midi / 12) - 1;
@@ -3186,12 +3307,22 @@ function hvPlayNote() {
     const step = HEAVY_STEPS[hvStepIdx];
     const sc = SCALES[step.scaleType];
     const keys = hvBuildKeysFromRange(step.scaleType);
-    const hvBpm = (step.scaleType==='desc') ? 70 : 115;
+    const hvBpm = ROUTINE_BPM; // ✅ 전역 BPM 사용 (기존 desc 70/else 115 → 전역으로 통일)
 
     if (hvNoteIdx >= sc.notes.length) {
-        hvNoteIdx = 0; hvKeyIdx++;
+        hvNoteIdx = 0;
+        const prevKeySeqIdx = hvKeyIdx; // 전환 전 키 인덱스 보존
+        hvKeyIdx++;
         if (hvKeyIdx >= hvKeySeq.length) { hvStepIdx++; hvTimer = setTimeout(hvRunStep,800); return; }
-        hvTimer = setTimeout(hvPlayNote, (60000/hvBpm)*0.8); return;
+        // ✅ 키 전환: 코드 안내 후 루틴 재개
+        const fromMidi = keys[hvKeySeq[prevKeySeqIdx]].midi;
+        const toMidi   = keys[hvKeySeq[hvKeyIdx]].midi;
+        document.getElementById('hv-status').textContent =
+            `🎵 ${keys[hvKeySeq[prevKeySeqIdx]].label} → ${keys[hvKeySeq[hvKeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => {
+            if (hvActive) hvPlayNote();
+        }, () => hvActive);
+        return;
     }
     const rootMidi = keys[hvKeySeq[hvKeyIdx]].midi;
     const midi = rootMidi + sc.notes[hvNoteIdx];
@@ -3429,12 +3560,22 @@ function lvPlayNote() {
     const step = LIGHT_STEPS[lvStepIdx];
     const sc = SCALES[step.scaleType];
     const keys = lvBuildKeysFromRange(step.scaleType);
-    const lvBpm = 115;
+    const lvBpm = ROUTINE_BPM; // ✅ 전역 BPM 사용
 
     if (lvNoteIdx >= sc.notes.length) {
-        lvNoteIdx = 0; lvKeyIdx++;
+        lvNoteIdx = 0;
+        const prevKeySeqIdx = lvKeyIdx; // 전환 전 키 인덱스 보존
+        lvKeyIdx++;
         if (lvKeyIdx >= lvKeySeq.length) { lvStepIdx++; lvTimer = setTimeout(lvRunStep,800); return; }
-        lvTimer = setTimeout(lvPlayNote, (60000/lvBpm)*0.8); return;
+        // ✅ 키 전환: 코드 안내 후 루틴 재개
+        const fromMidi = keys[lvKeySeq[prevKeySeqIdx]].midi;
+        const toMidi   = keys[lvKeySeq[lvKeyIdx]].midi;
+        document.getElementById('lv-status').textContent =
+            `🎵 ${keys[lvKeySeq[prevKeySeqIdx]].label} → ${keys[lvKeySeq[lvKeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => {
+            if (lvActive) lvPlayNote();
+        }, () => lvActive);
+        return;
     }
     const rootMidi = keys[lvKeySeq[lvKeyIdx]].midi;
     const midi = rootMidi + sc.notes[lvNoteIdx];
