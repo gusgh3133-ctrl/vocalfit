@@ -2063,6 +2063,16 @@ const FEMALE_KEYS_DESC = (function(){
 // ════════════════════════════════════════════════
 function initPiano() {
     document.getElementById('piano-prog').style.width = '25%';
+
+    // ── 컴프레서: 클리핑 방지 + 소리 균일하게 ──────────────────────────
+    const pianoComp = new Tone.Compressor({
+        threshold: -14,  // 이 레벨 넘으면 압축 시작 (dB)
+        ratio: 4,        // 4:1 압축비
+        attack: 0.005,
+        release: 0.1,
+        knee: 6,
+    }).toDestination();
+
     try {
         piano = new Tone.Sampler({
             urls: {
@@ -2071,7 +2081,7 @@ function initPiano() {
                 C4:'C4.mp3', Ds4:'Ds4.mp3', Fs4:'Fs4.mp3', A4:'A4.mp3',
                 C5:'C5.mp3', Ds5:'Ds5.mp3', Fs5:'Fs5.mp3', A5:'A5.mp3',
             },
-            volume: 12,
+            volume: 8,
             release: 1.2,
             baseUrl: 'https://tonejs.github.io/audio/salamander/',
             onload: () => {
@@ -2084,14 +2094,14 @@ function initPiano() {
                     document.querySelector('.progress-bar').style.display = 'none';
                 }, 1800);
             }
-        }).toDestination();
+        }).connect(pianoComp);
         document.getElementById('piano-prog').style.width = '55%';
     } catch(e) {
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 },
-            volume: 12
-        }).toDestination();
+            volume: 8
+        }).connect(pianoComp);
         pianoReady = true;
         document.getElementById('piano-msg').textContent = '✅ 피아노 로딩 완료!';
         document.getElementById('piano-prog').style.width = '100%';
@@ -4060,10 +4070,12 @@ async function ensurePianoReady() {
     if (!pianoReady) {
         // Last-resort fallback: replace with instant PolySynth
         try { piano.dispose(); } catch(e){}
+        const fbComp = new Tone.Compressor({ threshold:-14, ratio:4, attack:0.005, release:0.1, knee:6 }).toDestination();
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
-            envelope: { attack:.02, decay:.6, sustain:.4, release:1.8 }
-        }).toDestination();
+            envelope: { attack:.02, decay:.6, sustain:.4, release:1.8 },
+            volume: 8
+        }).connect(fbComp);
         pianoReady = true;
     }
     return true;
