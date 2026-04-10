@@ -2052,6 +2052,7 @@ function initPiano() {
                 C4:'C4.mp3', Ds4:'Ds4.mp3', Fs4:'Fs4.mp3', A4:'A4.mp3',
                 C5:'C5.mp3', Ds5:'Ds5.mp3', Fs5:'Fs5.mp3', A5:'A5.mp3',
             },
+            volume: 12,
             release: 1.2,
             baseUrl: 'https://tonejs.github.io/audio/salamander/',
             onload: () => {
@@ -2069,7 +2070,8 @@ function initPiano() {
     } catch(e) {
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
-            envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 }
+            envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 },
+            volume: 12
         }).toDestination();
         pianoReady = true;
         document.getElementById('piano-msg').textContent = '✅ 피아노 로딩 완료!';
@@ -2735,8 +2737,8 @@ function playChordTransition(fromMidi, toMidi, cb, isActive) {
     const bpm      = ROUTINE_BPM;
     const CHORD    = [0, 4, 7];                        // 장3화음 (루트·장3도·완전5도)
     const noteDur  = (60 / bpm) * 0.85;          // 코드 울림 길이 (초)
-    const chordGap = Math.round(60000 / bpm);    // 두 코드 사이 간격: 정확히 1박 (ms)
-    const postGap  = Math.round(60000 / bpm);    // 전환 후 루틴 재개 전 간격: 정확히 1박 (ms)
+    const chordGap = Math.round(60000 / bpm);        // 두 코드 사이 간격: 정확히 1박 (ms)
+    const postGap  = Math.round(60000 / bpm) * 2;   // 전환 후 루틴 재개 전 간격: 정확히 2박 (ms)
 
     // 도-미-솔 동시에 쾅! 피아노 코드처럼
     function playChord(rootMidi) {
