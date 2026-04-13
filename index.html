@@ -1767,21 +1767,30 @@ async function vfGetMic(fftSize) {
     await vfEnsureCtx();
     if (!VF.micStream || !VF.micStream.active) {
         try {
+            // ── iOS 17+ AudioSession API: 덕킹 완전 방지 ─────────────────
+            // play-and-record 타입으로 설정하면 iOS가 재생 볼륨을 줄이지 않음
+            if (navigator.audioSession) {
+                try {
+                    navigator.audioSession.type = 'play-and-record';
+                    console.log('[VF] audioSession.type = play-and-record (덕킹 방지)');
+                } catch(e) { console.warn('[VF] audioSession 설정 실패:', e); }
+            }
+            // ────────────────────────────────────────────────────────────
+
             VF.micStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
-                    echoCancellation:   true,   // true = iOS 스피커 라우팅 유지 (끄면 이어폰 스피커로 바뀌어 작아짐)
+                    echoCancellation:   true,   // true = iOS 스피커 라우팅 유지
                     noiseSuppression:   false,  // 노이즈 억제 끔
                     autoGainControl:    false,  // 자동 게인 끔 → 피아노 볼륨 유지
                 }
             });
             VF.micSource = VF.ctx.createMediaStreamSource(VF.micStream);
 
-            // ── iOS 덕킹 방지 트릭 ───────────────────────────────────────
-            // mic → gain(0) → destination 으로 무음 연결해두면
-            // iOS가 "녹음+재생이 같은 세션"으로 인식 → 피아노 볼륨 덕킹 안 함
+            // ── 덕킹 방지 보조: mic → gain(0) → destination 무음 연결 ────
+            // iOS가 "녹음+재생이 같은 세션"임을 인식하도록 경로 연결
             if (!VF.micDuckGuard) {
                 VF.micDuckGuard = VF.ctx.createGain();
-                VF.micDuckGuard.gain.value = 0; // 완전 무음
+                VF.micDuckGuard.gain.value = 0; // 완전 무음 (소리 출력 없음)
                 VF.micSource.connect(VF.micDuckGuard);
                 VF.micDuckGuard.connect(VF.ctx.destination);
             }
@@ -1922,12 +1931,12 @@ const NOTE_TONE = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 // ════════════════════════════════════════════════
 const SCALES = {
     '1.5oct': {
-        notes:      [0, 4, 7, 12, 16, 19, 17, 14, 11, 7, 5, 2, 0],
-        peakIdx:    5,
+        notes:      [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 17, 16, 14, 12, 11, 9, 7, 5, 4, 2, 0],
+        peakIdx:    11,
         sustainIdx: -1,
         sustainSec: 0,
-        upArrow:    '⬆ 아르페지오 상승 중',
-        downArrow:  '⬇ 파-레 하강 lick',
+        upArrow:    '⬆ 장음계 상승 중',
+        downArrow:  '⬇ 장음계 하강 중',
     },
     '2.0oct': {
         notes:      [0, 4, 7, 12, 16, 19, 24, 28, 31, 29, 26, 23, 19, 17, 14, 11, 7, 5, 2, 0],
@@ -1949,7 +1958,7 @@ const SCALES = {
         notes:      [0, 4, 7, 12, 7, 4, 0],
         peakIdx:    3,
         sustainIdx: 3,   // 도' 서스테인
-        sustainSec: 3,
+        sustainSec: 2,
         upArrow:    '⬆ 상승 중',
         downArrow:  '⬇ 하강 중',
     },
@@ -2064,6 +2073,9 @@ const FEMALE_KEYS_DESC = (function(){
 function initPiano() {
     document.getElementById('piano-prog').style.width = '25%';
 
+    // ── 모바일/웹 볼륨 분리 ──────────────────────────────────────────────
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     // ── 컴프레서: 클리핑 방지 + 소리 균일하게 ──────────────────────────
     const pianoComp = new Tone.Compressor({
         threshold: -14,  // 이 레벨 넘으면 압축 시작 (dB)
@@ -2085,7 +2097,7 @@ function initPiano() {
                 Fs1:'Fs1.mp3',Fs2:'Fs2.mp3',Fs3:'Fs3.mp3',Fs4:'Fs4.mp3',
                 Fs5:'Fs5.mp3',Fs6:'Fs6.mp3',Fs7:'Fs7.mp3',
             },
-            volume: 8,
+            volume: isMobile ? 12 : 8,
             release: 1.2,
             baseUrl: 'https://nbrosowsky.github.io/tonejs-instruments/samples/piano/',
             onload: () => {
@@ -2104,7 +2116,7 @@ function initPiano() {
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 },
-            volume: 8
+            volume: isMobile ? 12 : 8
         }).connect(pianoComp);
         pianoReady = true;
         document.getElementById('piano-msg').textContent = '✅ 피아노 로딩 완료!';
