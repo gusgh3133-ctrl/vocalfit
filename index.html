@@ -446,6 +446,13 @@
         /* Scale direction arrow + dots */
         .direction-arrow { font-size: 1.1rem; margin: 10px 0 4px; }
         .scale-dots { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+        /* 루틴 섹션 미니 비주얼 디스플레이 */
+        .ru-vis { display:none; text-align:center; padding:10px 12px 8px; border-radius:10px; background:var(--card2); margin-bottom:10px; }
+        .ru-vis-key { font-size:.68rem; color:var(--text2); margin-bottom:2px; }
+        .ru-vis-key span { font-weight:700; color:var(--cyan); }
+        .ru-vis-note { font-size:2rem; font-weight:900; color:var(--cyan); line-height:1.1; }
+        .ru-vis-kor  { font-size:.8rem; color:var(--text2); margin:2px 0 3px; }
+        .ru-vis-dir  { font-size:.7rem; color:var(--muted); margin-bottom:7px; }
         .sdot {
             min-width: 42px; padding: 5px 4px;
             border-radius: 8px;
@@ -1019,7 +1026,14 @@
 
                 <!-- 재생 / 정지 -->
                 <button class="btn btn-green" id="wu-play-btn" onclick="wuStart()" style="width:100%;margin-bottom:10px;">▶️ 워밍업 시작</button>
-                <div id="wu-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="wu-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:8px;display:none;"></div>
+                <div class="ru-vis" id="wu-vis">
+                    <div class="ru-vis-key">현재 키 · <span id="wu-vis-key"></span></div>
+                    <div class="ru-vis-note" id="wu-vis-note"></div>
+                    <div class="ru-vis-kor"  id="wu-vis-kor"></div>
+                    <div class="ru-vis-dir"  id="wu-vis-dir"></div>
+                    <div class="scale-dots"  id="wu-vis-dots"></div>
+                </div>
                 <div id="wu-step-list"></div>
             </div>
         </div>
@@ -1059,7 +1073,14 @@
 
                 <!-- 재생 / 정지 -->
                 <button class="btn btn-green" id="wu2-play-btn" onclick="wu2Start()" style="width:100%;margin-bottom:10px;">▶️ 워밍업 2 시작</button>
-                <div id="wu2-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="wu2-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:8px;display:none;"></div>
+                <div class="ru-vis" id="wu2-vis">
+                    <div class="ru-vis-key">현재 키 · <span id="wu2-vis-key"></span></div>
+                    <div class="ru-vis-note" id="wu2-vis-note"></div>
+                    <div class="ru-vis-kor"  id="wu2-vis-kor"></div>
+                    <div class="ru-vis-dir"  id="wu2-vis-dir"></div>
+                    <div class="scale-dots"  id="wu2-vis-dots"></div>
+                </div>
                 <div id="wu2-step-list"></div>
             </div>
         </div>
@@ -1100,7 +1121,14 @@
 
                 <!-- 재생 / 정지 -->
                 <button class="btn btn-green" id="hv-play-btn" onclick="hvStart()" style="width:100%;margin-bottom:10px;">▶️ 루틴 시작</button>
-                <div id="hv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="hv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:8px;display:none;"></div>
+                <div class="ru-vis" id="hv-vis">
+                    <div class="ru-vis-key">현재 키 · <span id="hv-vis-key"></span></div>
+                    <div class="ru-vis-note" id="hv-vis-note"></div>
+                    <div class="ru-vis-kor"  id="hv-vis-kor"></div>
+                    <div class="ru-vis-dir"  id="hv-vis-dir"></div>
+                    <div class="scale-dots"  id="hv-vis-dots"></div>
+                </div>
                 <div id="hv-step-list"></div>
 
                 <div class="accordion-point">
@@ -1145,7 +1173,14 @@
 
                 <!-- 재생 / 정지 -->
                 <button class="btn btn-green" id="lv-play-btn" onclick="lvStart()" style="width:100%;margin-bottom:10px;">▶️ 루틴 시작</button>
-                <div id="lv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:12px;display:none;"></div>
+                <div id="lv-status" style="font-size:.82rem;color:var(--purple);text-align:center;margin-bottom:8px;display:none;"></div>
+                <div class="ru-vis" id="lv-vis">
+                    <div class="ru-vis-key">현재 키 · <span id="lv-vis-key"></span></div>
+                    <div class="ru-vis-note" id="lv-vis-note"></div>
+                    <div class="ru-vis-kor"  id="lv-vis-kor"></div>
+                    <div class="ru-vis-dir"  id="lv-vis-dir"></div>
+                    <div class="scale-dots"  id="lv-vis-dots"></div>
+                </div>
                 <div id="lv-step-list"></div>
 
                 <div class="accordion-point">
@@ -2768,6 +2803,42 @@ function setRoutineBpm(val) {
 }
 
 // ════════════════════════════════════════════════
+// ROUTINE VISUAL DISPLAY HELPER
+// ════════════════════════════════════════════════
+function routineVisUpdate(prefix, sc, keys, keySeq, keyIdx, noteIdx) {
+    const vis = document.getElementById(prefix + '-vis');
+    if (!vis || vis.style.display === 'none') return;
+    const rootMidi = keys[keySeq[keyIdx]].midi;
+    const midi = rootMidi + sc.notes[noteIdx];
+    const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
+
+    document.getElementById(prefix + '-vis-key').textContent  = keys[keySeq[keyIdx]].label;
+    document.getElementById(prefix + '-vis-note').textContent = NOTE_EN[ni] + no;
+    document.getElementById(prefix + '-vis-kor').textContent  = NOTE_KO[ni];
+    document.getElementById(prefix + '-vis-dir').textContent  =
+        noteIdx <= sc.peakIdx ? (sc.upArrow || '⬆') : (sc.downArrow || '⬇');
+
+    // 키가 바뀔 때마다(noteIdx===0) 스케일 도트 새로 렌더링
+    if (noteIdx === 0) {
+        document.getElementById(prefix + '-vis-dots').innerHTML = sc.notes.map((offset, i) => {
+            const m = rootMidi + offset;
+            const ni2 = ((m%12)+12)%12, no2 = Math.floor(m/12)-1;
+            const isSus = i === sc.sustainIdx, isPeak = i === sc.peakIdx;
+            return `<div class="sdot${isPeak||isSus?' peak':''}" id="${prefix}-sd${i}">
+                <span class="sdot-kor">${NOTE_KO[ni2]}${isSus?'★':''}</span>
+                <span class="sdot-en">${NOTE_EN[ni2]}${no2}</span>
+            </div>`;
+        }).join('');
+    }
+    // 도트 활성/완료 상태
+    document.querySelectorAll('#' + prefix + '-vis-dots .sdot').forEach((d, i) => {
+        d.classList.remove('active','done','sustain');
+        if (i < noteIdx) d.classList.add('done');
+        if (i === noteIdx) { d.classList.add('active'); if (i===sc.sustainIdx) d.classList.add('sustain'); }
+    });
+}
+
+// ════════════════════════════════════════════════
 // CHORD TRANSITION HELPER
 // 키 전환 시 "현재 키 코드 → 다음 키 코드" 아르페지오 재생 후 콜백
 // 상행/하행 모두 동일 구조: fromMidi 코드 → toMidi 코드 → cb()
@@ -3072,6 +3143,7 @@ async function wuStart() {
     document.getElementById('wu-play-btn').setAttribute('onclick', 'wuStop()');
     document.getElementById('wu-status').textContent   = '🔥 워밍업 진행 중...';
     document.getElementById('wu-status').style.display = 'block';
+    document.getElementById('wu-vis').style.display    = 'block';
     wuUpdateNavButtons();
     wuShowCtrlBar();
 
@@ -3086,6 +3158,7 @@ function wuStop() {
     document.getElementById('wu-play-btn').className   = 'btn btn-green';
     document.getElementById('wu-play-btn').setAttribute('onclick', 'wuStart()');
     document.getElementById('wu-status').textContent   = '⏸ 워밍업 정지됨';
+    document.getElementById('wu-vis').style.display    = 'none';
     wuUpdateNavButtons();
     wuHideCtrlBar();
     renderWuSteps();
@@ -3098,6 +3171,7 @@ function wuRunStep() {
         document.getElementById('wu-play-btn').className   = 'btn btn-green';
         document.getElementById('wu-play-btn').setAttribute('onclick', 'wuStart()');
         document.getElementById('wu-status').textContent   = '✅ 워밍업 완료!';
+        document.getElementById('wu-vis').style.display    = 'none';
         wuUpdateNavButtons();
         wuHideCtrlBar();
         renderWuSteps();
@@ -3109,6 +3183,10 @@ function wuRunStep() {
     const keys = wuBuildKeysFromRange(step.scaleType);
     wuKeySeq = [];
     for (let i = 0; i < keys.length; i++) wuKeySeq.push(i);
+    // desc 제외: 올라간 뒤 다시 내려오는 핑퐁
+    if (step.scaleType !== 'desc') {
+        for (let i = keys.length - 2; i >= 0; i--) wuKeySeq.push(i);
+    }
     wuKeyIdx = 0;
 
     wuUpdateNavButtons();
@@ -3122,49 +3200,34 @@ function wuRunStep() {
 
 function wuPlayNote() {
     if (!wuActive) return;
-
-    const step  = WARMUP_STEPS[wuStepIdx];
-    const sc    = SCALES[step.scaleType];
-    const keys  = wuBuildKeysFromRange(step.scaleType);
-    const wuBpm = ROUTINE_BPM; // ✅ 전역 BPM 사용
+    const step = WARMUP_STEPS[wuStepIdx];
+    const sc   = SCALES[step.scaleType];
+    const keys = wuBuildKeysFromRange(step.scaleType);
+    const bpm  = ROUTINE_BPM;
 
     if (wuNoteIdx >= sc.notes.length) {
         wuNoteIdx = 0;
-        const prevKeySeqIdx = wuKeyIdx; // 전환 전 키 인덱스 보존
-        wuKeyIdx++;
-        if (wuKeyIdx >= wuKeySeq.length) {
-            wuStepIdx++;
-            wuTimer = setTimeout(wuRunStep, 800);
-            return;
-        }
-        // ✅ 키 전환: 이전 키 코드 → 다음 키 코드 → 루틴 재개
-        const fromMidi = keys[wuKeySeq[prevKeySeqIdx]].midi;
-        const toMidi   = keys[wuKeySeq[wuKeyIdx]].midi;
+        const prev = wuKeyIdx++;
+        if (wuKeyIdx >= wuKeySeq.length) { wuStepIdx++; wuTimer = setTimeout(wuRunStep, 800); return; }
+        const fromMidi = keys[wuKeySeq[prev]].midi, toMidi = keys[wuKeySeq[wuKeyIdx]].midi;
         document.getElementById('wu-status').textContent =
-            `🎵 ${keys[wuKeySeq[prevKeySeqIdx]].label} → ${keys[wuKeySeq[wuKeyIdx]].label} 전환 중...`;
-        playChordTransition(fromMidi, toMidi, () => {
-            if (wuActive) wuPlayNote();
-        }, () => wuActive);
+            `🎵 ${keys[wuKeySeq[prev]].label} → ${keys[wuKeySeq[wuKeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => { if (wuActive) wuPlayNote(); }, () => wuActive);
         return;
     }
-
-    const rootMidi = keys[wuKeySeq[wuKeyIdx]].midi;
-    const midi     = rootMidi + sc.notes[wuNoteIdx];
-    const tNote    = midiToTone(midi);
-
+    const rootMidi   = keys[wuKeySeq[wuKeyIdx]].midi;
+    const midi       = rootMidi + sc.notes[wuNoteIdx];
+    const tNote      = midiToTone(midi);
     const isSustain  = (wuNoteIdx === sc.sustainIdx);
-    const noteDurSec = isSustain ? sc.sustainSec : (60 / wuBpm) * 0.82;
-    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / wuBpm;
-
-    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) { console.warn('[WU] piano play failed:', e.name, e.message); }
-
-    const noteIdxMod = ((midi % 12) + 12) % 12;
-    const noteOct    = Math.floor(midi / 12) - 1;
-    const statusText = `🔥 Step ${wuStepIdx + 1}/${WARMUP_STEPS.length} · ${step.syllable} · 키 ${keys[wuKeySeq[wuKeyIdx]].label} · ${NOTE_EN[noteIdxMod]}${noteOct}`;
-    document.getElementById('wu-status').textContent = statusText;
+    const noteDurSec = isSustain ? sc.sustainSec : (60 / bpm) * 0.82;
+    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / bpm;
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) {}
+    const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
+    routineVisUpdate('wu', sc, keys, wuKeySeq, wuKeyIdx, wuNoteIdx);
+    document.getElementById('wu-status').textContent =
+        `🔥 Step ${wuStepIdx+1}/${WARMUP_STEPS.length} · ${step.syllable} · 키 ${keys[wuKeySeq[wuKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
     document.getElementById('wu-bar-info').textContent =
-        `${wuStepIdx + 1}/${WARMUP_STEPS.length} · ${step.syllable} · ${keys[wuKeySeq[wuKeyIdx]].label} · ${NOTE_EN[noteIdxMod]}${noteOct}`;
-
+        `${wuStepIdx+1}/${WARMUP_STEPS.length} · ${step.syllable} · ${keys[wuKeySeq[wuKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
     wuNoteIdx++;
     wuTimer = setTimeout(wuPlayNote, waitMs);
 }
@@ -3411,6 +3474,7 @@ async function wu2Start() {
     document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Stop()');
     document.getElementById('wu2-status').textContent   = '🔥 워밍업 2 진행 중...';
     document.getElementById('wu2-status').style.display = 'block';
+    document.getElementById('wu2-vis').style.display    = 'block';
     wu2UpdateNavButtons();
     wu2ShowCtrlBar();
     wu2RunStep();
@@ -3424,6 +3488,7 @@ function wu2Stop() {
     document.getElementById('wu2-play-btn').className   = 'btn btn-green';
     document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Start()');
     document.getElementById('wu2-status').textContent   = '⏸ 워밍업 2 정지됨';
+    document.getElementById('wu2-vis').style.display    = 'none';
     wu2UpdateNavButtons();
     wu2HideCtrlBar();
     renderWu2Steps();
@@ -3436,6 +3501,7 @@ function wu2RunStep() {
         document.getElementById('wu2-play-btn').className   = 'btn btn-green';
         document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Start()');
         document.getElementById('wu2-status').textContent   = '✅ 워밍업 2 완료!';
+        document.getElementById('wu2-vis').style.display    = 'none';
         wu2UpdateNavButtons();
         wu2HideCtrlBar();
         renderWu2Steps();
@@ -3446,6 +3512,9 @@ function wu2RunStep() {
     const keys = wu2BuildKeysFromRange(step.scaleType);
     wu2KeySeq = [];
     for (let i = 0; i < keys.length; i++) wu2KeySeq.push(i);
+    if (step.scaleType !== 'desc') {
+        for (let i = keys.length - 2; i >= 0; i--) wu2KeySeq.push(i);
+    }
     wu2KeyIdx = 0;
     wu2UpdateNavButtons();
     wu2UpdateCtrlBar();
@@ -3457,46 +3526,34 @@ function wu2RunStep() {
 
 function wu2PlayNote() {
     if (!wu2Active) return;
-    const step   = WARMUP2_STEPS[wu2StepIdx];
-    const sc     = SCALES[step.scaleType];
-    const keys   = wu2BuildKeysFromRange(step.scaleType);
-    const wu2Bpm = ROUTINE_BPM;
+    const step = WARMUP2_STEPS[wu2StepIdx];
+    const sc   = SCALES[step.scaleType];
+    const keys = wu2BuildKeysFromRange(step.scaleType);
+    const bpm  = ROUTINE_BPM;
 
     if (wu2NoteIdx >= sc.notes.length) {
         wu2NoteIdx = 0;
-        const prevKeySeqIdx = wu2KeyIdx;
-        wu2KeyIdx++;
-        if (wu2KeyIdx >= wu2KeySeq.length) {
-            wu2StepIdx++;
-            wu2Timer = setTimeout(wu2RunStep, 800);
-            return;
-        }
-        const fromMidi = keys[wu2KeySeq[prevKeySeqIdx]].midi;
-        const toMidi   = keys[wu2KeySeq[wu2KeyIdx]].midi;
+        const prev = wu2KeyIdx++;
+        if (wu2KeyIdx >= wu2KeySeq.length) { wu2StepIdx++; wu2Timer = setTimeout(wu2RunStep, 800); return; }
+        const fromMidi = keys[wu2KeySeq[prev]].midi, toMidi = keys[wu2KeySeq[wu2KeyIdx]].midi;
         document.getElementById('wu2-status').textContent =
-            `🎵 ${keys[wu2KeySeq[prevKeySeqIdx]].label} → ${keys[wu2KeySeq[wu2KeyIdx]].label} 전환 중...`;
-        playChordTransition(fromMidi, toMidi, () => {
-            if (wu2Active) wu2PlayNote();
-        }, () => wu2Active);
+            `🎵 ${keys[wu2KeySeq[prev]].label} → ${keys[wu2KeySeq[wu2KeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => { if (wu2Active) wu2PlayNote(); }, () => wu2Active);
         return;
     }
-
-    const rootMidi  = keys[wu2KeySeq[wu2KeyIdx]].midi;
-    const midi      = rootMidi + sc.notes[wu2NoteIdx];
-    const tNote     = midiToTone(midi);
-    const isSustain = (wu2NoteIdx === sc.sustainIdx);
-    const noteDurSec = isSustain ? sc.sustainSec : (60 / wu2Bpm) * 0.82;
-    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / wu2Bpm;
-
-    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) { console.warn('[WU2] piano play failed:', e.name, e.message); }
-
-    const noteIdxMod = ((midi % 12) + 12) % 12;
-    const noteOct    = Math.floor(midi / 12) - 1;
-    const statusText = `🔥 Step ${wu2StepIdx + 1}/${WARMUP2_STEPS.length} · ${step.syllable} · 키 ${keys[wu2KeySeq[wu2KeyIdx]].label} · ${NOTE_EN[noteIdxMod]}${noteOct}`;
-    document.getElementById('wu2-status').textContent = statusText;
+    const rootMidi   = keys[wu2KeySeq[wu2KeyIdx]].midi;
+    const midi       = rootMidi + sc.notes[wu2NoteIdx];
+    const tNote      = midiToTone(midi);
+    const isSustain  = (wu2NoteIdx === sc.sustainIdx);
+    const noteDurSec = isSustain ? sc.sustainSec : (60 / bpm) * 0.82;
+    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / bpm;
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) {}
+    const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
+    routineVisUpdate('wu2', sc, keys, wu2KeySeq, wu2KeyIdx, wu2NoteIdx);
+    document.getElementById('wu2-status').textContent =
+        `🔥 Step ${wu2StepIdx+1}/${WARMUP2_STEPS.length} · ${step.syllable} · 키 ${keys[wu2KeySeq[wu2KeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
     document.getElementById('wu2-bar-info').textContent =
-        `${wu2StepIdx + 1}/${WARMUP2_STEPS.length} · ${step.syllable} · ${keys[wu2KeySeq[wu2KeyIdx]].label} · ${NOTE_EN[noteIdxMod]}${noteOct}`;
-
+        `${wu2StepIdx+1}/${WARMUP2_STEPS.length} · ${step.syllable} · ${keys[wu2KeySeq[wu2KeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
     wu2NoteIdx++;
     wu2Timer = setTimeout(wu2PlayNote, waitMs);
 }
@@ -3690,6 +3747,7 @@ async function hvStart() {
     document.getElementById('hv-play-btn').setAttribute('onclick','hvStop()');
     document.getElementById('hv-status').textContent = '🔥 무거운 소리 루틴 진행 중...';
     document.getElementById('hv-status').style.display = 'block';
+    document.getElementById('hv-vis').style.display = 'block';
     hvUpdateNavButtons(); hvShowCtrlBar(); hvRunStep();
 }
 
@@ -3700,6 +3758,7 @@ function hvStop() {
     document.getElementById('hv-play-btn').className = 'btn btn-green';
     document.getElementById('hv-play-btn').setAttribute('onclick','hvStart()');
     document.getElementById('hv-status').textContent = '⏸ 루틴 정지됨';
+    document.getElementById('hv-vis').style.display = 'none';
     hvUpdateNavButtons(); hvHideCtrlBar(); renderHvSteps();
 }
 
@@ -3710,12 +3769,16 @@ function hvRunStep() {
         document.getElementById('hv-play-btn').className = 'btn btn-green';
         document.getElementById('hv-play-btn').setAttribute('onclick','hvStart()');
         document.getElementById('hv-status').textContent = '✅ 무거운 소리 루틴 완료!';
+        document.getElementById('hv-vis').style.display = 'none';
         hvUpdateNavButtons(); hvHideCtrlBar(); renderHvSteps(); return;
     }
     const step = HEAVY_STEPS[hvStepIdx];
     hvNoteIdx = 0;
     const keys = hvBuildKeysFromRange(step.scaleType);
     hvKeySeq = []; for (let i=0;i<keys.length;i++) hvKeySeq.push(i);
+    if (step.scaleType !== 'desc') {
+        for (let i = keys.length - 2; i >= 0; i--) hvKeySeq.push(i);
+    }
     hvKeyIdx = 0;
     hvUpdateNavButtons(); hvUpdateCtrlBar(); renderHvSteps();
     const el = document.getElementById('hv-s'+hvStepIdx);
@@ -3726,39 +3789,33 @@ function hvRunStep() {
 function hvPlayNote() {
     if (!hvActive) return;
     const step = HEAVY_STEPS[hvStepIdx];
-    const sc = SCALES[step.scaleType];
+    const sc   = SCALES[step.scaleType];
     const keys = hvBuildKeysFromRange(step.scaleType);
-    const hvBpm = ROUTINE_BPM; // ✅ 전역 BPM 사용 (기존 desc 70/else 115 → 전역으로 통일)
+    const bpm  = ROUTINE_BPM;
 
     if (hvNoteIdx >= sc.notes.length) {
         hvNoteIdx = 0;
-        const prevKeySeqIdx = hvKeyIdx; // 전환 전 키 인덱스 보존
-        hvKeyIdx++;
-        if (hvKeyIdx >= hvKeySeq.length) { hvStepIdx++; hvTimer = setTimeout(hvRunStep,800); return; }
-        // ✅ 키 전환: 코드 안내 후 루틴 재개
-        const fromMidi = keys[hvKeySeq[prevKeySeqIdx]].midi;
-        const toMidi   = keys[hvKeySeq[hvKeyIdx]].midi;
+        const prev = hvKeyIdx++;
+        if (hvKeyIdx >= hvKeySeq.length) { hvStepIdx++; hvTimer = setTimeout(hvRunStep, 800); return; }
+        const fromMidi = keys[hvKeySeq[prev]].midi, toMidi = keys[hvKeySeq[hvKeyIdx]].midi;
         document.getElementById('hv-status').textContent =
-            `🎵 ${keys[hvKeySeq[prevKeySeqIdx]].label} → ${keys[hvKeySeq[hvKeyIdx]].label} 전환 중...`;
-        playChordTransition(fromMidi, toMidi, () => {
-            if (hvActive) hvPlayNote();
-        }, () => hvActive);
+            `🎵 ${keys[hvKeySeq[prev]].label} → ${keys[hvKeySeq[hvKeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => { if (hvActive) hvPlayNote(); }, () => hvActive);
         return;
     }
-    const rootMidi = keys[hvKeySeq[hvKeyIdx]].midi;
-    const midi = rootMidi + sc.notes[hvNoteIdx];
-    const tNote = midiToTone(midi);
-    const isSustain = (hvNoteIdx===sc.sustainIdx);
-    const noteDurSec = isSustain ? sc.sustainSec : (60/hvBpm)*0.82;
-    const waitMs = isSustain ? sc.sustainSec*1000+300 : 60000/hvBpm;
-    try{piano.triggerAttackRelease(tNote,noteDurSec);}catch(e){ console.warn('[Routine] piano play failed:', e); }
-
+    const rootMidi   = keys[hvKeySeq[hvKeyIdx]].midi;
+    const midi       = rootMidi + sc.notes[hvNoteIdx];
+    const tNote      = midiToTone(midi);
+    const isSustain  = (hvNoteIdx === sc.sustainIdx);
+    const noteDurSec = isSustain ? sc.sustainSec : (60 / bpm) * 0.82;
+    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / bpm;
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) {}
     const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
-    const statusText = `🔥 Step ${hvStepIdx+1}/${HEAVY_STEPS.length} · ${step.syllable} · 키 ${keys[hvKeySeq[hvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
-    document.getElementById('hv-status').textContent = statusText;
+    routineVisUpdate('hv', sc, keys, hvKeySeq, hvKeyIdx, hvNoteIdx);
+    document.getElementById('hv-status').textContent =
+        `🔥 Step ${hvStepIdx+1}/${HEAVY_STEPS.length} · ${step.syllable} · 키 ${keys[hvKeySeq[hvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
     const info = document.getElementById('hv-bar-info');
     if (info) info.textContent = `${hvStepIdx+1}/${HEAVY_STEPS.length} · ${step.syllable} · ${keys[hvKeySeq[hvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
-
     hvNoteIdx++;
     hvTimer = setTimeout(hvPlayNote, waitMs);
 }
@@ -3943,6 +4000,7 @@ async function lvStart() {
     document.getElementById('lv-play-btn').setAttribute('onclick','lvStop()');
     document.getElementById('lv-status').textContent = '🔥 가벼운 소리 루틴 진행 중...';
     document.getElementById('lv-status').style.display = 'block';
+    document.getElementById('lv-vis').style.display = 'block';
     lvUpdateNavButtons(); lvShowCtrlBar(); lvRunStep();
 }
 
@@ -3953,6 +4011,7 @@ function lvStop() {
     document.getElementById('lv-play-btn').className = 'btn btn-green';
     document.getElementById('lv-play-btn').setAttribute('onclick','lvStart()');
     document.getElementById('lv-status').textContent = '⏸ 루틴 정지됨';
+    document.getElementById('lv-vis').style.display = 'none';
     lvUpdateNavButtons(); lvHideCtrlBar(); renderLvSteps();
 }
 
@@ -3963,12 +4022,16 @@ function lvRunStep() {
         document.getElementById('lv-play-btn').className = 'btn btn-green';
         document.getElementById('lv-play-btn').setAttribute('onclick','lvStart()');
         document.getElementById('lv-status').textContent = '✅ 가벼운 소리 루틴 완료!';
+        document.getElementById('lv-vis').style.display = 'none';
         lvUpdateNavButtons(); lvHideCtrlBar(); renderLvSteps(); return;
     }
     const step = LIGHT_STEPS[lvStepIdx];
     lvNoteIdx = 0;
     const keys = lvBuildKeysFromRange(step.scaleType);
     lvKeySeq = []; for (let i=0;i<keys.length;i++) lvKeySeq.push(i);
+    if (step.scaleType !== 'desc') {
+        for (let i = keys.length - 2; i >= 0; i--) lvKeySeq.push(i);
+    }
     lvKeyIdx = 0;
     lvUpdateNavButtons(); lvUpdateCtrlBar(); renderLvSteps();
     const el = document.getElementById('lv-s'+lvStepIdx);
@@ -3979,39 +4042,33 @@ function lvRunStep() {
 function lvPlayNote() {
     if (!lvActive) return;
     const step = LIGHT_STEPS[lvStepIdx];
-    const sc = SCALES[step.scaleType];
+    const sc   = SCALES[step.scaleType];
     const keys = lvBuildKeysFromRange(step.scaleType);
-    const lvBpm = ROUTINE_BPM; // ✅ 전역 BPM 사용
+    const bpm  = ROUTINE_BPM;
 
     if (lvNoteIdx >= sc.notes.length) {
         lvNoteIdx = 0;
-        const prevKeySeqIdx = lvKeyIdx; // 전환 전 키 인덱스 보존
-        lvKeyIdx++;
-        if (lvKeyIdx >= lvKeySeq.length) { lvStepIdx++; lvTimer = setTimeout(lvRunStep,800); return; }
-        // ✅ 키 전환: 코드 안내 후 루틴 재개
-        const fromMidi = keys[lvKeySeq[prevKeySeqIdx]].midi;
-        const toMidi   = keys[lvKeySeq[lvKeyIdx]].midi;
+        const prev = lvKeyIdx++;
+        if (lvKeyIdx >= lvKeySeq.length) { lvStepIdx++; lvTimer = setTimeout(lvRunStep, 800); return; }
+        const fromMidi = keys[lvKeySeq[prev]].midi, toMidi = keys[lvKeySeq[lvKeyIdx]].midi;
         document.getElementById('lv-status').textContent =
-            `🎵 ${keys[lvKeySeq[prevKeySeqIdx]].label} → ${keys[lvKeySeq[lvKeyIdx]].label} 전환 중...`;
-        playChordTransition(fromMidi, toMidi, () => {
-            if (lvActive) lvPlayNote();
-        }, () => lvActive);
+            `🎵 ${keys[lvKeySeq[prev]].label} → ${keys[lvKeySeq[lvKeyIdx]].label} 전환 중...`;
+        playChordTransition(fromMidi, toMidi, () => { if (lvActive) lvPlayNote(); }, () => lvActive);
         return;
     }
-    const rootMidi = keys[lvKeySeq[lvKeyIdx]].midi;
-    const midi = rootMidi + sc.notes[lvNoteIdx];
-    const tNote = midiToTone(midi);
-    const isSustain = (lvNoteIdx===sc.sustainIdx);
-    const noteDurSec = isSustain ? sc.sustainSec : (60/lvBpm)*0.82;
-    const waitMs = isSustain ? sc.sustainSec*1000+300 : 60000/lvBpm;
-    try{piano.triggerAttackRelease(tNote,noteDurSec);}catch(e){ console.warn('[Routine] piano play failed:', e); }
-
+    const rootMidi   = keys[lvKeySeq[lvKeyIdx]].midi;
+    const midi       = rootMidi + sc.notes[lvNoteIdx];
+    const tNote      = midiToTone(midi);
+    const isSustain  = (lvNoteIdx === sc.sustainIdx);
+    const noteDurSec = isSustain ? sc.sustainSec : (60 / bpm) * 0.82;
+    const waitMs     = isSustain ? sc.sustainSec * 1000 + 300 : 60000 / bpm;
+    try { piano.triggerAttackRelease(tNote, noteDurSec); } catch(e) {}
     const ni = ((midi%12)+12)%12, no = Math.floor(midi/12)-1;
-    const statusText = `🔥 Step ${lvStepIdx+1}/${LIGHT_STEPS.length} · ${step.syllable} · 키 ${keys[lvKeySeq[lvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
-    document.getElementById('lv-status').textContent = statusText;
+    routineVisUpdate('lv', sc, keys, lvKeySeq, lvKeyIdx, lvNoteIdx);
+    document.getElementById('lv-status').textContent =
+        `🔥 Step ${lvStepIdx+1}/${LIGHT_STEPS.length} · ${step.syllable} · 키 ${keys[lvKeySeq[lvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
     const info = document.getElementById('lv-bar-info');
     if (info) info.textContent = `${lvStepIdx+1}/${LIGHT_STEPS.length} · ${step.syllable} · ${keys[lvKeySeq[lvKeyIdx]].label} · ${NOTE_EN[ni]}${no}`;
-
     lvNoteIdx++;
     lvTimer = setTimeout(lvPlayNote, waitMs);
 }
