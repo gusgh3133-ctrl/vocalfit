@@ -1955,6 +1955,29 @@ let playTimer  = null;
 let piano      = null, pianoReady = false;
 
 // ════════════════════════════════════════════════
+// WAKE LOCK — 재생 중 화면 꺼짐 방지
+// ════════════════════════════════════════════════
+let _wakeLock = null;
+async function acquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+        if (_wakeLock) return; // already held
+        _wakeLock = await navigator.wakeLock.request('screen');
+        _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+    } catch(e) { /* 권한 없음 or 지원 안 함 */ }
+}
+function releaseWakeLock() {
+    if (_wakeLock) { _wakeLock.release(); _wakeLock = null; }
+}
+// 페이지 다시 보일 때 자동 재획득 (백그라운드 후 복귀)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        const anyPlaying = isPlaying || wuActive || wu2Active || hvActive || lvActive;
+        if (anyPlaying) acquireWakeLock();
+    }
+});
+
+// ════════════════════════════════════════════════
 // CONSTANTS
 // ════════════════════════════════════════════════
 const NOTE_EN   = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -2640,6 +2663,7 @@ async function toggleEx() {
 }
 
 async function startEx() {
+    acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
     await vfToneStart();           // 1) AudioContext 생성 + unlock (gesture 체인 유지)
     await ensurePianoReady();      // 2) Tone.setContext() 이후 piano 초기화
 
@@ -2743,6 +2767,7 @@ function stopEx() {
     isPlaying = false;
     clearTimeout(playTimer);
     try { if(piano) piano.releaseAll(); } catch(e){}
+    releaseWakeLock();
     // 버튼만 변경, play-card는 그대로 유지 (정지된 화면 유지)
     document.getElementById('play-btn').textContent = '▶️ 이어서 시작';
     document.getElementById('play-btn').className   = 'btn btn-green';
@@ -3062,6 +3087,7 @@ async function wuJumpToStep(idx) {
     if (idx < 0 || idx >= WARMUP_STEPS.length) return;
     // If not yet playing, start fresh from this step
     if (!wuActive) {
+        acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
         await vfToneStart();
         await ensurePianoReady();
         wuActive = true;
@@ -3070,6 +3096,7 @@ async function wuJumpToStep(idx) {
         document.getElementById('wu-play-btn').className   = 'btn btn-red';
         document.getElementById('wu-play-btn').setAttribute('onclick', 'wuStop()');
         document.getElementById('wu-status').style.display = 'block';
+        document.getElementById('wu-vis').style.display    = 'block';
         wuShowCtrlBar();
         wuRunStep();
     } else {
@@ -3130,6 +3157,7 @@ function wuPrevStep() {
 
 async function wuStart() {
     if (wuActive) return;
+    acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출 (iOS Safari 필수)
     console.log('[WU] play routine clicked — ctx.state:', VF.ctx?.state, 'unlocked:', window.__audioUnlocked);
     await vfToneStart();      // FIRST: unlock audio within gesture chain (no delays)
     console.log('[WU] after vfToneStart — ctx.state:', VF.ctx?.state);
@@ -3153,6 +3181,7 @@ async function wuStart() {
 function wuStop() {
     wuActive = false;
     clearTimeout(wuTimer);
+    releaseWakeLock();
     try { if (piano) piano.releaseAll(); } catch(e) {}
     document.getElementById('wu-play-btn').textContent = '▶️ 워밍업 시작';
     document.getElementById('wu-play-btn').className   = 'btn btn-green';
@@ -3399,6 +3428,7 @@ function renderWu2Steps() {
 async function wu2JumpToStep(idx) {
     if (idx < 0 || idx >= WARMUP2_STEPS.length) return;
     if (!wu2Active) {
+        acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
         await vfToneStart();
         await ensurePianoReady();
         wu2Active = true;
@@ -3407,6 +3437,7 @@ async function wu2JumpToStep(idx) {
         document.getElementById('wu2-play-btn').className   = 'btn btn-red';
         document.getElementById('wu2-play-btn').setAttribute('onclick', 'wu2Stop()');
         document.getElementById('wu2-status').style.display = 'block';
+        document.getElementById('wu2-vis').style.display    = 'block';
         wu2ShowCtrlBar();
         wu2RunStep();
     } else {
@@ -3465,6 +3496,7 @@ function wu2PrevStep() {
 
 async function wu2Start() {
     if (wu2Active) return;
+    acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
     await vfToneStart();
     await ensurePianoReady();
     wu2Active  = true;
@@ -3483,6 +3515,7 @@ async function wu2Start() {
 function wu2Stop() {
     wu2Active = false;
     clearTimeout(wu2Timer);
+    releaseWakeLock();
     try { if (piano) piano.releaseAll(); } catch(e) {}
     document.getElementById('wu2-play-btn').textContent = '▶️ 워밍업 2 시작';
     document.getElementById('wu2-play-btn').className   = 'btn btn-green';
@@ -3690,12 +3723,14 @@ function renderHvSteps() {
 async function hvJumpToStep(idx) {
     if (idx < 0 || idx >= HEAVY_STEPS.length) return;
     if (!hvActive) {
+        acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
         await vfToneStart(); await ensurePianoReady();
         hvActive = true; hvStepIdx = idx;
         document.getElementById('hv-play-btn').textContent = '⏹ 정지';
         document.getElementById('hv-play-btn').className = 'btn btn-red';
         document.getElementById('hv-play-btn').setAttribute('onclick','hvStop()');
         document.getElementById('hv-status').style.display = 'block';
+        document.getElementById('hv-vis').style.display = 'block';
         hvShowCtrlBar(); hvRunStep();
     } else {
         clearTimeout(hvTimer); try{if(piano)piano.releaseAll();}catch(e){}
@@ -3739,6 +3774,7 @@ function hvPrevStep() {
 
 async function hvStart() {
     if (hvActive) return;
+    acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
     await vfToneStart();      // FIRST: unlock audio within gesture chain
     await ensurePianoReady(); // THEN: wait for piano
     hvActive = true; hvStepIdx = 0;
@@ -3753,6 +3789,7 @@ async function hvStart() {
 
 function hvStop() {
     hvActive = false; clearTimeout(hvTimer);
+    releaseWakeLock();
     try{if(piano)piano.releaseAll();}catch(e){}
     document.getElementById('hv-play-btn').textContent = '▶️ 루틴 시작';
     document.getElementById('hv-play-btn').className = 'btn btn-green';
@@ -3943,12 +3980,14 @@ function renderLvSteps() {
 async function lvJumpToStep(idx) {
     if (idx < 0 || idx >= LIGHT_STEPS.length) return;
     if (!lvActive) {
+        acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
         await vfToneStart(); await ensurePianoReady();
         lvActive = true; lvStepIdx = idx;
         document.getElementById('lv-play-btn').textContent = '⏹ 정지';
         document.getElementById('lv-play-btn').className = 'btn btn-red';
         document.getElementById('lv-play-btn').setAttribute('onclick','lvStop()');
         document.getElementById('lv-status').style.display = 'block';
+        document.getElementById('lv-vis').style.display = 'block';
         lvShowCtrlBar(); lvRunStep();
     } else {
         clearTimeout(lvTimer); try{if(piano)piano.releaseAll();}catch(e){}
@@ -3992,6 +4031,7 @@ function lvPrevStep() {
 
 async function lvStart() {
     if (lvActive) return;
+    acquireWakeLock(); // 제스처 컨텍스트 안에서 먼저 호출
     await vfToneStart();      // FIRST: unlock audio within gesture chain
     await ensurePianoReady(); // THEN: wait for piano
     lvActive = true; lvStepIdx = 0;
@@ -4006,6 +4046,7 @@ async function lvStart() {
 
 function lvStop() {
     lvActive = false; clearTimeout(lvTimer);
+    releaseWakeLock();
     try{if(piano)piano.releaseAll();}catch(e){}
     document.getElementById('lv-play-btn').textContent = '▶️ 루틴 시작';
     document.getElementById('lv-play-btn').className = 'btn btn-green';
