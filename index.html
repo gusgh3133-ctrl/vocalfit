@@ -720,12 +720,12 @@
     <nav class="tabs desk-tabs" id="desk-tabs">
         <button class="tab active" onclick="switchTab('routine')">🎯 보컬 루틴</button>
         <button class="tab"        onclick="switchTab('exercise')">🎹 발성 연습</button>
-        <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
+        <button class="tab"        onclick="switchTab('riff')">🎤 리프</button>
         <button class="tab"        onclick="switchTab('pitch')">🎤 음정 체크</button>
         <button class="tab"        onclick="switchTab('game')">🧱 미니게임</button>
         <button class="tab"        onclick="switchTab('selfcheck')">🔍 셀프 평가</button>
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
-        <button class="tab"        onclick="switchTab('riff')">🎤 리프</button>
+        <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
     </nav>
 
@@ -2332,7 +2332,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['routine', 'exercise', 'spectrogram', 'pitch', 'game', 'selfcheck', 'notes', 'studio', 'riff'];
+const TAB_ORDER = ['routine', 'exercise', 'riff', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio'];
 function switchTab(tab) {
     currentTab = tab;
     // Desktop tabs
