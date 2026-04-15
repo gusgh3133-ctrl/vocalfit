@@ -332,6 +332,49 @@
         .scale-sheet-pattern { font-size: .75rem; color: var(--muted); margin-bottom: 14px; font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: .02em; }
         .scale-sheet-desc { font-size: .88rem; color: var(--text2); line-height: 1.65; }
 
+        /* ── RIFF TRAINING ── */
+        .riff-card { background:var(--card2); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:12px; cursor:pointer; border:2px solid transparent; transition:border-color .15s,background .15s; }
+        .riff-card:active { background:var(--card3,#1e2533); }
+        .riff-card-left { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+        .riff-card-name { font-weight:700; font-size:.95rem; color:var(--text); }
+        .riff-card-meta { font-size:.72rem; color:var(--text2); }
+        .riff-card-desc { font-size:.78rem; color:var(--muted); margin-top:2px; }
+        .riff-level-badge { font-size:.65rem; font-weight:700; border-radius:6px; padding:2px 7px; flex-shrink:0; }
+        .riff-level-1 { background:rgba(16,185,129,.15); color:#10b981; border:1px solid #10b981; }
+        .riff-level-2 { background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid #f59e0b; }
+        .riff-level-3 { background:rgba(239,68,68,.15);  color:#ef4444; border:1px solid #ef4444; }
+        .riff-level-4 { background:rgba(168,85,247,.15); color:#a855f7; border:1px solid #a855f7; }
+        .riff-level-5 { background:rgba(251,191,36,.15);  color:#fbbf24; border:1px solid #fbbf24; }
+        .riff-go-btn { font-size:1.2rem; flex-shrink:0; }
+
+        .riff-note-display { background:var(--card2); border-radius:10px; padding:14px 12px 10px; text-align:center; margin:8px 0 4px; }
+        .riff-beat-row { display:flex; gap:5px; justify-content:center; margin:6px 0 4px; flex-wrap:wrap; }
+        .riff-beat { width:26px; height:26px; border-radius:6px; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:700; color:var(--muted); transition:background .08s,color .08s; }
+        .riff-beat.bar-start { border-color:var(--text2); }
+        .riff-beat.active { background:var(--cyan); border-color:var(--cyan); color:#0f172a; transform:scale(1.1); }
+        .riff-note-big { font-size:2.4rem; font-weight:900; color:var(--cyan); line-height:1.1; min-height:2.8rem; }
+        .riff-note-kor { font-size:.85rem; color:var(--text2); margin:2px 0 6px; }
+        .riff-note-dots { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
+        .riff-dot { min-width:36px; padding:5px 4px; border-radius:7px; border:1.5px solid var(--border); text-align:center; transition:all .12s; background:var(--card3,#1e2533); }
+        .riff-dot.active { background:var(--cyan); border-color:var(--cyan); transform:scale(1.15); box-shadow:0 0 8px rgba(6,182,212,.5); }
+        .riff-dot.active .rd-en,.riff-dot.active .rd-ko { color:#fff; }
+        .riff-dot.done { border-color:var(--purple); }
+        .riff-dot.done .rd-en,.riff-dot.done .rd-ko { color:var(--purple); }
+        .rd-ko { font-size:.65rem; font-weight:700; color:var(--muted); line-height:1; }
+        .rd-en { font-size:.58rem; color:var(--muted); line-height:1; }
+
+        .riff-ctrl-row { display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+        .riff-ctrl-label { font-size:.78rem; font-weight:700; color:var(--text2); min-width:28px; }
+        .riff-ctrl-val { font-size:.9rem; font-weight:700; color:var(--cyan); min-width:40px; text-align:center; }
+        .riff-key-btn { min-width:0; padding:4px 10px; font-size:.9rem; }
+        .riff-bpm-btn { padding:5px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--card2); color:var(--text2); font-size:.8rem; font-weight:600; cursor:pointer; transition:all .15s; }
+        .riff-bpm-btn.active { background:var(--green); border-color:var(--green); color:#fff; }
+        .riff-tog { padding:5px 14px; border-radius:8px; border:1.5px solid var(--border); background:var(--card2); color:var(--text2); font-size:.8rem; font-weight:700; cursor:pointer; transition:all .15s; min-width:52px; }
+        .riff-tog.active { background:var(--green,#10b981); border-color:var(--green,#10b981); color:#fff; }
+        .riff-countdown { position:fixed; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; z-index:999; }
+        .riff-countdown-num { font-size:6rem; font-weight:900; color:var(--cyan); animation:riffCountPop .35s ease; }
+        @keyframes riffCountPop { 0%{transform:scale(.4);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+
         /* ── BRICK GAME ── */
         /* ── PITCH BREAKER v2 ── */
         .gm-hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -682,6 +725,7 @@
         <button class="tab"        onclick="switchTab('game')">🧱 미니게임</button>
         <button class="tab"        onclick="switchTab('selfcheck')">🔍 셀프 평가</button>
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
+        <button class="tab"        onclick="switchTab('riff')">🎤 리프</button>
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
     </nav>
 
@@ -693,8 +737,8 @@
         <button class="mob-tab" data-tab="exercise" onclick="switchTab('exercise')">
             <span class="mob-icon">🎹</span><span class="mob-label">발성</span>
         </button>
-        <button class="mob-tab" data-tab="spectrogram" onclick="switchTab('spectrogram')">
-            <span class="mob-icon">📊</span><span class="mob-label">분석</span>
+        <button class="mob-tab" data-tab="riff" onclick="switchTab('riff')">
+            <span class="mob-icon">🎤</span><span class="mob-label">리프</span>
         </button>
         <button class="mob-tab" data-tab="pitch" onclick="switchTab('pitch')">
             <span class="mob-icon">🎤</span><span class="mob-label">음정</span>
@@ -714,6 +758,7 @@
     <div class="mob-more-overlay" id="mob-more-overlay" onclick="closeMobMore()"></div>
     <div class="mob-more-sheet" id="mob-more-sheet">
         <div class="mob-more-header">메뉴<button class="mob-more-close" onclick="closeMobMore()">✕</button></div>
+        <button class="mob-more-item" onclick="switchTab('spectrogram');closeMobMore()">📊 분석</button>
         <button class="mob-more-item" onclick="switchTab('game');closeMobMore()">🧱 미니게임</button>
         <button class="mob-more-item" onclick="switchTab('selfcheck');closeMobMore()">🔍 셀프 평가</button>
         <button class="mob-more-item" onclick="switchTab('notes');closeMobMore()">📋 참고사항</button>
@@ -1541,6 +1586,107 @@
 
     </section>
 
+    <!-- ══════════════ RIFF TRAINING TAB ══════════════ -->
+    <section id="riff-section" class="section">
+
+        <!-- ── 리프 리스트 뷰 ── -->
+        <div id="riff-list-view">
+            <div class="card" style="padding-bottom:8px;">
+                <div class="card-label">🎤 리프 트레이닝</div>
+                <p style="font-size:.82rem;color:var(--text2);line-height:1.7;margin-bottom:10px;">
+                    R&amp;B / Gospel 멜리즈마 패턴을 드럼 루프 위에서 반복 연습합니다.<br>
+                    <strong style="color:var(--text);">느린 속도 → 정확한 음 → 빠르게</strong> 순서로 연습하세요.
+                </p>
+                <div class="two-toggle" id="riff-voice-toggle" style="margin-bottom:0;">
+                    <button class="vtoggle active" id="riff-v-male"   onclick="riffSetVoice('male')">🎵 남성</button>
+                    <button class="vtoggle"        id="riff-v-female" onclick="riffSetVoice('female')">🎵 여성</button>
+                </div>
+            </div>
+
+            <div id="riff-cards-container"></div>
+        </div>
+
+        <!-- ── 훈련 뷰 ── -->
+        <div id="riff-train-view" style="display:none;">
+
+            <!-- 마이크 카드 -->
+            <div class="card" style="padding:10px 14px;">
+                <div class="mic-row" style="margin-bottom:8px;">
+                    <div class="mic-dot" id="riff-mic-dot"></div>
+                    <span style="font-size:.82rem;color:var(--text2);" id="riff-mic-label">마이크 꺼짐 — 켜면 실시간 음정 확인 가능</span>
+                </div>
+                <button class="btn btn-purple" id="riff-mic-btn" onclick="riffToggleMic()" style="width:100%;">🎤 마이크 켜기</button>
+            </div>
+
+            <!-- 헤더 -->
+            <div class="card" style="padding-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <button class="btn" style="padding:4px 10px;font-size:.8rem;min-width:0;" onclick="riffBackToList()">← 목록</button>
+                    <div>
+                        <div style="font-weight:700;font-size:1rem;" id="riff-train-name"></div>
+                        <div style="font-size:.75rem;color:var(--text2);" id="riff-train-meta"></div>
+                    </div>
+                </div>
+
+                <!-- 노트 디스플레이 -->
+                <div class="riff-note-display" id="riff-note-display">
+                    <div class="riff-note-big" id="riff-note-big">—</div>
+                    <div class="riff-note-kor"  id="riff-note-kor">대기 중</div>
+                    <div class="riff-beat-row"  id="riff-beat-row"></div>
+                    <div class="riff-note-dots" id="riff-note-dots"></div>
+                </div>
+            </div>
+
+            <!-- 컨트롤 카드 -->
+            <div class="card">
+                <!-- 키 -->
+                <div class="riff-ctrl-row">
+                    <span class="riff-ctrl-label">키</span>
+                    <button class="btn riff-key-btn" onclick="riffChangeKey(-1)">◀</button>
+                    <span class="riff-ctrl-val" id="riff-key-display">C3</span>
+                    <button class="btn riff-key-btn" onclick="riffChangeKey(+1)">▶</button>
+                    <span style="font-size:.72rem;color:var(--muted);" id="riff-key-range"></span>
+                </div>
+
+                <!-- 속도 -->
+                <div class="riff-ctrl-row" style="flex-wrap:wrap;">
+                    <span class="riff-ctrl-label">속도</span>
+                    <button class="riff-bpm-btn" id="rbpm-60"  onclick="riffSetBpm(60)">60</button>
+                    <button class="riff-bpm-btn active" id="rbpm-80"  onclick="riffSetBpm(80)">80</button>
+                    <button class="riff-bpm-btn" id="rbpm-100" onclick="riffSetBpm(100)">100</button>
+                    <button class="riff-bpm-btn" id="rbpm-120" onclick="riffSetBpm(120)">120</button>
+                </div>
+                <div class="riff-ctrl-row" style="gap:10px;">
+                    <input type="range" id="riff-bpm-slider" min="40" max="130" step="1" value="80"
+                        oninput="riffSetBpm(+this.value)"
+                        style="flex:1;accent-color:var(--cyan);">
+                    <span class="riff-ctrl-val" id="riff-bpm-val" style="min-width:38px;">80 BPM</span>
+                </div>
+
+                <!-- 루프 길이 -->
+                <div class="riff-ctrl-row">
+                    <span class="riff-ctrl-label">루프</span>
+                    <button class="riff-bpm-btn active" id="rloop-2" onclick="riffSetLoop(2)">2마디</button>
+                    <button class="riff-bpm-btn"        id="rloop-4" onclick="riffSetLoop(4)">4마디</button>
+                </div>
+
+                <!-- 드럼 / 리프 토글 -->
+                <div class="riff-ctrl-row" style="gap:10px;">
+                    <span class="riff-ctrl-label">드럼</span>
+                    <button class="riff-tog active" id="riff-drum-btn" onclick="riffToggleDrum()">ON</button>
+                    <span class="riff-ctrl-label" style="margin-left:8px;">리프</span>
+                    <button class="riff-tog active" id="riff-piano-btn" onclick="riffTogglePiano()">ON</button>
+                </div>
+
+                <!-- 재생 / 정지 -->
+                <div id="riff-countdown-display" style="display:none;text-align:center;font-size:2.5rem;font-weight:900;color:var(--cyan);margin:8px 0;"></div>
+                <button class="btn btn-green" id="riff-play-btn" onclick="riffPlay()" style="width:100%;margin-top:6px;">▶ 재생</button>
+            </div>
+
+        </div>
+
+    </section>
+
     <!-- ══════════════ GAME TAB ══════════════ -->
     <section id="game-section" class="section">
         <div class="card">
@@ -2186,7 +2332,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['routine', 'exercise', 'spectrogram', 'pitch', 'game', 'selfcheck', 'notes', 'studio'];
+const TAB_ORDER = ['routine', 'exercise', 'spectrogram', 'pitch', 'game', 'selfcheck', 'notes', 'studio', 'riff'];
 function switchTab(tab) {
     currentTab = tab;
     // Desktop tabs
@@ -2199,7 +2345,7 @@ function switchTab(tab) {
         b.classList.toggle('active', t === tab);
     });
     // If tab is in the "more" group, highlight the more button
-    const moreGroup = ['game', 'selfcheck', 'notes', 'studio'];
+    const moreGroup = ['game', 'selfcheck', 'notes', 'studio', 'spectrogram'];
     const moreBtn = document.querySelector('.mob-tab[data-tab="more"]');
     if (moreBtn) moreBtn.classList.toggle('active', moreGroup.includes(tab));
 
@@ -2215,6 +2361,8 @@ function switchTab(tab) {
     if (tab !== 'routine' && lvActive)  lvStop();
     if (tab !== 'game' && gmActive) gmStop();
     if (tab !== 'game' && fbActive) fbStop();
+    if (tab !== 'riff' && riffActive) riffStop();
+    if (tab === 'riff') setTimeout(riffInit, 50);
     if (tab !== 'spectrogram' && specRunning) stopSpecMic();
 }
 
@@ -5537,6 +5685,887 @@ function updateSpecInfo(freq, db) {
     wrap.addEventListener('click', handleInspect);
     wrap.addEventListener('touchstart', handleInspect, { passive: false });
 })();
+
+// ════════════════════════════════════════════════════════════════
+// 🎤 RIFF TRAINING MODULE
+// ════════════════════════════════════════════════════════════════
+
+// ── 리프 데이터 ──────────────────────────────────────────────
+// notes: [semitone_offset_from_root, Tone_time_string, duration_string]
+// time  형식: "bar:beat:sixteenth" (0-indexed, 각 bar = 4 beats = 16 sixteenths)
+// rootMidi_male / rootMidi_female: 기본 루트 MIDI
+const RIFFS = [
+    {
+        id: 1,
+        name: 'Basic Run',
+        nameKo: '기본 런',
+        level: 1,
+        levelLabel: '입문',
+        style: 'Soul',
+        desc: '펜타토닉 5음 균일 상행. 모든 R&B의 기초 패턴.',
+        pattern: '1-2-3-2-1',
+        rootMidi_male: 60,    // C4
+        rootMidi_female: 72,  // C5
+        bpmDefault: 80,
+        notes: [
+            [0,  "0:0:0", "8n"],
+            [2,  "0:0:2", "8n"],
+            [4,  "0:1:0", "8n"],
+            [2,  "0:1:2", "8n"],
+            [0,  "0:2:0", "4n"],
+        ],
+    },
+    {
+        id: 2,
+        name: 'R&B Blue',
+        nameKo: 'R&B 블루',
+        level: 1,
+        levelLabel: '입문',
+        style: 'R&B',
+        desc: 'b3 블루노트 포함. 끊기는 느낌의 R&B 특유 프레이징.',
+        pattern: '1-b3-4-3-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [0,  "0:0:0", "4n"],
+            [3,  "0:1:0", "8n"],
+            [5,  "0:1:2", "8n"],
+            [4,  "0:2:2", "8n"],
+            [0,  "0:3:0", "4n"],
+        ],
+    },
+    {
+        id: 3,
+        name: 'Fast Run',
+        nameKo: '빠른 멜리즈마',
+        level: 2,
+        levelLabel: '초급',
+        style: 'R&B',
+        desc: '중간에 16분음표 4연타. 속도 60부터 천천히 시작.',
+        pattern: '5-3-2-1-2-3-5',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [7,  "0:0:0", "8n"],
+            [4,  "0:0:2", "8n"],
+            [2,  "0:1:0", "16n"],
+            [0,  "0:1:1", "16n"],
+            [2,  "0:1:2", "16n"],
+            [4,  "0:1:3", "16n"],
+            [7,  "0:2:0", "4n"],
+        ],
+    },
+    {
+        id: 4,
+        name: 'Descending Run',
+        nameKo: '하행 런',
+        level: 2,
+        levelLabel: '초급',
+        style: 'Gospel',
+        desc: '고음에서 빠르게 내려오는 Gospel 특유의 흐름.',
+        pattern: '8-7-5-3-2-1',
+        rootMidi_male: 60,    // C4 → 최고음 C5
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [12, "0:0:0", "16n"],
+            [11, "0:0:1", "16n"],
+            [7,  "0:0:2", "16n"],
+            [4,  "0:0:3", "16n"],
+            [2,  "0:1:0", "8n"],
+            [0,  "0:2:0", "4n"],
+        ],
+    },
+    {
+        id: 5,
+        name: 'R&B Core',
+        nameKo: 'R&B 핵심 런',
+        level: 2,
+        levelLabel: '초급',
+        style: 'R&B',
+        desc: '3-5-6 상행 후 빠른 하행. 실전에서 가장 자주 쓰이는 패턴.',
+        pattern: '3-5-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [4,  "0:0:0", "8n"],
+            [7,  "0:0:2", "8n"],
+            [9,  "0:1:0", "8n"],
+            [7,  "0:1:2", "8n"],
+            [4,  "0:2:0", "16n"],
+            [2,  "0:2:1", "16n"],
+            [0,  "0:2:2", "16n"],
+        ],
+    },
+    {
+        id: 6,
+        name: 'Connected Wave',
+        nameKo: '연결 웨이브 런',
+        level: 3,
+        levelLabel: '중급',
+        style: 'R&B',
+        desc: '끊지 않고 쭉 이어가는 2마디 런. 리듬보다 연결감이 핵심.',
+        pattern: '1-2-3-5-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [0,  "0:0:0", "16n"],
+            [2,  "0:0:1", "16n"],
+            [4,  "0:0:2", "16n"],
+            [7,  "0:0:3", "16n"],
+            [9,  "0:1:0", "16n"],
+            [7,  "0:1:1", "16n"],
+            [4,  "0:1:2", "16n"],
+            [2,  "0:1:3", "16n"],
+            [0,  "0:2:0", "8n"],
+        ],
+    },
+    {
+        id: 7,
+        name: 'Rolling Turn',
+        nameKo: '롤링 턴 런',
+        level: 3,
+        levelLabel: '중급',
+        style: 'R&B',
+        desc: '중간에 되감기듯 말리는 연속 런. 혀 꼬이듯 흐르면 성공.',
+        pattern: '3-5-6-8-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [4,  "0:0:0", "16n"],
+            [7,  "0:0:1", "16n"],
+            [9,  "0:0:2", "16n"],
+            [12, "0:0:3", "16n"],
+            [9,  "0:1:0", "16n"],
+            [7,  "0:1:1", "16n"],
+            [4,  "0:1:2", "16n"],
+            [2,  "0:1:3", "16n"],
+            [0,  "0:2:0", "8n"],
+        ],
+    },
+    {
+        id: 8,
+        name: 'Spiral Flow',
+        nameKo: '스파이럴 플로우',
+        level: 4,
+        levelLabel: '상급',
+        style: 'Gospel',
+        desc: '위로 감았다가 바로 아래로 풀리는 연속형 런. 안 끊기는 호흡이 중요.',
+        pattern: '1-2-3-5-6-8-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [0,  "0:0:0", "16n"],
+            [2,  "0:0:1", "16n"],
+            [4,  "0:0:2", "16n"],
+            [7,  "0:0:3", "16n"],
+            [9,  "0:1:0", "16n"],
+            [12, "0:1:1", "16n"],
+            [9,  "0:1:2", "16n"],
+            [7,  "0:1:3", "16n"],
+            [4,  "0:2:0", "16n"],
+            [2,  "0:2:1", "16n"],
+            [0,  "0:2:2", "8n"],
+        ],
+    },
+    {
+        id: 9,
+        name: 'Endless Run',
+        nameKo: '엔들리스 런',
+        level: 4,
+        levelLabel: '상급',
+        style: 'R&B',
+        desc: '정말 안 끊고 밀어야 하는 긴 4마디 런. 느리게부터 시작해야 함.',
+        pattern: '1-2-3-5-6-5-3-2 / 3-5-6-8-6-5-3-2 / 1-2-3-5-6-5-3-2 / 3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 80,
+        notes: [
+            [0,  "0:0:0", "16n"],
+            [2,  "0:0:1", "16n"],
+            [4,  "0:0:2", "16n"],
+            [7,  "0:0:3", "16n"],
+            [9,  "0:1:0", "16n"],
+            [7,  "0:1:1", "16n"],
+            [4,  "0:1:2", "16n"],
+            [2,  "0:1:3", "16n"],
+            [4,  "1:0:0", "16n"],
+            [7,  "1:0:1", "16n"],
+            [9,  "1:0:2", "16n"],
+            [12, "1:0:3", "16n"],
+            [9,  "1:1:0", "16n"],
+            [7,  "1:1:1", "16n"],
+            [4,  "1:1:2", "16n"],
+            [2,  "1:1:3", "16n"],
+            [0,  "2:0:0", "16n"],
+            [2,  "2:0:1", "16n"],
+            [4,  "2:0:2", "16n"],
+            [7,  "2:0:3", "16n"],
+            [9,  "2:1:0", "16n"],
+            [7,  "2:1:1", "16n"],
+            [4,  "2:1:2", "16n"],
+            [2,  "2:1:3", "16n"],
+            [4,  "3:0:0", "16n"],
+            [2,  "3:0:1", "16n"],
+            [0,  "3:0:2", "8n"],
+        ],
+        recommendedLoopBars: 2,
+    },
+    {
+        id: 10,
+        name: 'Gospel Stream 4',
+        nameKo: '가스펠 스트림 4',
+        level: 4,
+        levelLabel: '상급',
+        style: 'Gospel',
+        desc: '4마디를 끊지 않고 밀어가는 상급 연속 런. 연결감과 일정한 압력이 핵심.',
+        pattern: '1-2-3-5-6-8-9-8-6-5-3-2-1-2-3-5-6-8-9-8-6-5-3-2-1-2-3-5-6-8-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 58,
+        recommendedLoopBars: 2,
+        notes: [
+            [0,"0:0:0","16n"],[2,"0:0:1","16n"],[4,"0:0:2","16n"],[7,"0:0:3","16n"],
+            [9,"0:1:0","16n"],[12,"0:1:1","16n"],[14,"0:1:2","16n"],[12,"0:1:3","16n"],
+            [9,"0:2:0","16n"],[7,"0:2:1","16n"],[4,"0:2:2","16n"],[2,"0:2:3","16n"],
+            [0,"0:3:0","16n"],[2,"0:3:1","16n"],[4,"0:3:2","16n"],[7,"0:3:3","16n"],
+            [9,"1:0:0","16n"],[12,"1:0:1","16n"],[14,"1:0:2","16n"],[12,"1:0:3","16n"],
+            [9,"1:1:0","16n"],[7,"1:1:1","16n"],[4,"1:1:2","16n"],[2,"1:1:3","16n"],
+            [0,"1:2:0","16n"],[2,"1:2:1","16n"],[4,"1:2:2","16n"],[7,"1:2:3","16n"],
+            [9,"1:3:0","16n"],[12,"1:3:1","16n"],[9,"1:3:2","16n"],[7,"1:3:3","16n"],
+            [4,"2:0:0","16n"],[2,"2:0:1","16n"],[0,"2:0:2","16n"],[2,"2:0:3","16n"],
+            [4,"2:1:0","16n"],[7,"2:1:1","16n"],[9,"2:1:2","16n"],[12,"2:1:3","16n"],
+            [9,"2:2:0","16n"],[7,"2:2:1","16n"],[4,"2:2:2","16n"],[2,"2:2:3","16n"],
+            [0,"2:3:0","16n"],[2,"2:3:1","16n"],[4,"2:3:2","16n"],[7,"2:3:3","16n"],
+            [9,"3:0:0","16n"],[12,"3:0:1","16n"],[9,"3:0:2","16n"],[7,"3:0:3","16n"],
+            [4,"3:1:0","16n"],[2,"3:1:1","16n"],[0,"3:1:2","16n"],[2,"3:1:3","16n"],
+            [4,"3:2:0","16n"],[7,"3:2:1","16n"],[9,"3:2:2","16n"],[7,"3:2:3","16n"],
+            [4,"3:3:0","16n"],[2,"3:3:1","16n"],[0,"3:3:2","8n"],
+        ],
+    },
+    {
+        id: 11,
+        name: 'Return Fire 4',
+        nameKo: '리턴 파이어 4',
+        level: 4,
+        levelLabel: '상급',
+        style: 'Gospel',
+        desc: '위로 강하게 갔다가 말리듯 되돌아오는 4마디 런. 중간 회전이 많아 더 어렵다.',
+        pattern: '3-5-6-8-9-8-6-5-3-5-6-8-9-8-6-5-3-2-1-2-3-5-6-5-3-2-1-2-3-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 56,
+        recommendedLoopBars: 2,
+        notes: [
+            [4,"0:0:0","16n"],[7,"0:0:1","16n"],[9,"0:0:2","16n"],[12,"0:0:3","16n"],
+            [14,"0:1:0","16n"],[12,"0:1:1","16n"],[9,"0:1:2","16n"],[7,"0:1:3","16n"],
+            [4,"0:2:0","16n"],[7,"0:2:1","16n"],[9,"0:2:2","16n"],[12,"0:2:3","16n"],
+            [14,"0:3:0","16n"],[12,"0:3:1","16n"],[9,"0:3:2","16n"],[7,"0:3:3","16n"],
+            [4,"1:0:0","16n"],[2,"1:0:1","16n"],[0,"1:0:2","16n"],[2,"1:0:3","16n"],
+            [4,"1:1:0","16n"],[7,"1:1:1","16n"],[9,"1:1:2","16n"],[7,"1:1:3","16n"],
+            [4,"1:2:0","16n"],[2,"1:2:1","16n"],[0,"1:2:2","16n"],[2,"1:2:3","16n"],
+            [4,"1:3:0","16n"],[7,"1:3:1","16n"],[4,"1:3:2","16n"],[2,"1:3:3","16n"],
+            [0,"2:0:0","16n"],[2,"2:0:1","16n"],[4,"2:0:2","16n"],[7,"2:0:3","16n"],
+            [9,"2:1:0","16n"],[12,"2:1:1","16n"],[14,"2:1:2","16n"],[12,"2:1:3","16n"],
+            [9,"2:2:0","16n"],[7,"2:2:1","16n"],[4,"2:2:2","16n"],[2,"2:2:3","16n"],
+            [0,"2:3:0","16n"],[2,"2:3:1","16n"],[4,"2:3:2","16n"],[7,"2:3:3","16n"],
+            [9,"3:0:0","16n"],[7,"3:0:1","16n"],[4,"3:0:2","16n"],[2,"3:0:3","16n"],
+            [0,"3:1:0","16n"],[2,"3:1:1","16n"],[4,"3:1:2","16n"],[7,"3:1:3","16n"],
+            [9,"3:2:0","16n"],[7,"3:2:1","16n"],[4,"3:2:2","16n"],[2,"3:2:3","16n"],
+            [0,"3:3:0","16n"],[2,"3:3:1","16n"],[0,"3:3:2","8n"],
+        ],
+    },
+    {
+        id: 12,
+        name: 'Black Church Endless',
+        nameKo: '블랙처치 엔들리스',
+        level: 5,
+        levelLabel: '최상급',
+        style: 'Gospel',
+        desc: '최상급 4마디 연속 런. 정말 쉬지 않고 굴러가야 하는 타입.',
+        pattern: '1-2-3-5-6-8-9-10-9-8-6-5-3-2-1-2-3-5-6-8-9-8-6-5-3-2-1-2-3-5-6-8-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 52,
+        recommendedLoopBars: 2,
+        notes: [
+            [0,"0:0:0","16n"],[2,"0:0:1","16n"],[4,"0:0:2","16n"],[7,"0:0:3","16n"],
+            [9,"0:1:0","16n"],[12,"0:1:1","16n"],[14,"0:1:2","16n"],[16,"0:1:3","16n"],
+            [14,"0:2:0","16n"],[12,"0:2:1","16n"],[9,"0:2:2","16n"],[7,"0:2:3","16n"],
+            [4,"0:3:0","16n"],[2,"0:3:1","16n"],[0,"0:3:2","16n"],[2,"0:3:3","16n"],
+            [4,"1:0:0","16n"],[7,"1:0:1","16n"],[9,"1:0:2","16n"],[12,"1:0:3","16n"],
+            [14,"1:1:0","16n"],[12,"1:1:1","16n"],[9,"1:1:2","16n"],[7,"1:1:3","16n"],
+            [4,"1:2:0","16n"],[2,"1:2:1","16n"],[0,"1:2:2","16n"],[2,"1:2:3","16n"],
+            [4,"1:3:0","16n"],[7,"1:3:1","16n"],[9,"1:3:2","16n"],[12,"1:3:3","16n"],
+            [9,"2:0:0","16n"],[7,"2:0:1","16n"],[4,"2:0:2","16n"],[2,"2:0:3","16n"],
+            [0,"2:1:0","16n"],[2,"2:1:1","16n"],[4,"2:1:2","16n"],[7,"2:1:3","16n"],
+            [9,"2:2:0","16n"],[12,"2:2:1","16n"],[14,"2:2:2","16n"],[12,"2:2:3","16n"],
+            [9,"2:3:0","16n"],[7,"2:3:1","16n"],[4,"2:3:2","16n"],[2,"2:3:3","16n"],
+            [0,"3:0:0","16n"],[2,"3:0:1","16n"],[4,"3:0:2","16n"],[7,"3:0:3","16n"],
+            [9,"3:1:0","16n"],[12,"3:1:1","16n"],[9,"3:1:2","16n"],[7,"3:1:3","16n"],
+            [4,"3:2:0","16n"],[2,"3:2:1","16n"],[0,"3:2:2","16n"],[2,"3:2:3","16n"],
+            [4,"3:3:0","16n"],[2,"3:3:1","16n"],[0,"3:3:2","8n"],
+        ],
+    },
+    {
+        id: 13,
+        name: 'True 4-Bar Boss',
+        nameKo: '트루 4마디 보스런',
+        level: 5,
+        levelLabel: '최상급',
+        style: 'Gospel',
+        desc: '상급보다 확실히 어렵게 만든 4마디 풀런. 거의 전체가 연속 16분음표다.',
+        pattern: '3-5-6-8-9-10-9-8-6-5-3-2-1-2-3-5-6-8-9-8-6-5-3-2-1-2-3-5-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 50,
+        recommendedLoopBars: 2,
+        notes: [
+            [4,"0:0:0","16n"],[7,"0:0:1","16n"],[9,"0:0:2","16n"],[12,"0:0:3","16n"],
+            [14,"0:1:0","16n"],[16,"0:1:1","16n"],[14,"0:1:2","16n"],[12,"0:1:3","16n"],
+            [9,"0:2:0","16n"],[7,"0:2:1","16n"],[4,"0:2:2","16n"],[2,"0:2:3","16n"],
+            [0,"0:3:0","16n"],[2,"0:3:1","16n"],[4,"0:3:2","16n"],[7,"0:3:3","16n"],
+            [9,"1:0:0","16n"],[12,"1:0:1","16n"],[14,"1:0:2","16n"],[12,"1:0:3","16n"],
+            [9,"1:1:0","16n"],[7,"1:1:1","16n"],[4,"1:1:2","16n"],[2,"1:1:3","16n"],
+            [0,"1:2:0","16n"],[2,"1:2:1","16n"],[4,"1:2:2","16n"],[7,"1:2:3","16n"],
+            [9,"1:3:0","16n"],[7,"1:3:1","16n"],[4,"1:3:2","16n"],[2,"1:3:3","16n"],
+            [0,"2:0:0","16n"],[2,"2:0:1","16n"],[4,"2:0:2","16n"],[7,"2:0:3","16n"],
+            [9,"2:1:0","16n"],[12,"2:1:1","16n"],[14,"2:1:2","16n"],[16,"2:1:3","16n"],
+            [14,"2:2:0","16n"],[12,"2:2:1","16n"],[9,"2:2:2","16n"],[7,"2:2:3","16n"],
+            [4,"2:3:0","16n"],[2,"2:3:1","16n"],[0,"2:3:2","16n"],[2,"2:3:3","16n"],
+            [4,"3:0:0","16n"],[7,"3:0:1","16n"],[9,"3:0:2","16n"],[7,"3:0:3","16n"],
+            [4,"3:1:0","16n"],[2,"3:1:1","16n"],[0,"3:1:2","16n"],[2,"3:1:3","16n"],
+            [4,"3:2:0","16n"],[7,"3:2:1","16n"],[4,"3:2:2","16n"],[2,"3:2:3","16n"],
+            [0,"3:3:0","16n"],[2,"3:3:1","16n"],[0,"3:3:2","8n"],
+        ],
+    },
+    {
+        id: 14,
+        name: '4-Bar Monster Chain',
+        nameKo: '4마디 몬스터 체인',
+        level: 5,
+        levelLabel: '최상급',
+        style: 'Gospel',
+        desc: '앱 안에서 제일 어렵게 써먹을 수 있는 연속형 리프. 상급은 이 정도는 돼야 한다.',
+        pattern: '1-2-3-5-6-8-9-10-9-8-6-5-3-2-1-2-3-5-6-8-9-10-9-8-6-5-3-2-1-2-3-5-6-8-6-5-3-2-1',
+        rootMidi_male: 60,
+        rootMidi_female: 72,
+        bpmDefault: 48,
+        recommendedLoopBars: 2,
+        notes: [
+            [0,"0:0:0","16n"],[2,"0:0:1","16n"],[4,"0:0:2","16n"],[7,"0:0:3","16n"],
+            [9,"0:1:0","16n"],[12,"0:1:1","16n"],[14,"0:1:2","16n"],[16,"0:1:3","16n"],
+            [14,"0:2:0","16n"],[12,"0:2:1","16n"],[9,"0:2:2","16n"],[7,"0:2:3","16n"],
+            [4,"0:3:0","16n"],[2,"0:3:1","16n"],[0,"0:3:2","16n"],[2,"0:3:3","16n"],
+            [4,"1:0:0","16n"],[7,"1:0:1","16n"],[9,"1:0:2","16n"],[12,"1:0:3","16n"],
+            [14,"1:1:0","16n"],[16,"1:1:1","16n"],[14,"1:1:2","16n"],[12,"1:1:3","16n"],
+            [9,"1:2:0","16n"],[7,"1:2:1","16n"],[4,"1:2:2","16n"],[2,"1:2:3","16n"],
+            [0,"1:3:0","16n"],[2,"1:3:1","16n"],[4,"1:3:2","16n"],[7,"1:3:3","16n"],
+            [9,"2:0:0","16n"],[12,"2:0:1","16n"],[9,"2:0:2","16n"],[7,"2:0:3","16n"],
+            [4,"2:1:0","16n"],[2,"2:1:1","16n"],[0,"2:1:2","16n"],[2,"2:1:3","16n"],
+            [4,"2:2:0","16n"],[7,"2:2:1","16n"],[9,"2:2:2","16n"],[12,"2:2:3","16n"],
+            [9,"2:3:0","16n"],[7,"2:3:1","16n"],[4,"2:3:2","16n"],[2,"2:3:3","16n"],
+            [0,"3:0:0","16n"],[2,"3:0:1","16n"],[4,"3:0:2","16n"],[7,"3:0:3","16n"],
+            [9,"3:1:0","16n"],[12,"3:1:1","16n"],[9,"3:1:2","16n"],[7,"3:1:3","16n"],
+            [4,"3:2:0","16n"],[2,"3:2:1","16n"],[0,"3:2:2","16n"],[2,"3:2:3","16n"],
+            [4,"3:3:0","16n"],[2,"3:3:1","16n"],[0,"3:3:2","8n"],
+        ],
+    },
+];
+
+// 드럼 패턴 (16스텝 = 1마디, 각 인덱스 = 16분음표)
+// 0=beat1, 4=beat2, 8=beat3, 12=beat4
+const DRUM_PATTERNS = {
+    slow: {   // Slow R&B
+        kick:  [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+        snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        hihat: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+    },
+    mid: {    // Mid R&B
+        kick:  [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+        snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        hihat: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+    },
+    neo: {    // Neo Soul
+        kick:  [1,0,0,0, 0,1,0,0, 1,0,0,0, 0,0,0,0],
+        snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+        hihat: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+    },
+};
+
+// ── 상태 변수 ────────────────────────────────────────────────
+let riffActive      = false;
+let riffCountingIn  = false;
+let riffVoice       = 'male';
+let riffCurrentId   = null;
+let riffBpm         = 80;
+let riffPendingBpm  = null;
+let riffKeyOffset   = 0;       // -5 ~ +5 반음
+let riffPendingKey  = null;
+let riffLoopBars    = 2;
+let riffDrumOn      = true;
+let riffPianoOn     = true;
+// setTimeout-based scheduler (Tone.Transport 미사용)
+let riffT0          = 0;       // 재생 기준 절대 시각 (Date.now() ms)
+let riffNoteTimers  = [];      // 루프 내 note setTimeout ID 목록
+let riffLoopTimer   = null;    // 다음 루프 예약 setTimeout ID
+let riffDrumTimer   = null;    // 드럼 step setTimeout ID (drift-corrected 체인)
+// 드럼 신스
+let riffKick        = null;
+let riffSnare       = null;
+let riffHihat       = null;
+let riffRecording    = false;
+
+// ── 음표 이름 ────────────────────────────────────────────────
+const RIFF_NOTE_EN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const RIFF_NOTE_KO = ['도','도#','레','레#','미','파','파#','솔','솔#','라','라#','시'];
+
+function riffMidiToName(midi) {
+    const ni = ((midi % 12) + 12) % 12;
+    const oct = Math.floor(midi / 12) - 1;
+    return { en: RIFF_NOTE_EN[ni] + oct, ko: RIFF_NOTE_KO[ni] };
+}
+
+// ── 드럼 신스 초기화 ─────────────────────────────────────────
+// 드럼 신스 초기화 — 매번 현재 Tone context에 맞게 새로 생성
+function riffInitDrums() {
+    // 기존 신스 dispose (context 변경 시 재생성 필요)
+    try { if (riffKick)  riffKick.dispose();  } catch(e){}
+    try { if (riffSnare) riffSnare.dispose(); } catch(e){}
+    try { if (riffHihat) riffHihat.dispose(); } catch(e){}
+
+    riffKick  = new Tone.MembraneSynth({
+        pitchDecay: 0.05, octaves: 6,
+        envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.1 }
+    }).toDestination();
+    riffKick.volume.value = -4;
+
+    riffSnare = new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.05 }
+    }).toDestination();
+    riffSnare.volume.value = -8;
+
+    riffHihat = new Tone.MetalSynth({
+        frequency: 400, envelope: { attack: 0.001, decay: 0.04, release: 0.01 },
+        harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5
+    }).toDestination();
+    riffHihat.volume.value = -14;
+}
+
+// ── 타이밍 헬퍼 ───────────────────────────────────────────────
+function riffTimeToMs(timeStr) {
+    // "bar:beat:sixteenth" → ms  (예: "0:1:2" = beat1 + 2sixteenths)
+    const p = timeStr.split(':').map(Number);
+    const s16 = 60000 / riffBpm / 4;
+    return ((p[0]||0) * 16 + (p[1]||0) * 4 + (p[2]||0)) * s16;
+}
+function riffDurToSec(dur) {
+    // Tone.js 기간 문자열 → 초 (BPM 기준)
+    const beat = 60 / riffBpm;
+    const map  = { '1n':beat*4, '2n':beat*2, '4n':beat, '8n':beat/2, '16n':beat/4, '32n':beat/8 };
+    return map[dur] ?? beat / 2;
+}
+
+// ── 리프 목록 렌더링 ─────────────────────────────────────────
+function riffRenderList() {
+    const container = document.getElementById('riff-cards-container');
+    if (!container) return;
+    container.innerHTML = RIFFS.map(r => `
+        <div class="riff-card" onclick="riffSelectRiff(${r.id})">
+            <div class="riff-card-left">
+                <div class="riff-card-name">${r.nameKo} <span style="font-size:.75rem;color:var(--muted);">${r.name}</span></div>
+                <div class="riff-card-meta">${r.style} · ${r.pattern}</div>
+                <div class="riff-card-desc">${r.desc}</div>
+            </div>
+            <span class="riff-level-badge riff-level-${r.level}">${r.levelLabel}</span>
+            <span class="riff-go-btn">▶</span>
+        </div>
+    `).join('');
+}
+
+// ── 성별 설정 ────────────────────────────────────────────────
+function riffSetVoice(v) {
+    riffVoice = v;
+    document.getElementById('riff-v-male').classList.toggle('active', v === 'male');
+    document.getElementById('riff-v-female').classList.toggle('active', v === 'female');
+}
+
+// ── 리프 선택 → 훈련 뷰 ──────────────────────────────────────
+function riffSelectRiff(id) {
+    const r = RIFFS.find(x => x.id === id);
+    if (!r) return;
+    riffCurrentId  = id;
+    riffKeyOffset  = 0;
+    riffBpm        = r.bpmDefault;
+    riffPendingBpm = null;
+    riffPendingKey = null;
+    riffUpdateBpmButtons(r.bpmDefault);   // 슬라이더 + 버튼 동기화
+    // recommendedLoopBars로 루프 자동 설정 (없으면 2마디)
+    riffSetLoop(r.recommendedLoopBars || 2);
+
+    // 헤더
+    document.getElementById('riff-train-name').textContent = `${r.nameKo} (${r.name})`;
+    document.getElementById('riff-train-meta').textContent = `${r.style} · ${r.levelLabel} · 패턴: ${r.pattern}`;
+
+    // 노트 도트 초기 렌더
+    riffRenderDots(r);
+    riffUpdateKeyDisplay(r);
+    riffUpdateBpmButtons();
+
+    // 뷰 전환
+    document.getElementById('riff-list-view').style.display  = 'none';
+    document.getElementById('riff-train-view').style.display = 'block';
+}
+
+function riffBackToList() {
+    if (riffActive) riffStop();
+    document.getElementById('riff-list-view').style.display  = 'block';
+    document.getElementById('riff-train-view').style.display = 'none';
+}
+
+// ── 노트 도트 렌더 ────────────────────────────────────────────
+function riffRenderDots(riff) {
+    const root = riff[riffVoice === 'male' ? 'rootMidi_male' : 'rootMidi_female'] + riffKeyOffset;
+    const container = document.getElementById('riff-note-dots');
+    if (!container) return;
+    container.innerHTML = riff.notes.map((n, i) => {
+        const midi = root + n[0];
+        const { en, ko } = riffMidiToName(midi);
+        return `<div class="riff-dot" id="riff-dot-${i}">
+            <div class="rd-ko">${ko}</div>
+            <div class="rd-en">${en}</div>
+        </div>`;
+    }).join('');
+}
+
+function riffHighlightDot(idx, totalNotes) {
+    for (let i = 0; i < totalNotes; i++) {
+        const d = document.getElementById('riff-dot-' + i);
+        if (!d) continue;
+        d.classList.remove('active', 'done');
+        if (i < idx)  d.classList.add('done');
+        if (i === idx) d.classList.add('active');
+    }
+    const riff = RIFFS.find(x => x.id === riffCurrentId);
+    if (!riff) return;
+    const root = riff[riffVoice === 'male' ? 'rootMidi_male' : 'rootMidi_female'] + riffKeyOffset;
+    const midi = root + riff.notes[idx][0];
+    const { en, ko } = riffMidiToName(midi);
+    document.getElementById('riff-note-big').textContent = en;
+    document.getElementById('riff-note-kor').textContent = ko;
+}
+
+// ── 키 표시 업데이트 ──────────────────────────────────────────
+function riffUpdateKeyDisplay(riff) {
+    if (!riff) riff = RIFFS.find(x => x.id === riffCurrentId);
+    if (!riff) return;
+    const root = riff[riffVoice === 'male' ? 'rootMidi_male' : 'rootMidi_female'] + riffKeyOffset;
+    const { en } = riffMidiToName(root);
+    document.getElementById('riff-key-display').textContent = en;
+    document.getElementById('riff-key-range').textContent   =
+        riffKeyOffset === 0 ? '(기본)' : (riffKeyOffset > 0 ? `+${riffKeyOffset}반음` : `${riffKeyOffset}반음`);
+}
+
+function riffChangeKey(delta) {
+    const newOff = riffKeyOffset + delta;
+    if (newOff < -5 || newOff > 5) return;
+    if (riffActive) {
+        riffPendingKey = newOff;
+        // 즉시 UI 반영
+        riffKeyOffset = newOff;
+    } else {
+        riffKeyOffset = newOff;
+    }
+    const riff = RIFFS.find(x => x.id === riffCurrentId);
+    riffUpdateKeyDisplay(riff);
+    riffRenderDots(riff);
+    if (!riffActive) riffRenderDots(riff);
+}
+
+// ── BPM 버튼 ─────────────────────────────────────────────────
+function riffSetBpm(bpm) {
+    if (riffActive) {
+        riffPendingBpm = bpm;
+    } else {
+        riffBpm = bpm;
+    }
+    riffUpdateBpmButtons(bpm);
+}
+
+function riffUpdateBpmButtons(bpm) {
+    const target = bpm != null ? bpm : (riffPendingBpm != null ? riffPendingBpm : riffBpm);
+    [60, 80, 100, 120].forEach(b => {
+        const el = document.getElementById('rbpm-' + b);
+        if (el) el.classList.toggle('active', b === target);
+    });
+    // 슬라이더 + 표시값 동기화
+    const slider = document.getElementById('riff-bpm-slider');
+    const valEl  = document.getElementById('riff-bpm-val');
+    if (slider) slider.value = target;
+    if (valEl)  valEl.textContent = target + ' BPM';
+}
+
+// ── 루프 길이 ────────────────────────────────────────────────
+function riffSetLoop(bars) {
+    riffLoopBars = bars;
+    document.getElementById('rloop-2').classList.toggle('active', bars === 2);
+    document.getElementById('rloop-4').classList.toggle('active', bars === 4);
+}
+
+// ── 드럼 / 리프 토글 ──────────────────────────────────────────
+function riffToggleDrum() {
+    riffDrumOn = !riffDrumOn;
+    const btn = document.getElementById('riff-drum-btn');
+    btn.textContent = riffDrumOn ? 'ON' : 'OFF';
+    btn.classList.toggle('active', riffDrumOn);
+    // 재생 중이 아니면 다음 재생 시 자동 반영 — 타이머 재시작 불필요
+}
+
+// ── 드럼 스텝 체인 (drift-corrected setTimeout) ───────────────
+// riffT0 기준으로 절대 시각 계산 → 드럼+피아노 완벽 동기화
+function riffScheduleDrumStep(step) {
+    if (!riffActive) return;
+    const s16Ms    = 60000 / riffBpm / 4;
+    const target   = riffT0 + step * s16Ms;
+    const delay    = Math.max(0, target - Date.now());
+
+    riffDrumTimer = setTimeout(() => {
+        if (!riffActive) return;
+
+        // 드럼 소리 (ON일 때만)
+        if (riffDrumOn) {
+            const pat = riffBpm <= 75 ? DRUM_PATTERNS.slow
+                      : riffBpm <= 90 ? DRUM_PATTERNS.mid
+                      : DRUM_PATTERNS.neo;
+            const idx = step % 16;
+            if (pat.kick[idx])  { try { riffKick.triggerAttackRelease('C1', 0.18); } catch(e){} }
+            if (pat.snare[idx]) { try { riffSnare.triggerAttackRelease(0.1);       } catch(e){} }
+            if (pat.hihat[idx]) { try { riffHihat.triggerAttackRelease('C6', 0.04); } catch(e){} }
+        }
+
+        // 비트 카운터 업데이트 (4 steps = 1 beat)
+        const totalSteps = riffLoopBars * 16;
+        const loopStep   = step % totalSteps;
+        if (loopStep % 4 === 0) {
+            riffUpdateBeatDisplay(Math.floor(loopStep / 4), riffLoopBars * 4);
+        }
+
+        riffScheduleDrumStep(step + 1);
+    }, delay);
+}
+function riffStopDrum() {
+    if (riffDrumTimer !== null) { clearTimeout(riffDrumTimer); riffDrumTimer = null; }
+}
+
+// ── 비트 카운터 UI ────────────────────────────────────────────
+function riffUpdateBeatDisplay(beatIdx, totalBeats) {
+    const row = document.getElementById('riff-beat-row');
+    if (!row) return;
+    // 비트 수 바뀌면 재렌더
+    if (row.children.length !== totalBeats) {
+        row.innerHTML = Array.from({length: totalBeats}, (_, i) =>
+            `<div class="riff-beat${i % 4 === 0 ? ' bar-start' : ''}" id="riff-beat-${i}">${i + 1}</div>`
+        ).join('');
+    }
+    for (let i = 0; i < totalBeats; i++) {
+        const d = document.getElementById('riff-beat-' + i);
+        if (d) d.classList.toggle('active', i === beatIdx);
+    }
+}
+
+// ── 피아노 루프 (riffT0 기준 절대 시각 → 드럼과 동기) ────────
+function riffSchedulePiano(riff, loopNum) {
+    if (!riffActive) return;
+
+    // 루프 경계마다 pending 적용
+    if (loopNum > 0) {
+        if (riffPendingBpm !== null) {
+            riffBpm = riffPendingBpm; riffPendingBpm = null;
+            riffUpdateBpmButtons();
+        }
+        if (riffPendingKey !== null) {
+            riffKeyOffset = riffPendingKey; riffPendingKey = null;
+            riffUpdateKeyDisplay(riff); riffRenderDots(riff);
+        }
+    }
+
+    const voiceKey  = riffVoice === 'male' ? 'rootMidi_male' : 'rootMidi_female';
+    const root      = riff[voiceKey] + riffKeyOffset;
+    const s16Ms     = 60000 / riffBpm / 4;
+    const loopMs    = riffLoopBars * 16 * s16Ms;
+    const loopStart = riffT0 + loopNum * loopMs;
+
+    riff.notes.forEach((n, i) => {
+        if (riffTimeToMs(n[1]) >= loopMs) return; // 루프 길이 초과 노트 건너뜀
+        const target = loopStart + riffTimeToMs(n[1]);
+        const delay  = Math.max(0, target - Date.now());
+        const t = setTimeout(() => {
+            if (!riffActive) return;
+            if (riffPianoOn) {
+                const midi = root + n[0];
+                try { piano.triggerAttackRelease(midiToTone(midi), riffDurToSec(n[2])); } catch(e) {}
+            }
+            riffHighlightDot(i, riff.notes.length);
+        }, delay);
+        riffNoteTimers.push(t);
+    });
+
+    // 다음 루프 예약
+    const nextDelay = Math.max(0, loopStart + loopMs - Date.now());
+    riffLoopTimer = setTimeout(() => {
+        riffNoteTimers = [];
+        riffSchedulePiano(riff, loopNum + 1);
+    }, nextDelay);
+}
+
+function riffTogglePiano() {
+    riffPianoOn = !riffPianoOn;
+    const btn = document.getElementById('riff-piano-btn');
+    btn.textContent = riffPianoOn ? 'ON' : 'OFF';
+    btn.classList.toggle('active', riffPianoOn);
+}
+
+// ── 카운트인 → 재생 ──────────────────────────────────────────
+async function riffPlay() {
+    if (riffActive || riffCountingIn) return;
+    if (!riffCurrentId) return;
+
+    acquireWakeLock();
+    await vfToneStart();
+    await ensurePianoReady();
+    riffInitDrums();
+
+    riffCountingIn = true;
+    const playBtn = document.getElementById('riff-play-btn');
+    playBtn.textContent = '…';
+    playBtn.disabled = true;
+
+    const countEl = document.getElementById('riff-countdown-display');
+    countEl.style.display = 'block';
+
+    const beatMs = (60000 / riffBpm);
+    for (let i = 1; i <= 4; i++) {
+        countEl.textContent = i;
+        // 짧은 클릭음
+        try {
+            const click = new Tone.Synth({ oscillator:{type:'triangle'}, envelope:{attack:.001,decay:.05,sustain:0,release:.01} }).toDestination();
+            click.volume.value = -10;
+            click.triggerAttackRelease('C5', '32n');
+            setTimeout(() => click.dispose(), 500);
+        } catch(e) {}
+        await new Promise(res => setTimeout(res, beatMs));
+        if (!riffCountingIn) return; // 취소됨
+    }
+
+    countEl.style.display = 'none';
+    riffCountingIn = false;
+    riffActive = true;
+    playBtn.textContent = '⏹ 정지';
+    playBtn.className = 'btn btn-red';
+    playBtn.onclick = riffStop;
+    playBtn.disabled = false;
+
+    // T0 설정 후 드럼·피아노 동시 출발 (같은 기준 시각)
+    const riff = RIFFS.find(x => x.id === riffCurrentId);
+    if (!riff) return;
+    riffNoteTimers = [];
+    riffT0 = Date.now() + 40;        // 40ms 버퍼 (셋업 여유)
+    riffSchedulePiano(riff, 0);       // 피아노 루프
+    riffScheduleDrumStep(0);          // 드럼+비트카운터 (항상 실행, 소리는 riffDrumOn 조건)
+}
+
+// ── 정지 ────────────────────────────────────────────────────
+function riffStop() {
+    riffCountingIn = false;
+    riffActive = false;
+
+    // 타이머 전부 해제
+    riffNoteTimers.forEach(t => clearTimeout(t));
+    riffNoteTimers = [];
+    if (riffLoopTimer !== null) { clearTimeout(riffLoopTimer); riffLoopTimer = null; }
+    riffStopDrum();
+    // 비트 카운터 초기화
+    const beatRow = document.getElementById('riff-beat-row');
+    if (beatRow) beatRow.innerHTML = '';
+
+    try { if (piano) piano.releaseAll(); } catch(e) {}
+    releaseWakeLock();
+
+    // UI 복원
+    const playBtn = document.getElementById('riff-play-btn');
+    if (playBtn) {
+        playBtn.textContent = '▶ 재생';
+        playBtn.className   = 'btn btn-green';
+        playBtn.onclick     = riffPlay;
+        playBtn.disabled    = false;
+    }
+    const countEl = document.getElementById('riff-countdown-display');
+    if (countEl) countEl.style.display = 'none';
+
+    // 노트 하이라이트 초기화
+    const riff = RIFFS.find(x => x.id === riffCurrentId);
+    if (riff) {
+        for (let i = 0; i < riff.notes.length; i++) {
+            const d = document.getElementById('riff-dot-' + i);
+            if (d) d.classList.remove('active', 'done');
+        }
+    }
+    document.getElementById('riff-note-big').textContent = '—';
+    document.getElementById('riff-note-kor').textContent = '대기 중';
+}
+
+// ── 마이크 토글 (기존 toggleMic 재사용 + riff 전용 UI 동기화) ──
+function riffToggleMic() {
+    toggleMic(); // 기존 pitch 탭과 동일한 마이크 함수 공유
+    // 약간 딜레이 후 isMicOn 상태 읽어서 riff 버튼 업데이트
+    setTimeout(() => {
+        const btn   = document.getElementById('riff-mic-btn');
+        const dot   = document.getElementById('riff-mic-dot');
+        const label = document.getElementById('riff-mic-label');
+        if (!btn) return;
+        if (isMicOn) {
+            btn.textContent  = '⏹ 마이크 끄기';
+            btn.className    = 'btn btn-red';
+            if (dot)   dot.classList.add('on');
+            if (label) label.textContent = '마이크 켜짐 — 음정 탭에서 현재 음 확인';
+        } else {
+            btn.textContent  = '🎤 마이크 켜기';
+            btn.className    = 'btn btn-purple';
+            if (dot)   dot.classList.remove('on');
+            if (label) label.textContent = '마이크 꺼짐 — 켜면 실시간 음정 확인 가능';
+        }
+    }, 400);
+}
+
+// ── 초기화 (탭 진입 시) ──────────────────────────────────────
+function riffInit() {
+    if (document.getElementById('riff-cards-container').children.length === 0) {
+        riffRenderList();
+    }
+}
+
+// ── 탭 전환 시 자동 초기화 훅 ────────────────────────────────
+// switchTab 내에서 'riff' 탭 진입 시 호출되도록 기존 switchTab에 추가
+const _origSwitchTab = switchTab;
+// (이미 switchTab에 riffStop 훅 있으므로 진입 초기화만 별도 처리)
+document.addEventListener('DOMContentLoaded', () => {
+    // 탭 클릭 감지해서 riff 진입 시 초기화
+    document.querySelectorAll('[onclick*="switchTab(\'riff\')"]').forEach(el => {
+        const orig = el.onclick;
+        el.addEventListener('click', () => { setTimeout(riffInit, 50); });
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// END RIFF TRAINING MODULE
+// ════════════════════════════════════════════════════════════════
 </script>
 
 <!-- Warmup 1 sticky control bar -->
