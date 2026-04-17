@@ -1817,8 +1817,10 @@ const VF = {
     unlocked: false,
     _toastTimer: null,
     _unlockInProgress: false,
-    _origDestVol: null,  // 마이크 ON 전 Destination 볼륨 저장 (덕킹 보상용)
-    micDuckGuard: null,  // 무음 연결 노드 (iOS 덕킹 방지 보조)
+    _origDestVol: null,      // 마이크 ON 전 Destination 볼륨 저장 (덕킹 보상용)
+    _duckBoost: 9,           // 보상할 dB 값 (필요 시 조절)
+    _duckGuardTimer: null,   // 주기적 볼륨 재확인 타이머
+    micDuckGuard: null,      // 무음 연결 노드 (iOS 덕킹 방지 보조)
 };
 // _vfInitCtx IIFE 제거: AudioContext를 페이지 로드 시점에 생성하지 않음
 // (이전에는 이 시점 생성이 iOS Safari audio unlock 실패의 원인이었음)
@@ -1979,15 +1981,33 @@ async function vfGetMic(fftSize) {
             }
             // ────────────────────────────────────────────────────────────
 
-            // ── iOS 덕킹 보상: 마이크 활성화 시 Destination 볼륨 자동 부스트 ──
+            // ── iOS 덕킹 보상: 마이크 활성화 시 Destination 볼륨 즉시 부스트 ──
             // iOS PlayAndRecord 전환 시 약 6~10dB 덕킹이 발생하므로 이를 상쇄함
             if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                 try {
                     if (VF._origDestVol === null) {
                         VF._origDestVol = Tone.Destination.volume.value;
-                        Tone.Destination.volume.rampTo(VF._origDestVol + 9, 0.4);
-                        console.log('[VF] iOS 덕킹 보상 적용: +9dB 부스트 (원래:', VF._origDestVol, ')');
+                        const target = VF._origDestVol + VF._duckBoost;
+                        // rampTo 대신 즉시 적용 (ramp 도중 재덕킹 방지)
+                        Tone.Destination.volume.value = target;
+                        console.log('[VF] iOS 덕킹 보상 즉시 적용: +' + VF._duckBoost + 'dB (원래:', VF._origDestVol, ')');
                     }
+                    // ── 주기적 재확인: 키/BPM 변경 터치 시 재덕킹 즉시 복구 ──
+                    clearInterval(VF._duckGuardTimer);
+                    VF._duckGuardTimer = setInterval(() => {
+                        if (!VF.micStream || !VF.micStream.active) {
+                            clearInterval(VF._duckGuardTimer);
+                            VF._duckGuardTimer = null;
+                            return;
+                        }
+                        if (VF._origDestVol === null) return;
+                        const target = VF._origDestVol + VF._duckBoost;
+                        // 실제 볼륨이 목표보다 2dB 이상 낮아졌으면 즉시 복구
+                        if (Tone.Destination.volume.value < target - 2) {
+                            Tone.Destination.volume.value = target;
+                            console.log('[VF] 덕킹 감지 → 즉시 복구:', target + 'dB');
+                        }
+                    }, 150);
                 } catch(e) { console.warn('[VF] 덕킹 보상 실패:', e); }
             }
             // ────────────────────────────────────────────────────────────────
@@ -2013,9 +2033,11 @@ function vfReleaseMic() {
     if (VF.micSource) { try { VF.micSource.disconnect(); } catch(e){} VF.micSource = null; }
     if (VF.micDuckGuard) { try { VF.micDuckGuard.disconnect(); } catch(e){} VF.micDuckGuard = null; }
     if (VF.micStream) { VF.micStream.getTracks().forEach(t => t.stop()); VF.micStream = null; }
-    // ── iOS 덕킹 보상 해제: 원래 볼륨으로 복구 ───────────────────────
+    // ── iOS 덕킹 보상 해제 + 타이머 정리 ────────────────────────────
+    clearInterval(VF._duckGuardTimer);
+    VF._duckGuardTimer = null;
     if (VF._origDestVol !== null) {
-        try { Tone.Destination.volume.rampTo(VF._origDestVol, 0.4); } catch(e) {}
+        try { Tone.Destination.volume.value = VF._origDestVol; } catch(e) {}
         VF._origDestVol = null;
         console.log('[VF] iOS 덕킹 보상 해제: 볼륨 원복');
     }
@@ -6396,6 +6418,14 @@ function riffChangeKey(delta) {
     riffUpdateKeyDisplay(riff);
     riffRenderDots(riff);
     if (!riffActive) riffRenderDots(riff);
+
+    // ── 키 변경 터치 후 iOS 재덕킹 즉시 복구 ───────────────────────
+    if (VF._origDestVol !== null) {
+        setTimeout(() => {
+            const target = VF._origDestVol + VF._duckBoost;
+            try { Tone.Destination.volume.value = target; } catch(e) {}
+        }, 80); // 터치 이벤트 처리 후 80ms 뒤 복구
+    }
 }
 
 // ── BPM 버튼 ─────────────────────────────────────────────────
