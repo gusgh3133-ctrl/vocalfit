@@ -1817,6 +1817,8 @@ const VF = {
     unlocked: false,
     _toastTimer: null,
     _unlockInProgress: false,
+    _origDestVol: null,  // 마이크 ON 전 Destination 볼륨 저장 (덕킹 보상용)
+    micDuckGuard: null,  // 무음 연결 노드 (iOS 덕킹 방지 보조)
 };
 // _vfInitCtx IIFE 제거: AudioContext를 페이지 로드 시점에 생성하지 않음
 // (이전에는 이 시점 생성이 iOS Safari audio unlock 실패의 원인이었음)
@@ -1977,6 +1979,24 @@ async function vfGetMic(fftSize) {
             }
             // ────────────────────────────────────────────────────────────
 
+            // ── iOS 덕킹 보상: 마이크 활성화 시 Destination 볼륨 자동 부스트 ──
+            // iOS PlayAndRecord 전환 시 약 6~10dB 덕킹이 발생하므로 이를 상쇄함
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                try {
+                    if (VF._origDestVol === null) {
+                        VF._origDestVol = Tone.Destination.volume.value;
+                        Tone.Destination.volume.rampTo(VF._origDestVol + 9, 0.4);
+                        console.log('[VF] iOS 덕킹 보상 적용: +9dB 부스트 (원래:', VF._origDestVol, ')');
+                    }
+                } catch(e) { console.warn('[VF] 덕킹 보상 실패:', e); }
+            }
+            // ────────────────────────────────────────────────────────────────
+
+            // ── AudioContext 재확인 (iOS가 duck 후 suspend 시키는 경우 대비) ──
+            if (VF.ctx && VF.ctx.state !== 'running') {
+                VF.ctx.resume().catch(()=>{});
+            }
+
             console.log('[VF] Mic stream obtained + duck guard connected, ctx.state =', VF.ctx.state);
         } catch(e) {
             console.error('[VF] getUserMedia failed:', e.name, e.message);
@@ -1991,7 +2011,14 @@ async function vfGetMic(fftSize) {
 
 function vfReleaseMic() {
     if (VF.micSource) { try { VF.micSource.disconnect(); } catch(e){} VF.micSource = null; }
+    if (VF.micDuckGuard) { try { VF.micDuckGuard.disconnect(); } catch(e){} VF.micDuckGuard = null; }
     if (VF.micStream) { VF.micStream.getTracks().forEach(t => t.stop()); VF.micStream = null; }
+    // ── iOS 덕킹 보상 해제: 원래 볼륨으로 복구 ───────────────────────
+    if (VF._origDestVol !== null) {
+        try { Tone.Destination.volume.rampTo(VF._origDestVol, 0.4); } catch(e) {}
+        VF._origDestVol = null;
+        console.log('[VF] iOS 덕킹 보상 해제: 볼륨 원복');
+    }
     console.log('[VF] Mic released');
 }
 
