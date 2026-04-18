@@ -1820,6 +1820,7 @@ const VF = {
     _origDestVol: null,  // 마이크 ON 전 Destination 볼륨 저장 (덕킹 보상용)
     _duckBoost: 9,       // 보상할 dB 값
     micDuckGuard: null,  // 무음 연결 노드 (iOS 덕킹 방지 보조)
+    micBoost: null,      // 피치 감지용 증폭 GainNode (낮은 입력 보상)
 };
 // _vfInitCtx IIFE 제거: AudioContext를 페이지 로드 시점에 생성하지 않음
 // (이전에는 이 시점 생성이 iOS Safari audio unlock 실패의 원인이었음)
@@ -1963,21 +1964,34 @@ async function vfGetMic(fftSize) {
 
             VF.micStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
-                    echoCancellation:   true,   // true = iOS 스피커 라우팅 유지
+                    echoCancellation:   true,
                     noiseSuppression:   false,
                     autoGainControl:    false,
                 }
             });
 
-            // ── 핵심 덕킹 방지: 획득 즉시 track.enabled = false ─────────
-            // iOS는 MediaStream이 존재해도 track이 disabled면 마이크 하드웨어를
-            // 실제 활성 상태로 보지 않아 PlayAndRecord 덕킹을 적용하지 않을 수 있음.
-            // 실제 음정 감지가 필요할 때만 vfMicEnable(true) 로 켠다.
-            VF.micStream.getAudioTracks().forEach(t => { t.enabled = false; });
-            console.log('[VF] 마이크 track.enabled = false (덕킹 방지 대기 상태)');
+            // ── 마이크 입력 게인 최소화 (iOS VAD 미감지 → 덕킹 방지) ────
+            // applyConstraints로 하드웨어 입력 레벨을 최솟값으로 낮춤.
+            // iOS가 마이크 신호를 목소리로 인식하지 못하면 덕킹을 걸지 않음.
+            VF.micStream.getAudioTracks().forEach(t => {
+                t.enabled = false; // 기본 비활성 (vfMicEnable 호출 전까지)
+                t.applyConstraints({ volume: 0.0001 }).catch(() => {
+                    // volume 제약 미지원 시 무시
+                });
+                console.log('[VF] mic track constraints:', JSON.stringify(t.getConstraints()));
+            });
             // ────────────────────────────────────────────────────────────
 
             VF.micSource = VF.ctx.createMediaStreamSource(VF.micStream);
+
+            // ── 피치 감지 보상 GainNode: 낮아진 입력을 100배 증폭 ────────
+            // applyConstraints로 하드웨어 입력이 낮아져도 analyser가 충분한
+            // 신호를 받도록 Web Audio 단에서 증폭. 오토코릴레이션은 진폭 독립적.
+            if (!VF.micBoost) {
+                VF.micBoost = VF.ctx.createGain();
+                VF.micBoost.gain.value = 100; // 약한 입력 신호를 100배 증폭
+                VF.micSource.connect(VF.micBoost);
+            }
 
             // ── iOS 덕킹 보상: 마이크 활성화 시 Destination 볼륨 즉시 부스트 ──
             // iOS PlayAndRecord 전환 시 약 6~10dB 덕킹이 발생하므로 이를 상쇄함
@@ -2005,14 +2019,17 @@ async function vfGetMic(fftSize) {
     }
     const analyser = VF.ctx.createAnalyser();
     analyser.fftSize = fftSize;
-    VF.micSource.connect(analyser);
+    // micBoost (100x 증폭) → analyser (낮은 입력 신호도 감지 가능)
+    const srcNode = VF.micBoost || VF.micSource;
+    srcNode.connect(analyser);
     return { stream: VF.micStream, analyser, sampleRate: VF.ctx.sampleRate };
 }
 
 function vfReleaseMic() {
-    if (VF.micSource) { try { VF.micSource.disconnect(); } catch(e){} VF.micSource = null; }
-    if (VF.micDuckGuard) { try { VF.micDuckGuard.disconnect(); } catch(e){} VF.micDuckGuard = null; }
-    if (VF.micStream) { VF.micStream.getTracks().forEach(t => t.stop()); VF.micStream = null; }
+    if (VF.micBoost)    { try { VF.micBoost.disconnect();    } catch(e){} VF.micBoost    = null; }
+    if (VF.micSource)   { try { VF.micSource.disconnect();   } catch(e){} VF.micSource   = null; }
+    if (VF.micDuckGuard){ try { VF.micDuckGuard.disconnect(); } catch(e){} VF.micDuckGuard= null; }
+    if (VF.micStream)   { VF.micStream.getTracks().forEach(t => t.stop()); VF.micStream = null; }
     // ── iOS 덕킹 보상 해제: 원래 볼륨으로 복구 ───────────────────────
     if (VF._origDestVol !== null) {
         try { Tone.Destination.volume.value = VF._origDestVol; } catch(e) {}
