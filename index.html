@@ -95,6 +95,11 @@
         .rb-main  { background: rgba(139,92,246,.15); color: var(--purple); border: 1px solid rgba(139,92,246,.3); }
         .rb-cool  { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
 
+        /* ── CHANGELOG ── */
+        .cl-item { font-size:.78rem; color:var(--text2); line-height:1.65; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+        .cl-item:last-child { border-bottom:none; }
+        .cl-item strong { color:var(--text); }
+
         /* ── WARMUP STEPS ── */
         .wu-step { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; background: var(--card2); border: 1.5px solid transparent; transition: all .25s; cursor: pointer; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; }
         .wu-step:hover { background: rgba(139,92,246,.06); border-color: rgba(139,92,246,.25); }
@@ -162,8 +167,8 @@
         .principle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
         .principle-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 10px 8px; }
         .pi-icon  { font-size: 1.2rem; margin-bottom: 4px; }
-        .pi-title { font-size: .75rem; font-weight: 700; color: var(--text); }
-        .pi-sub   { font-size: .67rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+        .pi-title { font-size: .82rem; font-weight: 700; color: var(--text); }
+        .pi-sub   { font-size: .72rem; color: var(--text2); margin-top: 2px; line-height: 1.4; }
 
         /* ── NOTES (참고사항) ── */
         .notes-placeholder { text-align: center; padding: 40px 20px; color: var(--muted); }
@@ -713,7 +718,7 @@
     <header class="header">
         <h1>보컬핏 스튜디오</h1>
         <p>Vocal Training System</p>
-        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">test version</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.6</p>
     </header>
 
     <!-- Desktop top nav -->
@@ -727,6 +732,7 @@
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
         <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
+        <button class="tab"        onclick="switchTab('changelog')">📢 업데이트</button>
     </nav>
 
     <!-- Mobile top nav -->
@@ -763,7 +769,68 @@
         <button class="mob-more-item" onclick="switchTab('selfcheck');closeMobMore()">🔍 셀프 평가</button>
         <button class="mob-more-item" onclick="switchTab('notes');closeMobMore()">📋 참고사항</button>
         <button class="mob-more-item" onclick="switchTab('studio');closeMobMore()">🏠 스튜디오</button>
+        <button class="mob-more-item" onclick="switchTab('changelog');closeMobMore()">📢 업데이트 공지</button>
     </div>
+
+    <!-- ══════════════ CHANGELOG TAB ══════════════ -->
+    <section id="changelog-section" class="section">
+        <div class="card" style="padding:14px 16px 6px;">
+            <div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:2px;">📢 업데이트 공지</div>
+            <div style="font-size:.75rem;color:var(--muted);">앱 개선 기록을 확인하세요</div>
+        </div>
+
+        <!-- v0.6 -->
+        <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="background:var(--purple);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.6</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--text);">iOS 오디오 덕킹 방지</span>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.04.22</span>
+            </div>
+            <div class="cl-item">🔇 <strong>소리 켜기 방식 개선</strong> — iOS에서 마이크 없이 AudioContext만으로 오디오 언락. 목소리 낼 때 피아노 소리 줄어드는 현상(iOS 덕킹) 대폭 감소</div>
+            <div class="cl-item">📱 <strong>플랫폼 분기</strong> — iOS는 마이크 권한 요청 없이 소리 켜짐. 크롬/안드로이드는 기존 방식 유지</div>
+            <div class="cl-item">🎤 <strong>마이크 대기 모드</strong> — 음정 탭/리프 탭에서 마이크 버튼 누를 때만 실제 입력 활성화 (track.enabled 방식)</div>
+            <div class="cl-item">⏹ <strong>정지 버튼 안정화</strong> — 리프 탭 재생/정지 버튼 onclick 처리 방식 개선</div>
+        </div>
+
+        <!-- v0.5 -->
+        <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="background:var(--blue);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.5</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--text);">리프 콤보 & 레벨 확장</span>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.04.21</span>
+            </div>
+            <div class="cl-item">🎵 <strong>서킷 런 추가</strong> (상급) — 빠른 멜리즈마 → 웨이브 런 → 하행 런 → 롤링 턴 4가지 패턴 연결 4마디 콤보</div>
+            <div class="cl-item">🎵 <strong>멜리 드롭 추가</strong> (중급) — 멜리즈마 + 하행 런 결합 2마디 리프</div>
+            <div class="cl-item">📊 <strong>탭 순서 조정</strong> — 데스크탑에서 리프 ↔ 스펙트로그램 위치 교체</div>
+            <div class="cl-item">🔢 <strong>루프 마디 조정</strong> — 4마디 리프를 2마디로 끊어서 연습 난이도 조절</div>
+            <div class="cl-item">🥁 <strong>드럼 기본값 ON</strong> — 리프 탭 진입 시 드럼 자동 켜짐</div>
+        </div>
+
+        <!-- v0.4 -->
+        <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="background:var(--green);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.4</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--text);">R&B 리프 훈련 모드</span>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.04.20</span>
+            </div>
+            <div class="cl-item">🎤 <strong>리프(멜리즈마) 탭 신설</strong> — R&B 보컬 패턴 16종, 입문~최상급 5단계 레벨</div>
+            <div class="cl-item">🥁 <strong>드럼 루프</strong> — BPM 연동 slow/mid/neo-soul 패턴, 60~120 BPM 조절</div>
+            <div class="cl-item">🎹 <strong>피아노 + 드럼 동기화</strong> — 공통 기준 시각(T0) 기반 drift-corrected 스케줄링</div>
+            <div class="cl-item">🎯 <strong>비트 카운터</strong> — 1~8박 실시간 시각 표시, 키/BPM 버튼 색상 개선</div>
+        </div>
+
+        <!-- v0.3 -->
+        <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="background:var(--yellow);color:#000;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.3</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--text);">화면 잠금 방지 & 버그픽스</span>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.04.18</span>
+            </div>
+            <div class="cl-item">💡 <strong>Wake Lock</strong> — 루틴/발성 재생 중 스마트폰 화면 꺼짐 방지</div>
+            <div class="cl-item">🔧 <strong>시각화 버그 수정</strong> — 순서 무관 스텝 점프 후 시각화 표시 안 되던 문제 해결</div>
+            <div class="cl-item">🔧 <strong>iOS Wake Lock 수정</strong> — 제스처 컨텍스트 안에서 먼저 호출되도록 순서 조정</div>
+        </div>
+    </section>
 
     <!-- ══════════════ STUDIO TAB ══════════════ -->
     <section id="studio-section" class="section">
@@ -907,7 +974,7 @@
         </div>
 
         <!-- 저작권 -->
-        <div style="padding:10px 12px;background:rgba(139,92,246,.08);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;font-size:.74rem;color:var(--muted);line-height:1.6;margin-top:4px;">
+        <div style="padding:10px 12px;background:rgba(139,92,246,.08);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;font-size:.74rem;color:var(--text2);line-height:1.6;margin-top:4px;">
             © 본 앱의 모든 콘텐츠는 보컬핏 스튜디오의 고유 자산이며,<br>무단 사용·복제·배포를 금지합니다.
         </div>
 
@@ -2391,7 +2458,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['routine', 'exercise', 'riff', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio'];
+const TAB_ORDER = ['routine', 'exercise', 'riff', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio', 'changelog'];
 function switchTab(tab) {
     currentTab = tab;
     // Desktop tabs
@@ -2404,7 +2471,7 @@ function switchTab(tab) {
         b.classList.toggle('active', t === tab);
     });
     // If tab is in the "more" group, highlight the more button
-    const moreGroup = ['game', 'selfcheck', 'notes', 'studio', 'spectrogram'];
+    const moreGroup = ['game', 'selfcheck', 'notes', 'studio', 'spectrogram', 'changelog'];
     const moreBtn = document.querySelector('.mob-tab[data-tab="more"]');
     if (moreBtn) moreBtn.classList.toggle('active', moreGroup.includes(tab));
 
