@@ -2080,11 +2080,22 @@ async function vfSoundUnlock(e) {
     if (btn) { btn.textContent = '⏳ 소리 켜는 중...'; btn.classList.add('loading'); btn.disabled = true; }
 
     try {
-        // ── AudioContext만으로 iOS 오디오 언락 ─────────────────────
-        // getUserMedia를 쓰지 않으므로 PlayAndRecord 모드 전환이 없음.
-        // → 피아노 재생 중 목소리 내도 덕킹이 발생하지 않음.
-        await vfEnsureCtx();
-        console.log('[VF] AudioContext 언락 완료 — ctx.state:', VF.ctx?.state);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (isIOS) {
+            // ── iOS Safari: AudioContext만으로 언락 ──────────────────
+            // getUserMedia를 쓰지 않으면 PlayAndRecord 전환이 없어 덕킹 없음.
+            // iOS는 유저 제스처 내 AudioContext + silent buffer로 충분히 열림.
+            console.log('[VF] iOS → AudioContext 단독 언락 (덕킹 방지)');
+            await vfEnsureCtx();
+        } else {
+            // ── 비iOS (Chrome Android 등): getUserMedia 방식 ─────────
+            // Chrome은 getUserMedia를 통한 언락이 가장 안정적임.
+            console.log('[VF] 비iOS → getUserMedia 언락');
+            const mic = await vfGetMic(2048);
+            if (mic?.analyser) { try { mic.analyser.disconnect(); } catch(_) {} }
+        }
+        console.log('[VF] 언락 완료 — ctx.state:', VF.ctx?.state);
 
         // ── piano 샘플러 사전 로딩 ─────────────────────────────────
         await ensurePianoReady();
@@ -2099,7 +2110,13 @@ async function vfSoundUnlock(e) {
         console.log('[VF] 소리 활성화 완료 ✅');
     } else {
         if (btn)  { btn.textContent = '🔊 소리 켜기'; btn.classList.remove('loading'); btn.disabled = false; }
-        if (hint) { hint.innerHTML = '❌ 소리를 켜지 못했습니다. 다시 눌러주세요.'; }
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (hint) {
+            hint.innerHTML = isIOS
+                ? '❌ 소리를 켜지 못했습니다. 다시 눌러주세요.'
+                : '❌ <strong>마이크 권한을 허용</strong>하고 다시 눌러주세요';
+        }
+        if (!isIOS) vfToast('🔇 마이크 권한이 필요합니다. 허용 후 다시 눌러주세요.');
         console.warn('[VF] 소리 활성화 실패 ❌ ctx.state:', VF.ctx?.state);
     }
 }
