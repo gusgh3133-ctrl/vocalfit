@@ -175,6 +175,70 @@
         .notes-placeholder .np-icon { font-size: 2.5rem; margin-bottom: 12px; }
         .notes-placeholder p { font-size: .82rem; line-height: 1.6; }
 
+        /* ── 연습곡 추천 아코디언 ── */
+        .song-acc-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 15px 16px; cursor: pointer;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+            transition: background .15s;
+        }
+        .song-acc-header:active { background: rgba(139,92,246,.06); }
+        .song-acc-icon  { font-size: 1.1rem; flex-shrink: 0; }
+        .song-acc-title { flex: 1; font-size: .9rem; font-weight: 800; color: var(--text); }
+        .song-acc-count { font-size: .7rem; font-weight: 700; color: var(--muted);
+                          background: var(--bg2); border: 1px solid var(--border);
+                          padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
+        .song-acc-arrow { font-size: .72rem; color: var(--text2); flex-shrink: 0;
+                          transition: transform .25s; display: inline-block; }
+        .song-accordion.open .song-acc-arrow { transform: rotate(90deg); color: var(--purple); }
+        .song-accordion.open .song-acc-count { background: rgba(139,92,246,.12);
+                                               border-color: rgba(139,92,246,.4); color: var(--purple); }
+        .song-acc-body  { display: none; padding: 0 12px 12px; border-top: 1px solid var(--border); }
+        .song-accordion.open .song-acc-body { display: block; }
+
+        /* ── YouTube 썸네일 카드 ── */
+        .yt-card {
+            display: flex; align-items: stretch; gap: 0;
+            border-radius: 10px; overflow: hidden;
+            background: var(--card2); border: 1px solid var(--border);
+            margin-top: 10px; cursor: pointer;
+            transition: border-color .15s, transform .1s;
+        }
+        .yt-card:first-child { margin-top: 12px; }
+        .yt-card:active { transform: scale(.98); }
+        .yt-card:hover  { border-color: var(--purple); }
+        .yt-thumb {
+            width: 110px; min-width: 110px; height: 72px;
+            background: #1a1a2e; position: relative; overflow: hidden; flex-shrink: 0;
+        }
+        .yt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .yt-play-btn {
+            position: absolute; inset: 0; display: flex; align-items: center;
+            justify-content: center; background: rgba(0,0,0,.35);
+            font-size: .85rem; color: #fff; opacity: 0; transition: opacity .2s;
+        }
+        .yt-card:hover .yt-play-btn { opacity: 1; }
+        .yt-thumb-search {
+            background: linear-gradient(135deg, #1a0a0a, #2a0a0a);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .yt-thumb-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .yt-search-icon  { font-size: 1.3rem; }
+        .yt-search-label { font-size: .5rem; font-weight: 700; color: rgba(255,255,255,.45);
+                           letter-spacing: .04em; white-space: nowrap; }
+        .yt-card-info {
+            flex: 1; padding: 9px 12px; display: flex; flex-direction: column;
+            justify-content: center; min-width: 0;
+        }
+        .yt-card-title { font-size: .84rem; font-weight: 800; color: var(--text);
+                         line-height: 1.3; margin-bottom: 3px;
+                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .yt-card-desc  { font-size: .72rem; color: var(--text2); line-height: 1.4;
+                         display: -webkit-box; -webkit-line-clamp: 2;
+                         -webkit-box-orient: vertical; overflow: hidden; }
+        .yt-card-tag   { font-size: .65rem; font-weight: 700; color: var(--muted);
+                         margin-top: 5px; }
+
         /* Sections */
         .section { display: none; padding: 18px 16px; }
         .section.active { display: block; }
@@ -732,6 +796,7 @@
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
         <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
+        <button class="tab"        onclick="switchTab('songs')">🎵 연습곡 추천</button>
         <button class="tab"        onclick="switchTab('changelog')">📢 업데이트</button>
     </nav>
 
@@ -769,8 +834,239 @@
         <button class="mob-more-item" onclick="switchTab('selfcheck');closeMobMore()">🔍 셀프 평가</button>
         <button class="mob-more-item" onclick="switchTab('notes');closeMobMore()">📋 참고사항</button>
         <button class="mob-more-item" onclick="switchTab('studio');closeMobMore()">🏠 스튜디오</button>
+        <button class="mob-more-item" onclick="switchTab('songs');closeMobMore()">🎵 연습곡 추천</button>
         <button class="mob-more-item" onclick="switchTab('changelog');closeMobMore()">📢 업데이트 공지</button>
     </div>
+
+
+    <!-- ══════════════ 연습곡 추천 TAB ══════════════ -->
+    <section id="songs-section" class="section">
+
+        <!-- 헤더 카드 -->
+        <div class="card" style="padding:14px 18px 12px;">
+            <div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:3px;">🎵 연습곡 추천</div>
+            <div style="font-size:.76rem;color:var(--muted);">카테고리를 눌러 펼치고, 썸네일을 눌러 유튜브로 이동하세요</div>
+        </div>
+
+        <!-- 네이버 카페 배너 -->
+        <div class="card" style="padding:0;overflow:hidden;">
+            <a href="https://cafe.naver.com/vocalfit" target="_blank" rel="noopener noreferrer"
+               style="display:flex;align-items:center;gap:14px;padding:14px 16px;text-decoration:none;background:linear-gradient(135deg,rgba(3,199,90,.12),rgba(3,199,90,.04));border:1px solid rgba(3,199,90,.3);border-radius:16px;transition:background .2s;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#03C75A;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem;">☕</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:.9rem;font-weight:800;color:#03C75A;margin-bottom:1px;">보컬핏 네이버 카페</div>
+                    <div style="font-size:.73rem;color:var(--text2);">연습 후기 · Q&A · 커뮤니티 — cafe.naver.com/vocalfit</div>
+                </div>
+                <span style="font-size:.9rem;color:var(--muted);">→</span>
+            </a>
+        </div>
+
+        <!-- ── 아코디언 스타일 카테고리 ── -->
+
+        <!-- 🌱 입문 · 워밍업 -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🌱</span>
+                <span class="song-acc-title">입문 · 워밍업 추천곡</span>
+                <span class="song-acc-count">2곡</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body">
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=보컬+립트릴+연습곡','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">립트릴 · 허밍 연습용</div>
+                        <div class="yt-card-desc">부담 없이 소리 흐름을 여는 곡들</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=보컬+웜업+발라드+연습','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">느린 발라드 웜업</div>
+                        <div class="yt-card-desc">음역 부담 없는 중저음 발성 연습</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🎙️ 남성 추천곡 -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🎙️</span>
+                <span class="song-acc-title">남성 추천곡</span>
+                <span class="song-acc-count">4곡</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body">
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=남자+보컬+연습곡+중저음','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">중저음 연습곡</div>
+                        <div class="yt-card-desc">흉성 연결 · 안정적인 흉성 구간 훈련</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=남자+고음+보컬+연습+혼성구간','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">혼성구간 연결 연습</div>
+                        <div class="yt-card-desc">파사지오 구간 무너지지 않는 훈련</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=남성+고음+팔세토+연습','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">팔세토 · 두성 연습</div>
+                        <div class="yt-card-desc">헤드보이스 확장 훈련용 곡</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/RmAMWPcYmKE?si=CcsZWn6V6HTeMKcp','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/RmAMWPcYmKE/mqdefault.jpg"
+                             alt="2nd Bridge 연습곡"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">2nd Bridge 연습곡</div>
+                        <div class="yt-card-desc">세컨 브릿지 구간 연결 · 고음 진입 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🎤 여성 추천곡 -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🎤</span>
+                <span class="song-acc-title">여성 추천곡</span>
+                <span class="song-acc-count">3곡</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body">
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=여성+보컬+중음+연습곡','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">중음 안정 연습</div>
+                        <div class="yt-card-desc">체스트·믹스 연결을 다지는 곡들</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=여성+고음+보컬+연습+믹스보이스','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">믹스보이스 연습곡</div>
+                        <div class="yt-card-desc">고음으로 자연스럽게 올라가는 훈련</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=여성+두성+헤드보이스+연습','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">두성 · 헤드보이스</div>
+                        <div class="yt-card-desc">가볍고 맑은 두성 감각 훈련</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🎼 리프 · 멜리즈마 -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🎼</span>
+                <span class="song-acc-title">리프 · 멜리즈마 연습곡</span>
+                <span class="song-acc-count">2곡</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body">
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=RnB+멜리즈마+보컬+연습','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">R&B 멜리즈마</div>
+                        <div class="yt-card-desc">리프 트레이닝과 연결되는 곡 스타일</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=gospel+vocal+run+연습+유튜브','_blank')">
+                    <div class="yt-thumb yt-thumb-search">
+                        <div class="yt-thumb-inner">
+                            <span class="yt-search-icon">🔍</span>
+                            <span class="yt-search-label">YouTube 검색</span>
+                        </div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Gospel 런 패턴</div>
+                        <div class="yt-card-desc">빠른 음형 연결 · 리프 응용 연습</div>
+                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단 카페 버튼 -->
+        <div class="card" style="background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.25);text-align:center;">
+            <div style="font-size:.8rem;color:var(--text2);line-height:1.75;margin-bottom:12px;">
+                선생님 추천곡은 카페에서 확인하세요! 👇
+            </div>
+            <a href="https://cafe.naver.com/vocalfit" target="_blank" rel="noopener noreferrer"
+               style="display:block;padding:12px;background:#03C75A;border-radius:10px;font-size:.88rem;font-weight:800;color:#fff;text-decoration:none;">
+                ☕ 보컬핏 네이버 카페 바로가기
+            </a>
+        </div>
+
+    </section>
 
     <!-- ══════════════ CHANGELOG TAB ══════════════ -->
     <section id="changelog-section" class="section">
@@ -971,6 +1267,22 @@
             <div style="text-align:center;margin-top:20px;">
                 <button class="btn btn-purple" onclick="openBookingModal()" style="max-width:280px;margin:0 auto;">내 발성 확인하기</button>
             </div>
+        </div>
+
+
+        <!-- 네이버 카페 링크 -->
+        <div class="card" style="padding:0;overflow:hidden;margin-bottom:4px;">
+            <a href="https://cafe.naver.com/vocalfit" target="_blank" rel="noopener noreferrer"
+               style="display:flex;align-items:center;gap:14px;padding:16px 18px;text-decoration:none;background:linear-gradient(135deg,rgba(3,199,90,.12),rgba(3,199,90,.04));border:1px solid rgba(3,199,90,.3);border-radius:16px;transition:background .2s;">
+                <div style="width:42px;height:42px;border-radius:12px;background:#03C75A;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <span style="font-size:1.3rem;">☕</span>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:.92rem;font-weight:800;color:#03C75A;margin-bottom:2px;">보컬핏 네이버 카페</div>
+                    <div style="font-size:.76rem;color:var(--text2);line-height:1.4;">연습 후기·Q&A·커뮤니티 — cafe.naver.com/vocalfit</div>
+                </div>
+                <span style="font-size:1rem;color:var(--muted);">→</span>
+            </a>
         </div>
 
         <!-- 저작권 -->
@@ -2458,7 +2770,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['routine', 'exercise', 'riff', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio', 'changelog'];
+const TAB_ORDER = ['routine', 'exercise', 'riff', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio', 'songs', 'changelog'];
 function switchTab(tab) {
     currentTab = tab;
     // Desktop tabs
@@ -2471,7 +2783,7 @@ function switchTab(tab) {
         b.classList.toggle('active', t === tab);
     });
     // If tab is in the "more" group, highlight the more button
-    const moreGroup = ['game', 'selfcheck', 'notes', 'studio', 'spectrogram', 'changelog'];
+    const moreGroup = ['game', 'selfcheck', 'notes', 'studio', 'spectrogram', 'songs', 'changelog'];
     const moreBtn = document.querySelector('.mob-tab[data-tab="more"]');
     if (moreBtn) moreBtn.classList.toggle('active', moreGroup.includes(tab));
 
@@ -2493,6 +2805,12 @@ function switchTab(tab) {
 }
 
 // Mobile more menu
+/* ── 연습곡 아코디언 토글 ── */
+function toggleSongAcc(header) {
+    const acc = header.closest('.song-accordion');
+    acc.classList.toggle('open');
+}
+
 function toggleMobMore() {
     const sheet = document.getElementById('mob-more-sheet');
     const overlay = document.getElementById('mob-more-overlay');
