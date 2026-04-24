@@ -788,15 +788,15 @@
     <!-- Desktop top nav -->
     <nav class="tabs desk-tabs" id="desk-tabs">
         <button class="tab active" onclick="switchTab('routine')">🎯 보컬 루틴</button>
-        <button class="tab"        onclick="switchTab('exercise')">🎹 발성 연습</button>
+        <button class="tab"        onclick="switchTab('songs')">🎵 연습곡 추천</button>
         <button class="tab"        onclick="switchTab('riff')">🎤 리프</button>
+        <button class="tab"        onclick="switchTab('exercise')">🎹 발성 연습</button>
         <button class="tab"        onclick="switchTab('pitch')">🎤 음정 체크</button>
         <button class="tab"        onclick="switchTab('game')">🧱 미니게임</button>
         <button class="tab"        onclick="switchTab('selfcheck')">🔍 셀프 평가</button>
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
         <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
-        <button class="tab"        onclick="switchTab('songs')">🎵 연습곡 추천</button>
         <button class="tab"        onclick="switchTab('changelog')">📢 업데이트</button>
     </nav>
 
@@ -805,14 +805,14 @@
         <button class="mob-tab active" data-tab="routine" onclick="switchTab('routine')">
             <span class="mob-icon">🎯</span><span class="mob-label">루틴</span>
         </button>
-        <button class="mob-tab" data-tab="exercise" onclick="switchTab('exercise')">
-            <span class="mob-icon">🎹</span><span class="mob-label">발성</span>
+        <button class="mob-tab" data-tab="songs" onclick="switchTab('songs')">
+            <span class="mob-icon">🎵</span><span class="mob-label">연습곡</span>
         </button>
         <button class="mob-tab" data-tab="riff" onclick="switchTab('riff')">
             <span class="mob-icon">🎤</span><span class="mob-label">리프</span>
         </button>
-        <button class="mob-tab" data-tab="pitch" onclick="switchTab('pitch')">
-            <span class="mob-icon">🎤</span><span class="mob-label">음정</span>
+        <button class="mob-tab" data-tab="exercise" onclick="switchTab('exercise')">
+            <span class="mob-icon">🎹</span><span class="mob-label">발성</span>
         </button>
         <button class="mob-tab" data-tab="more" onclick="toggleMobMore()">
             <span class="mob-icon">☰</span><span class="mob-label">더보기</span>
@@ -829,12 +829,12 @@
     <div class="mob-more-overlay" id="mob-more-overlay" onclick="closeMobMore()"></div>
     <div class="mob-more-sheet" id="mob-more-sheet">
         <div class="mob-more-header">메뉴<button class="mob-more-close" onclick="closeMobMore()">✕</button></div>
+        <button class="mob-more-item" onclick="switchTab('pitch');closeMobMore()">🎤 음정 체크</button>
         <button class="mob-more-item" onclick="switchTab('spectrogram');closeMobMore()">📊 분석</button>
         <button class="mob-more-item" onclick="switchTab('game');closeMobMore()">🧱 미니게임</button>
         <button class="mob-more-item" onclick="switchTab('selfcheck');closeMobMore()">🔍 셀프 평가</button>
         <button class="mob-more-item" onclick="switchTab('notes');closeMobMore()">📋 참고사항</button>
         <button class="mob-more-item" onclick="switchTab('studio');closeMobMore()">🏠 스튜디오</button>
-        <button class="mob-more-item" onclick="switchTab('songs');closeMobMore()">🎵 연습곡 추천</button>
         <button class="mob-more-item" onclick="switchTab('changelog');closeMobMore()">📢 업데이트 공지</button>
     </div>
 
@@ -2763,7 +2763,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['routine', 'exercise', 'riff', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio', 'songs', 'changelog'];
+const TAB_ORDER = ['routine', 'songs', 'riff', 'exercise', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio', 'changelog'];
 function switchTab(tab) {
     currentTab = tab;
     // Desktop tabs
@@ -2776,7 +2776,7 @@ function switchTab(tab) {
         b.classList.toggle('active', t === tab);
     });
     // If tab is in the "more" group, highlight the more button
-    const moreGroup = ['game', 'selfcheck', 'notes', 'studio', 'spectrogram', 'songs', 'changelog'];
+    const moreGroup = ['pitch', 'game', 'selfcheck', 'notes', 'studio', 'spectrogram', 'changelog'];
     const moreBtn = document.querySelector('.mob-tab[data-tab="more"]');
     if (moreBtn) moreBtn.classList.toggle('active', moreGroup.includes(tab));
 
