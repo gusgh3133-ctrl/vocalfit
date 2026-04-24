@@ -782,7 +782,7 @@
     <header class="header">
         <h1>보컬핏 스튜디오</h1>
         <p>Vocal Training System</p>
-        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.6</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7</p>
     </header>
 
     <!-- Desktop top nav -->
@@ -863,64 +863,27 @@
 
         <!-- ── 아코디언 스타일 카테고리 ── -->
 
-        <!-- 🌱 입문 · 워밍업 -->
-        <div class="card song-accordion" style="padding:0;overflow:hidden;">
-            <div class="song-acc-header" onclick="toggleSongAcc(this)">
-                <span class="song-acc-icon">🌱</span>
-                <span class="song-acc-title">입문 · 워밍업 추천곡</span>
-                <span class="song-acc-count">2곡</span>
-                <span class="song-acc-arrow">▶</span>
-            </div>
-            <div class="song-acc-body">
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=보컬+립트릴+연습곡','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
-                    </div>
-                    <div class="yt-card-info">
-                        <div class="yt-card-title">립트릴 · 허밍 연습용</div>
-                        <div class="yt-card-desc">부담 없이 소리 흐름을 여는 곡들</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
-                    </div>
-                </div>
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=보컬+웜업+발라드+연습','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
-                    </div>
-                    <div class="yt-card-info">
-                        <div class="yt-card-title">느린 발라드 웜업</div>
-                        <div class="yt-card-desc">음역 부담 없는 중저음 발성 연습</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- 🎙️ 남성 추천곡 -->
         <div class="card song-accordion" style="padding:0;overflow:hidden;">
             <div class="song-acc-header" onclick="toggleSongAcc(this)">
                 <span class="song-acc-icon">🎙️</span>
                 <span class="song-acc-title">남성 추천곡</span>
-                <span class="song-acc-count">4곡</span>
+                <span class="song-acc-count">5곡</span>
                 <span class="song-acc-arrow">▶</span>
             </div>
             <div class="song-acc-body">
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=남자+보컬+연습곡+중저음','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/6Hz7TiOwLBs?si=TqB9vts4fVAGZS4A','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/6Hz7TiOwLBs/mqdefault.jpg"
+                             alt="중저음 연습곡"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
                     </div>
                     <div class="yt-card-info">
                         <div class="yt-card-title">중저음 연습곡</div>
                         <div class="yt-card-desc">흉성 연결 · 안정적인 흉성 구간 훈련</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
                 <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=남자+고음+보컬+연습+혼성구간','_blank')">
@@ -936,17 +899,32 @@
                         <div class="yt-card-tag">🔍 유튜브 검색</div>
                     </div>
                 </div>
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=남성+고음+팔세토+연습','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/xHna8p5KdeM?si=8OVARndStjZ5dsb5','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/xHna8p5KdeM/mqdefault.jpg"
+                             alt="팔세토 · 두성 연습 1"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
                     </div>
                     <div class="yt-card-info">
-                        <div class="yt-card-title">팔세토 · 두성 연습</div>
+                        <div class="yt-card-title">팔세토 · 두성 연습 ①</div>
                         <div class="yt-card-desc">헤드보이스 확장 훈련용 곡</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/YtBovYHx0vw?si=R7HqRP-ALm_-_ZzR','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/YtBovYHx0vw/mqdefault.jpg"
+                             alt="팔세토 · 두성 연습 2"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">팔세토 · 두성 연습 ②</div>
+                        <div class="yt-card-desc">헤드보이스 확장 훈련용 곡</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
                 <div class="yt-card" onclick="window.open('https://youtu.be/RmAMWPcYmKE?si=CcsZWn6V6HTeMKcp','_blank')">
@@ -975,30 +953,32 @@
                 <span class="song-acc-arrow">▶</span>
             </div>
             <div class="song-acc-body">
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=여성+보컬+중음+연습곡','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/iR5HEvBLZqg?si=tZ7PQTtR6RjtC3GK','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/iR5HEvBLZqg/mqdefault.jpg"
+                             alt="중음 안정 연습"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
                     </div>
                     <div class="yt-card-info">
                         <div class="yt-card-title">중음 안정 연습</div>
                         <div class="yt-card-desc">체스트·믹스 연결을 다지는 곡들</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=여성+고음+보컬+연습+믹스보이스','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/6SlBk5ziyOk?si=cpazkQrVpVXZNSDZ','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/6SlBk5ziyOk/mqdefault.jpg"
+                             alt="고음 연습"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
                     </div>
                     <div class="yt-card-info">
-                        <div class="yt-card-title">믹스보이스 연습곡</div>
+                        <div class="yt-card-title">고음 연습</div>
                         <div class="yt-card-desc">고음으로 자연스럽게 올라가는 훈련</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
                 <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=여성+두성+헤드보이스+연습','_blank')">
@@ -1075,10 +1055,23 @@
             <div style="font-size:.75rem;color:var(--muted);">앱 개선 기록을 확인하세요</div>
         </div>
 
+        <!-- v0.7 -->
+        <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="background:var(--purple);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.7</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--text);">연습곡 추천 탭 · 네이버 카페 연결</span>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.04.24</span>
+            </div>
+            <div class="cl-item">🎵 <strong>연습곡 추천 탭 신설</strong> — 카테고리별 아코디언 방식, 썸네일 카드로 유튜브 바로 연결</div>
+            <div class="cl-item">☕ <strong>네이버 카페 링크 추가</strong> — 스튜디오 탭 · 연습곡 탭에 보컬핏 카페 바로가기 삽입</div>
+            <div class="cl-item">🎙️ <strong>남성 추천곡 업데이트</strong> — 2nd Bridge 연습곡, 팔세토·두성 ①② 실제 유튜브 링크 추가</div>
+            <div class="cl-item">🎤 <strong>여성 추천곡 업데이트</strong> — 중음 안정 연습 실제 유튜브 링크 추가</div>
+        </div>
+
         <!-- v0.6 -->
         <div class="card" style="padding:14px 16px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <span style="background:var(--purple);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.6</span>
+                <span style="background:var(--blue);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.6</span>
                 <span style="font-size:.78rem;font-weight:700;color:var(--text);">iOS 오디오 덕킹 방지</span>
                 <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.04.22</span>
             </div>
