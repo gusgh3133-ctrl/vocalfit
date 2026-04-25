@@ -848,20 +848,8 @@
             <div style="font-size:.76rem;color:var(--muted);">카테고리를 눌러 펼치고, 썸네일을 눌러 유튜브로 이동하세요</div>
         </div>
 
-        <!-- 네이버 카페 배너 -->
-        <div class="card" style="padding:0;overflow:hidden;">
-            <a href="https://cafe.naver.com/vocalfit" target="_blank" rel="noopener noreferrer"
-               style="display:flex;align-items:center;gap:14px;padding:14px 16px;text-decoration:none;background:linear-gradient(135deg,rgba(3,199,90,.12),rgba(3,199,90,.04));border:1px solid rgba(3,199,90,.3);border-radius:16px;transition:background .2s;">
-                <div style="width:40px;height:40px;border-radius:10px;background:#03C75A;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem;">☕</div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:.9rem;font-weight:800;color:#03C75A;margin-bottom:1px;">보컬핏 네이버 카페</div>
-                    <div style="font-size:.73rem;color:var(--text2);">연습 후기 · Q&A · 커뮤니티 — cafe.naver.com/vocalfit</div>
-                </div>
-                <span style="font-size:.9rem;color:var(--muted);">→</span>
-            </a>
-        </div>
-
         <!-- ── 아코디언 스타일 카테고리 ── -->
+
 
         <!-- 🎙️ 남성 추천곡 -->
         <div class="card song-accordion" style="padding:0;overflow:hidden;">
@@ -997,39 +985,261 @@
             </div>
         </div>
 
-        <!-- 🎼 리프 · 멜리즈마 -->
+        <!-- 목소리 분류 섹션 헤더 -->
+        <div class="card" style="padding:12px 16px 10px;background:rgba(139,92,246,.07);border-color:rgba(139,92,246,.3);margin-top:4px;">
+            <div style="font-size:.72rem;font-weight:800;color:var(--purple);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;">목소리 분류</div>
+            <div style="font-size:.78rem;color:var(--text2);">성대 접촉 방식과 음색 유형별 연습곡</div>
+        </div>
+
         <div class="card song-accordion" style="padding:0;overflow:hidden;">
             <div class="song-acc-header" onclick="toggleSongAcc(this)">
-                <span class="song-acc-icon">🎼</span>
-                <span class="song-acc-title">리프 · 멜리즈마 연습곡</span>
-                <span class="song-acc-count">2곡</span>
+                <span class="song-acc-icon">🎵</span>
+                <span class="song-acc-title">Medium Vocal Fold Closure (Mix, Balanced)</span>
+                <span class="song-acc-count">3곡</span>
                 <span class="song-acc-arrow">▶</span>
             </div>
             <div class="song-acc-body">
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=RnB+멜리즈마+보컬+연습','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/PjFoQxjgbrs?si=kSQ5DFHonHiVJZ_B','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/PjFoQxjgbrs/mqdefault.jpg"
+                             alt="Mix, Balanced"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
                     </div>
                     <div class="yt-card-info">
-                        <div class="yt-card-title">R&B 멜리즈마</div>
-                        <div class="yt-card-desc">리프 트레이닝과 연결되는 곡 스타일</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                        <div class="yt-card-title">Mix, Balanced ①</div>
+                        <div class="yt-card-desc">균형 잡힌 성대 접촉 · 믹스 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=gospel+vocal+run+연습+유튜브','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/JMGMSgPHJoI?si=LxFboPZvqk8rNX1F','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/JMGMSgPHJoI/mqdefault.jpg"
+                             alt="Mix, Balanced"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
                     </div>
                     <div class="yt-card-info">
-                        <div class="yt-card-title">Gospel 런 패턴</div>
-                        <div class="yt-card-desc">빠른 음형 연결 · 리프 응용 연습</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                        <div class="yt-card-title">Mix, Balanced ②</div>
+                        <div class="yt-card-desc">균형 잡힌 성대 접촉 · 믹스 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/DgfuV4ozn4s?si=v1_lTJFq2uUNljuu','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/DgfuV4ozn4s/mqdefault.jpg"
+                             alt="Mix, Balanced"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Mix, Balanced ③</div>
+                        <div class="yt-card-desc">균형 잡힌 성대 접촉 · 믹스 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🔥</span>
+                <span class="song-acc-title">Strong Vocal Fold Closure (Mix, Belt)</span>
+                <span class="song-acc-count">6곡</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body">
+                <div class="yt-card" onclick="window.open('https://youtu.be/MslDnwerQRA?si=49rgEbvBzwW2C7z8','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/MslDnwerQRA/mqdefault.jpg"
+                             alt="Mix, Belt"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Mix, Belt ①</div>
+                        <div class="yt-card-desc">강한 성대 접촉 · 벨팅 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/DK6MZBAZUOM?si=itOMKHNImyj7pOl','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/DK6MZBAZUOM/mqdefault.jpg"
+                             alt="Mix, Belt"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Mix, Belt ②</div>
+                        <div class="yt-card-desc">강한 성대 접촉 · 벨팅 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/ElJ0fiD0lkc?si=e9Dzq9UnIGHfKzX1','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/ElJ0fiD0lkc/mqdefault.jpg"
+                             alt="Mix, Belt"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Mix, Belt ③</div>
+                        <div class="yt-card-desc">강한 성대 접촉 · 벨팅 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/ByLJstEo0fo?si=VVWalnlW3NxoMc1L','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/ByLJstEo0fo/mqdefault.jpg"
+                             alt="Mix, Belt"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Mix, Belt ④</div>
+                        <div class="yt-card-desc">강한 성대 접촉 · 벨팅 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/EFSjeCsMX0E?si=BoYlSC9Q4CBfq1tl','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/EFSjeCsMX0E/mqdefault.jpg"
+                             alt="Mix, Belt"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Mix, Belt ⑤</div>
+                        <div class="yt-card-desc">강한 성대 접촉 · 벨팅 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/7qU2s5p_ZHA?si=Wk-AOPaCw4XHDqF5','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/7qU2s5p_ZHA/mqdefault.jpg"
+                             alt="Mix, Belt"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Mix, Belt ⑥</div>
+                        <div class="yt-card-desc">강한 성대 접촉 · 벨팅 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">👃</span>
+                <span class="song-acc-title">Nasal (Pharyngeal, Twang)</span>
+                <span class="song-acc-count">3곡</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body">
+                <div class="yt-card" onclick="window.open('https://youtu.be/IAuRoAUV19o?si=hnoIz7SnHySuOD2A','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/IAuRoAUV19o/mqdefault.jpg"
+                             alt="Pharyngeal, Twang"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Pharyngeal, Twang ①</div>
+                        <div class="yt-card-desc">비강·인두 공명 · 트왱 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/MWoQW-b6Ph8?si=o1Y8C7aICY3VxbQK','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/MWoQW-b6Ph8/mqdefault.jpg"
+                             alt="Pharyngeal, Twang"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Pharyngeal, Twang ②</div>
+                        <div class="yt-card-desc">비강·인두 공명 · 트왱 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/PIiQMsDQ0Uo?si=vnxjJEf31NqjkhRU','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/PIiQMsDQ0Uo/mqdefault.jpg"
+                             alt="Pharyngeal, Twang"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Pharyngeal, Twang ③</div>
+                        <div class="yt-card-desc">비강·인두 공명 · 트왱 발성 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🌬️</span>
+                <span class="song-acc-title">Breathy (Aspirate, Airy, Falsetto)</span>
+                <span class="song-acc-count">3곡</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body">
+                <div class="yt-card" onclick="window.open('https://youtu.be/tO4dxvguQDk?si=V91KVcAn5qgbCfkd','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/tO4dxvguQDk/mqdefault.jpg"
+                             alt="Aspirate, Airy, Falsetto"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Aspirate, Airy, Falsetto ①</div>
+                        <div class="yt-card-desc">기식성 발성 · 팔세토 느낌 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/1TO48Cnl66w?si=FGmfhjffw8u8SXu7','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/1TO48Cnl66w/mqdefault.jpg"
+                             alt="Aspirate, Airy, Falsetto"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Aspirate, Airy, Falsetto ②</div>
+                        <div class="yt-card-desc">기식성 발성 · 팔세토 느낌 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/ae7bOnP3NJU?si=X9l98KSATt1-hsip','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/ae7bOnP3NJU/mqdefault.jpg"
+                             alt="Aspirate, Airy, Falsetto"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">Aspirate, Airy, Falsetto ③</div>
+                        <div class="yt-card-desc">기식성 발성 · 팔세토 느낌 훈련</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
             </div>
