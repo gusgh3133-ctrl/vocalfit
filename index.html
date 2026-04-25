@@ -874,19 +874,6 @@
                         <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=남자+고음+보컬+연습+혼성구간','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
-                    </div>
-                    <div class="yt-card-info">
-                        <div class="yt-card-title">혼성구간 연결 연습</div>
-                        <div class="yt-card-desc">파사지오 구간 무너지지 않는 훈련</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
-                    </div>
-                </div>
                 <div class="yt-card" onclick="window.open('https://youtu.be/xHna8p5KdeM?si=8OVARndStjZ5dsb5','_blank')">
                     <div class="yt-thumb" style="position:relative;">
                         <img src="https://img.youtube.com/vi/xHna8p5KdeM/mqdefault.jpg"
@@ -929,6 +916,20 @@
                         <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/47dUc4iMAvQ?si=MN5xj2b92K1zqlBt','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/47dUc4iMAvQ/mqdefault.jpg"
+                             alt="뮤지컬 연습 곡"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
+                    </div>
+                    <div class="yt-card-info">
+                        <div class="yt-card-title">뮤지컬 연습 곡</div>
+                        <div class="yt-card-desc">뮤지컬 톤, 비브라토, 중고음 훈련곡</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -965,21 +966,22 @@
                     </div>
                     <div class="yt-card-info">
                         <div class="yt-card-title">고음 연습</div>
-                        <div class="yt-card-desc">고음으로 자연스럽게 올라가는 훈련</div>
+                        <div class="yt-card-desc">저음부터 고음까지 잡혀있는 곡</div>
                         <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
-                <div class="yt-card" onclick="window.open('https://www.youtube.com/results?search_query=여성+두성+헤드보이스+연습','_blank')">
-                    <div class="yt-thumb yt-thumb-search">
-                        <div class="yt-thumb-inner">
-                            <span class="yt-search-icon">🔍</span>
-                            <span class="yt-search-label">YouTube 검색</span>
-                        </div>
+                <div class="yt-card" onclick="window.open('https://youtu.be/AOGhUcAdTKk?si=8yAPjy0eE9r4PVrc','_blank')">
+                    <div class="yt-thumb" style="position:relative;">
+                        <img src="https://img.youtube.com/vi/AOGhUcAdTKk/mqdefault.jpg"
+                             alt="두성 · 헤드보이스"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:8px 0 0 8px;"
+                             onerror="this.style.display='none';this.parentNode.classList.add('yt-thumb-search');">
+                        <div class="yt-play-btn">▶</div>
                     </div>
                     <div class="yt-card-info">
                         <div class="yt-card-title">두성 · 헤드보이스</div>
-                        <div class="yt-card-desc">가볍고 맑은 두성 감각 훈련</div>
-                        <div class="yt-card-tag">🔍 유튜브 검색</div>
+                        <div class="yt-card-desc">가벼운 패턴과 부드러운 성구전환 연습</div>
+                        <div class="yt-card-tag" style="color:#ef4444;">▶ YouTube</div>
                     </div>
                 </div>
             </div>
@@ -2662,21 +2664,11 @@ async function vfSoundUnlock(e) {
     if (btn) { btn.textContent = '⏳ 소리 켜는 중...'; btn.classList.add('loading'); btn.disabled = true; }
 
     try {
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-        if (isIOS) {
-            // ── iOS Safari: AudioContext만으로 언락 ──────────────────
-            // getUserMedia를 쓰지 않으면 PlayAndRecord 전환이 없어 덕킹 없음.
-            // iOS는 유저 제스처 내 AudioContext + silent buffer로 충분히 열림.
-            console.log('[VF] iOS → AudioContext 단독 언락 (덕킹 방지)');
-            await vfEnsureCtx();
-        } else {
-            // ── 비iOS (Chrome Android 등): getUserMedia 방식 ─────────
-            // Chrome은 getUserMedia를 통한 언락이 가장 안정적임.
-            console.log('[VF] 비iOS → getUserMedia 언락');
-            const mic = await vfGetMic(2048);
-            if (mic?.analyser) { try { mic.analyser.disconnect(); } catch(_) {} }
-        }
+        // ── 모든 플랫폼: getUserMedia로 마이크 권한 요청 + AudioContext 언락 ──
+        // 마이크 권한을 요청해야 소리 재생도 정상적으로 활성화됨.
+        console.log('[VF] → getUserMedia 언락 (마이크 권한 요청)');
+        const mic = await vfGetMic(2048);
+        if (mic?.analyser) { try { mic.analyser.disconnect(); } catch(_) {} }
         console.log('[VF] 언락 완료 — ctx.state:', VF.ctx?.state);
 
         // ── piano 샘플러 사전 로딩 ─────────────────────────────────
@@ -2692,13 +2684,8 @@ async function vfSoundUnlock(e) {
         console.log('[VF] 소리 활성화 완료 ✅');
     } else {
         if (btn)  { btn.textContent = '🔊 소리 켜기'; btn.classList.remove('loading'); btn.disabled = false; }
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (hint) {
-            hint.innerHTML = isIOS
-                ? '❌ 소리를 켜지 못했습니다. 다시 눌러주세요.'
-                : '❌ <strong>마이크 권한을 허용</strong>하고 다시 눌러주세요';
-        }
-        if (!isIOS) vfToast('🔇 마이크 권한이 필요합니다. 허용 후 다시 눌러주세요.');
+        if (hint) hint.innerHTML = '❌ <strong>마이크 권한을 허용</strong>하고 다시 눌러주세요';
+        vfToast('🔇 마이크 권한이 필요합니다. 허용 후 다시 눌러주세요.');
         console.warn('[VF] 소리 활성화 실패 ❌ ctx.state:', VF.ctx?.state);
     }
 }
