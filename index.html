@@ -184,6 +184,16 @@
         }
         .song-acc-header:active { background: rgba(139,92,246,.06); }
         .song-acc-icon  { font-size: 1.1rem; flex-shrink: 0; }
+
+        /* ── 개념 사전 아이템 ── */
+        .dict-item { padding: 14px 16px 12px; border-top: 1px solid var(--border); }
+        .dict-item:first-child { border-top: none; }
+        .dict-term { font-size: .88rem; font-weight: 800; color: var(--text); margin-bottom: 5px; line-height: 1.4; }
+        .dict-en { font-size: .72rem; font-weight: 600; color: var(--purple); margin-left: 6px; }
+        .dict-desc { font-size: .8rem; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+        .dict-btn { display: inline-block; padding: 6px 14px; border-radius: 8px; border: 1.5px solid rgba(139,92,246,.35); background: rgba(139,92,246,.08); color: var(--purple); font-size: .76rem; font-weight: 700; cursor: pointer; transition: all .15s; -webkit-tap-highlight-color: transparent; }
+        .dict-btn:hover { background: rgba(139,92,246,.18); border-color: var(--purple); }
+        .dict-btn:active { transform: scale(.97); }
         .song-acc-title { flex: 1; font-size: .9rem; font-weight: 800; color: var(--text); }
         .song-acc-count { font-size: .7rem; font-weight: 700; color: var(--muted);
                           background: var(--bg2); border: 1px solid var(--border);
@@ -797,6 +807,7 @@
         <button class="tab"        onclick="switchTab('notes')">📋 참고사항</button>
         <button class="tab"        onclick="switchTab('spectrogram')">📊 스펙트로그램</button>
         <button class="tab"        onclick="switchTab('studio')">🏠 스튜디오</button>
+        <button class="tab"        onclick="switchTab('dict')">📖 개념 사전</button>
         <button class="tab"        onclick="switchTab('changelog')">📢 업데이트</button>
     </nav>
 
@@ -835,6 +846,7 @@
         <button class="mob-more-item" onclick="switchTab('selfcheck');closeMobMore()">🔍 셀프 평가</button>
         <button class="mob-more-item" onclick="switchTab('notes');closeMobMore()">📋 참고사항</button>
         <button class="mob-more-item" onclick="switchTab('studio');closeMobMore()">🏠 스튜디오</button>
+        <button class="mob-more-item" onclick="switchTab('dict');closeMobMore()">📖 개념 사전</button>
         <button class="mob-more-item" onclick="switchTab('changelog');closeMobMore()">📢 업데이트 공지</button>
     </div>
 
@@ -1254,6 +1266,210 @@
             </div>
             <a href="https://cafe.naver.com/vocalfit" target="_blank" rel="noopener noreferrer"
                style="display:block;padding:12px;background:#03C75A;border-radius:10px;font-size:.88rem;font-weight:800;color:#fff;text-decoration:none;">
+                ☕ 보컬핏 네이버 카페 바로가기
+            </a>
+        </div>
+
+    </section>
+
+    <!-- ══════════════ 개념 사전 TAB ══════════════ -->
+    <section id="dict-section" class="section">
+
+        <div class="card" style="padding:14px 18px 12px;">
+            <div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:3px;">📖 보컬 개념 사전</div>
+            <div style="font-size:.76rem;color:var(--muted);">카테고리를 눌러 개념을 확인하세요 · 보컬핏 자체 제작 자료 기반</div>
+        </div>
+
+        <!-- ── 카테고리 1: 발성 기초 ── -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🫁</span>
+                <span class="song-acc-title">발성 기초</span>
+                <span class="song-acc-count">6개</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body" style="padding:0 0 4px;">
+
+                <div class="dict-item">
+                    <div class="dict-term">발성의 3요소 <span class="dict-en">Respiration · Phonation · Resonation</span></div>
+                    <div class="dict-desc">호흡(에너지) → 성대(소리 생성) → 성도(공명·변형)의 3단계 흐름이 발성의 핵심입니다. 어느 하나가 무너지면 전체 소리가 흔들립니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">갑상피열근 <span class="dict-en">Thyroarytenoid · TA</span></div>
+                    <div class="dict-desc">성대를 수축·두껍게 만드는 저음 근육입니다. 체스트 보이스의 핵심이며, 과사용 시 소리가 갈라지거나(Crack) 조여지는 현상이 생깁니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">윤상갑상근 <span class="dict-en">Cricothyroid · CT</span></div>
+                    <div class="dict-desc">성대를 얇고 길게 늘이는 고음 근육입니다. 헤드 보이스와 음정 조절의 핵심이며, 약해지면 고음에서 소리가 뒤집히는(Flip) 현상이 생깁니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">흉성 <span class="dict-en">Chest Voice</span></div>
+                    <div class="dict-desc">TA 근육이 우세하여 성대가 두껍게 진동하는 저음역 소리입니다. 볼륨이 크고 풍부하며 힘차고 존재감 있는 톤이 특징입니다.</div>
+                    <button class="dict-btn" onclick="switchTab('exercise')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">두성 <span class="dict-en">Head Voice</span></div>
+                    <div class="dict-desc">CT 근육이 우세하여 성대가 얇게 진동하는 고음역 소리입니다. 가볍고 밝은 톤이며 자연스럽고 편안한 고음 발성에 사용됩니다.</div>
+                    <button class="dict-btn" onclick="switchTab('exercise')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">믹스보이스 <span class="dict-en">Mix Voice · Mixed Voice</span></div>
+                    <div class="dict-desc">TA와 CT가 균형을 이루는 상태로 발성의 최종 목표입니다. 모든 음역대에서 자연스럽고 일관된 톤을 낼 수 있으며, 비브라토와 다이나믹 표현도 자유롭습니다.</div>
+                    <button class="dict-btn" onclick="switchTab('exercise')">→ 관련 루틴 보기</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── 카테고리 2: 성구 & 브릿지 ── -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🎚️</span>
+                <span class="song-acc-title">성구 &amp; 브릿지</span>
+                <span class="song-acc-count">6개</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body" style="padding:0 0 4px;">
+
+                <div class="dict-item">
+                    <div class="dict-term">성구 <span class="dict-en">Register</span></div>
+                    <div class="dict-desc">성대 진동패턴에 따라 구분되는 목소리의 구역입니다. 흉성구 → 중성구(믹스) → 두성구 순서로 나뉘며, 각 구역마다 소리의 질감과 특성이 다릅니다.</div>
+                    <button class="dict-btn" onclick="switchTab('exercise')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">브릿지 <span class="dict-en">Bridge · 파사지오 · 지라레</span></div>
+                    <div class="dict-desc">성대 진동패턴이 바뀌는 전환 구간입니다. 이 구간에서 음이 갑자기 커지거나 조절이 어려울 수 있으며, 성악에서는 파사지오·지라레라고도 부릅니다.</div>
+                    <button class="dict-btn" onclick="switchTab('exercise')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">1st Bridge <span class="dict-en">첫 번째 성구전환 구간</span></div>
+                    <div class="dict-desc">흉성구에서 믹스(중성구)로 넘어가는 첫 번째 전환 구간입니다. 남성 E4~G4(2옥 미~솔), 여성 A4~C5(2옥 라~3옥 도) 부근에서 Flip·Crack이 잘 생깁니다.</div>
+                    <button class="dict-btn" onclick="switchTab('songs')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">2nd Bridge <span class="dict-en">두 번째 성구전환 구간</span></div>
+                    <div class="dict-desc">믹스(중성구)에서 두성구로 넘어가는 두 번째 전환 구간입니다. 고음 한계를 넓히려면 반드시 통과해야 하며, 섬세한 균형 훈련이 필요합니다.</div>
+                    <button class="dict-btn" onclick="switchTab('songs')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">성구전환 <span class="dict-en">Vocal Register Transition</span></div>
+                    <div class="dict-desc">흉성 → 믹스 → 두성으로 자연스럽게 이동하는 현상입니다. 올바른 전환은 귀와 몸으로 체감되며, 실패하면 소리가 뒤집히거나(Flip) 갑자기 튀어나옵니다.</div>
+                    <button class="dict-btn" onclick="switchTab('exercise')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">Flip / Crack <span class="dict-en">성구전환 실패 현상</span></div>
+                    <div class="dict-desc">Flip은 소리가 갑자기 뒤집히는 현상, Crack은 소리가 갈라지는 현상입니다. 둘 다 브릿지 구간 훈련 부족이 주요 원인이며 정상적인 성장 과정이기도 합니다.</div>
+                    <button class="dict-btn" onclick="switchTab('exercise')">→ 관련 루틴 보기</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── 카테고리 3: 발성 문제 진단 ── -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🔍</span>
+                <span class="song-acc-title">발성 문제 진단</span>
+                <span class="song-acc-count">4개</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body" style="padding:0 0 4px;">
+
+                <div class="dict-item">
+                    <div class="dict-term">조여진 발성 <span class="dict-en">Strained Voice · Pressed</span></div>
+                    <div class="dict-desc">과도한 힘으로 성대 주변 근육이 경직된 상태입니다. 소리를 억지로 밀어내는 느낌이 들며, 장기화되면 성대 손상으로 이어질 수 있습니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">기식성 발성 <span class="dict-en">Breathy Voice · Aspirate</span></div>
+                    <div class="dict-desc">성대 접촉이 불완전하여 공기가 새는 듯한 소리입니다. 소리가 얇고 힘이 없으며, 장시간 발성 시 성대가 쉽게 피로해집니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">근긴장성 발성장애 <span class="dict-en">MTD · Muscle Tension Dysphonia</span></div>
+                    <div class="dict-desc">스트레스·나쁜 자세 등으로 후두 주변 근육이 과하게 긴장된 상태입니다. 목이 조이는 느낌, 쉰 목소리가 나타나지만 성대 자체는 정상인 경우가 많습니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">내 발성 유형 확인하기 <span class="dict-en">Self Assessment</span></div>
+                    <div class="dict-desc">Pressed·Breathy·Extrinsic·Under-sung·Register 문제 등 6가지 발성 유형을 스스로 진단할 수 있습니다. 내 소리의 원인을 알아야 올바른 방향으로 연습할 수 있습니다.</div>
+                    <button class="dict-btn" onclick="switchTab('selfcheck')">→ 셀프 평가 바로가기</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── 카테고리 4: 성대 건강 ── -->
+        <div class="card song-accordion" style="padding:0;overflow:hidden;">
+            <div class="song-acc-header" onclick="toggleSongAcc(this)">
+                <span class="song-acc-icon">🏥</span>
+                <span class="song-acc-title">성대 건강</span>
+                <span class="song-acc-count">6개</span>
+                <span class="song-acc-arrow">▶</span>
+            </div>
+            <div class="song-acc-body" style="padding:0 0 4px;">
+
+                <div class="dict-item">
+                    <div class="dict-term">성대 결절 <span class="dict-en">Vocal Nodules</span></div>
+                    <div class="dict-desc">장기간 잘못된 발성으로 생기는 양측성 굳은살입니다. 고음역 상실·쉰 목소리·음이 갈라지는 현상이 나타나며, 대부분 휴식과 습관 개선만으로 회복 가능합니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">성대 폴립 <span class="dict-en">Vocal Polyps</span></div>
+                    <div class="dict-desc">과도한 소리 지르기나 감염 후 무리한 발성으로 생기는 단측성 병변입니다. 고음이 갑자기 사라지고 목소리가 좋다가 나빠지는 불안정한 증상이 특징입니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">후두염 <span class="dict-en">Laryngitis</span></div>
+                    <div class="dict-desc">세균·바이러스 감염이나 역류·탈수로 생기는 가장 흔한 성대 문제입니다. 쉰 목소리·목 통증·기침이 동반되며, 이때는 발성을 쉬는 것이 최선입니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">성대 출혈 <span class="dict-en">Vocal Hemorrhage ⚠️ 응급</span></div>
+                    <div class="dict-desc">성대 혈관이 파열된 응급 상태입니다. 갑작스러운 음역 상실이나 "목에 담요 씌운 듯"한 느낌이 오면 즉시 발성을 멈추고 ENT 전문의를 방문해야 합니다.</div>
+                    <button class="dict-btn" style="background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.3);">⚠️ 즉시 성대 휴식 필요</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">목소리 관리 4대 수칙</div>
+                    <div class="dict-desc">① 충분한 수분(소변 색으로 확인) ② 충분한 수면(피로 = 성대 피로) ③ 워밍업 & 쿨다운 ④ 전반적 건강 관리. 발성 기술보다 수면 부족이 목소리 문제의 더 흔한 원인입니다.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 워밍업 루틴 보기</button>
+                </div>
+
+                <div class="dict-item">
+                    <div class="dict-term">절대 하지 말 것 <span class="dict-en">Never Do This</span></div>
+                    <div class="dict-desc">아픈 상태의 무리한 발성, 소리 지르기, 잘못된 속삭임, 워밍업 없는 고음 발성, 마취 성분 목캔디 남용이 성대를 망가뜨리는 대표 행동입니다. 통증이 있으면 즉시 멈추세요.</div>
+                    <button class="dict-btn" onclick="switchTab('routine')">→ 관련 루틴 보기</button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="card" style="background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.25);text-align:center;padding:14px 16px;">
+            <div style="font-size:.8rem;color:var(--text2);line-height:1.75;">
+                개념 관련 질문은 카페에서 선생님께 문의하세요 👇
+            </div>
+            <a href="https://cafe.naver.com/vocalfit" target="_blank" rel="noopener noreferrer"
+               style="display:block;margin-top:10px;padding:11px;background:#03C75A;border-radius:10px;font-size:.86rem;font-weight:800;color:#fff;text-decoration:none;">
                 ☕ 보컬핏 네이버 카페 바로가기
             </a>
         </div>
@@ -2960,7 +3176,7 @@ function initPiano() {
 // ════════════════════════════════════════════════
 // TAB SWITCH
 // ════════════════════════════════════════════════
-const TAB_ORDER = ['routine', 'songs', 'riff', 'exercise', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio', 'changelog'];
+const TAB_ORDER = ['routine', 'songs', 'riff', 'exercise', 'pitch', 'game', 'selfcheck', 'notes', 'spectrogram', 'studio', 'dict', 'changelog'];
 function switchTab(tab) {
     currentTab = tab;
     // Desktop tabs
@@ -2973,7 +3189,7 @@ function switchTab(tab) {
         b.classList.toggle('active', t === tab);
     });
     // If tab is in the "more" group, highlight the more button
-    const moreGroup = ['pitch', 'game', 'selfcheck', 'notes', 'studio', 'spectrogram', 'changelog'];
+    const moreGroup = ['pitch', 'game', 'selfcheck', 'notes', 'studio', 'spectrogram', 'dict', 'changelog'];
     const moreBtn = document.querySelector('.mob-tab[data-tab="more"]');
     if (moreBtn) moreBtn.classList.toggle('active', moreGroup.includes(tab));
 
