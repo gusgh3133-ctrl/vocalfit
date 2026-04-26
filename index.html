@@ -29,7 +29,7 @@
         /* Desktop top tabs (hidden on mobile) */
         .desk-tabs { display: none; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
         .desk-tabs::-webkit-scrollbar { display: none; }
-        .tab { flex: 1; min-width: 0; padding: 11px 4px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text2); font-size: .76rem; font-weight: 500; cursor: pointer; transition: all .2s; white-space: nowrap; }
+        .tab { flex: 0 0 auto; padding: 11px 14px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text2); font-size: .76rem; font-weight: 500; cursor: pointer; transition: all .2s; white-space: nowrap; }
         .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
 
         /* Mobile bottom nav */
@@ -692,7 +692,7 @@
             .header p  { font-size: .9rem; }
 
             /* Desktop: show top tabs, hide mobile nav */
-            .desk-tabs { display: flex; justify-content: center; gap: 4px; padding: 6px 12px; }
+            .desk-tabs { display: flex; justify-content: flex-start; gap: 0; padding: 0 8px; }
             .mob-nav, .mob-more-overlay, .mob-more-sheet { display: none !important; }
             .tab  { flex: none; padding: 10px 18px; font-size: .85rem; border-radius: 8px; border-bottom: none; }
             .tab.active { background: rgba(139,92,246,.15); color: var(--purple); }
