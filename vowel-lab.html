@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보컬핏 스펙트로그램 Vowel Lab</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: #2a2a38;
+    --accent: #7cffb2;
+    --accent2: #ff6b9d;
+    --accent3: #6eb5ff;
+    --text: #e8e8f0;
+    --text-dim: #6a6a88;
+    --font-mono: 'Space Mono', monospace;
+    --font-ui: 'Noto Sans KR', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #root { width: 100%; min-height: 100vh; }
+
+  /* 스크롤바 */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  table th, table td { padding: 10px 12px; border-bottom: 1px solid #252536; text-align: left; white-space: nowrap; }
+  table th { background: #18181f; font-family: 'Space Mono', monospace; font-size: 12px; }
+  table td:first-child { color: #aaaac0; font-weight: 700; }
+  input { background:#0d0d15; border:1px solid #2a2a38; border-radius:8px; color:#e8e8f0; padding:8px 9px; font-family:'Noto Sans KR', sans-serif; width:100%; }
+  @media (max-width: 900px) {
+    .dummy {}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ──────────────── 상수 ──────────────── */
+const FFT_SIZE = 2048;
+const SMOOTHING = 0.8;
+const MIN_DB = -90;
+const MAX_DB = -10;
+const PITCH_MIN_HZ = 80;
+const PITCH_MAX_HZ = 1200;
+const FORMANT_MAX_HZ = 5000;
+const F1_RANGE = [250, 1100];
+const F2_RANGE = [800, 3500];
+const LPC_ORDER = 14;
+const LPC_MAX_BANDWIDTH = 900;
+
+/* ──────────────── 컬러맵 (스펙트로그램) ──────────────── */
+function dbToColor(db) {
+  const t = Math.max(0, Math.min(1, (db - MIN_DB) / (MAX_DB - MIN_DB)));
+  if (t < 0.25) {
+    const s = t / 0.25;
+    return `rgb(${Math.round(10 + s * 20)}, ${Math.round(10 + s * 30)}, ${Math.round(40 + s * 80)})`;
+  } else if (t < 0.5) {
+    const s = (t - 0.25) / 0.25;
+    return `rgb(${Math.round(30 + s * 80)}, ${Math.round(40 + s * 100)}, ${Math.round(120 + s * 80)})`;
+  } else if (t < 0.75) {
+    const s = (t - 0.5) / 0.25;
+    return `rgb(${Math.round(110 + s * 145)}, ${Math.round(140 + s * 80)}, ${Math.round(200 - s * 120)})`;
+  } else {
+    const s = (t - 0.75) / 0.25;
+    return `rgb(255, ${Math.round(220 - s * 120)}, ${Math.round(80 - s * 70)})`;
+  }
+}
+
+/* ──────────────── 피치 감지 (자기상관) ──────────────── */
+function detectPitch(buffer, sampleRate) {
+  const n = buffer.length;
+  const minLag = Math.floor(sampleRate / PITCH_MAX_HZ);
+  const maxLag = Math.ceil(sampleRate / PITCH_MIN_HZ);
+
+  let sumSq = 0;
+  for (let i = 0; i < n; i++) sumSq += buffer[i] * buffer[i];
+  const rms = Math.sqrt(sumSq / n);
+  if (rms < 0.01) return null;
+
+  // NSDF
+  let bestVal = -Infinity, bestLag = -1;
+  for (let lag = minLag; lag <= maxLag && lag < n; lag++) {
+    let corr = 0, norm = 0;
+    for (let i = 0; i < n - lag; i++) {
+      corr += buffer[i] * buffer[i + lag];
+      norm += buffer[i] * buffer[i] + buffer[i + lag] * buffer[i + lag];
+    }
+    const nsdf = norm > 0 ? 2 * corr / norm : 0;
+    if (nsdf > bestVal) { bestVal = nsdf; bestLag = lag; }
+  }
+  if (bestVal < 0.5 || bestLag < 0) return null;
+  return sampleRate / bestLag;
+}
+
+/* ──────────────── Hz → 노트 이름 ──────────────── */
+function hzToNote(hz) {
+  if (!hz) return '';
+  const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const midi = Math.round(12 * Math.log2(hz / 440) + 69);
+  const name = noteNames[((midi % 12) + 12) % 12];
+  const oct = Math.floor(midi / 12) - 1;
+  return `${name}${oct}`;
+}
+
+
+/* ──────────────── LPC 기반 F1/F2 추정 + FFT fallback ────────────────
+   주의: 브라우저 실시간 분석용 간이 LPC입니다.
+   레슨용 비교/시각화에는 유용하지만, 연구용 정밀 포먼트 값으로 확정하면 안 됩니다. */
+function findPeakInRange(freqData, sampleRate, fftSize, minHz, maxHz, minStrength = 18) {
+  const binHz = sampleRate / fftSize;
+  const start = Math.max(1, Math.floor(minHz / binHz));
+  const end = Math.min(freqData.length - 2, Math.ceil(maxHz / binHz));
+  let bestBin = -1;
+  let bestVal = -Infinity;
+  for (let i = start; i <= end; i++) {
+    const smoothed = (freqData[i - 1] + freqData[i] * 2 + freqData[i + 1]) / 4;
+    const isLocalPeak = freqData[i] >= freqData[i - 1] && freqData[i] >= freqData[i + 1];
+    if (isLocalPeak && smoothed > bestVal) { bestVal = smoothed; bestBin = i; }
+  }
+  if (bestBin < 0 || bestVal < minStrength) return null;
+  return { hz: bestBin * binHz, strength: bestVal, source: 'FFT' };
+}
+
+function estimateFormantsFFT(freqData, sampleRate, fftSize, pitch) {
+  const f1Min = pitch ? Math.max(F1_RANGE[0], pitch * 1.15) : F1_RANGE[0];
+  const f1 = findPeakInRange(freqData, sampleRate, fftSize, f1Min, F1_RANGE[1], 20);
+  const f2Min = f1 ? Math.max(F2_RANGE[0], f1.hz + 250) : F2_RANGE[0];
+  const f2 = findPeakInRange(freqData, sampleRate, fftSize, f2Min, F2_RANGE[1], 18);
+  return { f1: f1 ? f1.hz : null, f2: f2 ? f2.hz : null, f1Bandwidth: null, f2Bandwidth: null, source: 'FFT fallback', f1Strength: f1 ? f1.strength : 0, f2Strength: f2 ? f2.strength : 0 };
+}
+
+function levinsonDurbin(r, order) {
+  if (!r[0] || !isFinite(r[0])) return null;
+  const a = new Array(order + 1).fill(0); a[0] = 1;
+  let e = r[0];
+  for (let i = 1; i <= order; i++) {
+    let acc = r[i];
+    for (let j = 1; j < i; j++) acc += a[j] * r[i - j];
+    const k = -acc / e;
+    if (!isFinite(k) || Math.abs(k) > 1.05) return null;
+    const next = a.slice();
+    for (let j = 1; j < i; j++) next[j] = a[j] + k * a[i - j];
+    next[i] = k;
+    for (let j = 1; j <= i; j++) a[j] = next[j];
+    e *= (1 - k * k);
+    if (e <= 1e-9) return null;
+  }
+  return a;
+}
+
+function polyEval(coeffs, z) {
+  let out = { re: coeffs[0], im: 0 };
+  for (let i = 1; i < coeffs.length; i++) {
+    const re = out.re * z.re - out.im * z.im + coeffs[i];
+    const im = out.re * z.im + out.im * z.re;
+    out = { re, im };
+  }
+  return out;
+}
+function complexDiv(a, b) {
+  const den = b.re * b.re + b.im * b.im || 1e-12;
+  return { re: (a.re * b.re + a.im * b.im) / den, im: (a.im * b.re - a.re * b.im) / den };
+}
+function durandKerner(coeffs, maxIter = 70) {
+  const n = coeffs.length - 1;
+  const roots = [];
+  const radius = 0.72;
+  for (let i = 0; i < n; i++) {
+    const theta = (2 * Math.PI * i) / n;
+    roots.push({ re: radius * Math.cos(theta), im: radius * Math.sin(theta) });
+  }
+  for (let iter = 0; iter < maxIter; iter++) {
+    let maxDelta = 0;
+    for (let i = 0; i < n; i++) {
+      let denom = { re: 1, im: 0 };
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        const diff = { re: roots[i].re - roots[j].re, im: roots[i].im - roots[j].im };
+        const re = denom.re * diff.re - denom.im * diff.im;
+        const im = denom.re * diff.im + denom.im * diff.re;
+        denom = { re, im };
+      }
+      const delta = complexDiv(polyEval(coeffs, roots[i]), denom);
+      roots[i] = { re: roots[i].re - delta.re, im: roots[i].im - delta.im };
+      maxDelta = Math.max(maxDelta, Math.hypot(delta.re, delta.im));
+    }
+    if (maxDelta < 1e-7) break;
+  }
+  return roots;
+}
+
+function estimateFormantsLPC(timeData, sampleRate, pitch) {
+  const n = timeData.length;
+  let rms = 0;
+  for (let i = 0; i < n; i++) rms += timeData[i] * timeData[i];
+  rms = Math.sqrt(rms / n);
+  if (rms < 0.01) return null;
+  const x = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const pre = i === 0 ? timeData[i] : timeData[i] - 0.97 * timeData[i - 1];
+    const win = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (n - 1));
+    x[i] = pre * win;
+  }
+  const order = Math.min(LPC_ORDER, Math.floor(sampleRate / 3500) + 8);
+  const r = new Array(order + 1).fill(0);
+  for (let lag = 0; lag <= order; lag++) {
+    let sum = 0;
+    for (let i = 0; i < n - lag; i++) sum += x[i] * x[i + lag];
+    r[lag] = sum;
+  }
+  const a = levinsonDurbin(r, order);
+  if (!a) return null;
+  const roots = durandKerner(a);
+  const candidates = [];
+  for (const z of roots) {
+    if (z.im <= 0) continue;
+    const mag = Math.hypot(z.re, z.im);
+    if (mag <= 0.05 || mag >= 1.2) continue;
+    const angle = Math.atan2(z.im, z.re);
+    const hz = angle * sampleRate / (2 * Math.PI);
+    const bandwidth = -0.5 * (sampleRate / Math.PI) * Math.log(Math.max(mag, 1e-9));
+    if (hz >= 150 && hz <= 5000 && bandwidth > 30 && bandwidth < LPC_MAX_BANDWIDTH) candidates.push({ hz, bandwidth });
+  }
+  candidates.sort((a, b) => a.hz - b.hz);
+  const f1Min = pitch ? Math.max(F1_RANGE[0], pitch * 1.08) : F1_RANGE[0];
+  const f1 = candidates.find(c => c.hz >= f1Min && c.hz <= F1_RANGE[1]);
+  const f2Min = f1 ? Math.max(F2_RANGE[0], f1.hz + 250) : F2_RANGE[0];
+  const f2 = candidates.find(c => c.hz >= f2Min && c.hz <= F2_RANGE[1]);
+  if (!f1 && !f2) return null;
+  return { f1: f1 ? f1.hz : null, f2: f2 ? f2.hz : null, f1Bandwidth: f1 ? f1.bandwidth : null, f2Bandwidth: f2 ? f2.bandwidth : null, source: 'LPC', f1Strength: 0, f2Strength: 0 };
+}
+
+function estimateFormants(freqData, timeData, sampleRate, fftSize, pitch) {
+  const lpc = estimateFormantsLPC(timeData, sampleRate, pitch);
+  const fft = estimateFormantsFFT(freqData, sampleRate, fftSize, pitch);
+  return { f1: (lpc && lpc.f1) || fft.f1, f2: (lpc && lpc.f2) || fft.f2, f1Bandwidth: lpc ? lpc.f1Bandwidth : null, f2Bandwidth: lpc ? lpc.f2Bandwidth : null, source: lpc ? 'LPC' : 'FFT fallback', f1Strength: fft.f1Strength, f2Strength: fft.f2Strength };
+}
+
+function computeVoiceStrategy(freqData, sampleRate, fftSize, pitch, db, formants) {
+  const binHz = sampleRate / fftSize;
+  let low = 0, mid = 0, high = 0, weighted = 0, total = 0;
+  for (let i = 1; i < freqData.length; i++) {
+    const hz = i * binHz;
+    if (hz > FORMANT_MAX_HZ) break;
+    const amp = freqData[i] / 255;
+    const energy = amp * amp;
+    if (hz < 1000) low += energy;
+    else if (hz < 2500) mid += energy;
+    else high += energy;
+    weighted += hz * energy;
+    total += energy;
+  }
+  const highRatio = total ? high / total : 0;
+  const midHighRatio = total ? (mid + high) / total : 0;
+  const centroid = total ? weighted / total : 0;
+  const f1f0 = pitch && formants.f1 ? formants.f1 / pitch : null;
+
+  // 하모닉스 에너지: F0 정수배 주변 ±35Hz의 상대 에너지
+  let harmonicEnergy = 0, harmonicCount = 0;
+  if (pitch) {
+    const maxH = Math.min(16, Math.floor(FORMANT_MAX_HZ / pitch));
+    for (let h = 2; h <= maxH; h++) {
+      const center = pitch * h;
+      const lo = Math.max(1, Math.floor((center - 35) / binHz));
+      const hi = Math.min(freqData.length - 1, Math.ceil((center + 35) / binHz));
+      let local = 0;
+      for (let b = lo; b <= hi; b++) {
+        const amp = freqData[b] / 255;
+        local = Math.max(local, amp * amp);
+      }
+      harmonicEnergy += local;
+      harmonicCount++;
+    }
+  }
+  const harmonicRichness = harmonicCount ? harmonicEnergy / harmonicCount : 0;
+
+  // 벨팅/믹스 확정 판정이 아니라 참고 점수입니다.
+  const loudnessPart = Math.max(0, Math.min(1, (db + 50) / 35));
+  const highPart = Math.max(0, Math.min(1, (highRatio - 0.10) / 0.22));
+  const centroidPart = Math.max(0, Math.min(1, (centroid - 1000) / 2200));
+  const harmonicPart = Math.max(0, Math.min(1, (harmonicRichness - 0.07) / 0.22));
+  const beltScore = Math.round((loudnessPart * 0.25 + highPart * 0.35 + centroidPart * 0.20 + harmonicPart * 0.20) * 100);
+
+  let label = '관찰 중';
+  let hint = '소리를 조금 더 안정적으로 내면 참고 지표가 표시됩니다.';
+  if (total > 0.001 && db > -55) {
+    if (beltScore >= 65) {
+      label = '벨팅 쪽 에너지 강함';
+      hint = '음량과 2.5kHz 이상 고주파 에너지가 강하게 나타납니다. 단, 이것만으로 벨팅 확정은 아닙니다.';
+    } else if (beltScore <= 40) {
+      label = '믹스/라이트 쪽 가능성';
+      hint = '고주파 에너지가 상대적으로 낮거나 분산되어 보입니다. 모음 변화와 청지각을 같이 보세요.';
+    } else {
+      label = '중간 전략';
+      hint = '믹스와 벨팅 사이의 과도 구간일 수 있습니다. 같은 음에서 모음·음량을 바꿔 비교하세요.';
+    }
+  }
+
+  return { highRatio, midHighRatio, centroid, f1f0, harmonicRichness, loudnessPart, highPart, centroidPart, harmonicPart, beltScore, label, hint };
+}
+
+/* ──────────────── 메인 앱 ──────────────── */
+
+function nextPow2(n){let p=1; while(p<n)p<<=1; return p;}
+function fftMagnitude(input, sampleRate, fftSize=FFT_SIZE){
+  const n=fftSize, re=new Float64Array(n), im=new Float64Array(n);
+  const len=Math.min(input.length,n);
+  for(let i=0;i<len;i++){ const win=0.54-0.46*Math.cos(2*Math.PI*i/(n-1)); re[i]=input[i]*win; }
+  for(let i=1,j=0;i<n;i++){
+    let bit=n>>1; for(; j&bit; bit>>=1) j^=bit; j^=bit;
+    if(i<j){ let tr=re[i]; re[i]=re[j]; re[j]=tr; let ti=im[i]; im[i]=im[j]; im[j]=ti; }
+  }
+  for(let len2=2; len2<=n; len2<<=1){
+    const ang=-2*Math.PI/len2, wlenR=Math.cos(ang), wlenI=Math.sin(ang);
+    for(let i=0;i<n;i+=len2){ let wr=1, wi=0; for(let j=0;j<len2/2;j++){
+      const uR=re[i+j], uI=im[i+j];
+      const vR=re[i+j+len2/2]*wr-im[i+j+len2/2]*wi;
+      const vI=re[i+j+len2/2]*wi+im[i+j+len2/2]*wr;
+      re[i+j]=uR+vR; im[i+j]=uI+vI; re[i+j+len2/2]=uR-vR; im[i+j+len2/2]=uI-vI;
+      const nwr=wr*wlenR-wi*wlenI; wi=wr*wlenI+wi*wlenR; wr=nwr;
+    }}
+  }
+  const out=new Uint8Array(n/2);
+  for(let i=0;i<n/2;i++){
+    const mag=Math.sqrt(re[i]*re[i]+im[i]*im[i])/(n/2);
+    const db=20*Math.log10(mag+1e-8);
+    out[i]=Math.max(0, Math.min(255, Math.round((db-MIN_DB)/(MAX_DB-MIN_DB)*255)));
+  }
+  return out;
+}
+function mergeChunks(chunks){
+  const len=chunks.reduce((a,c)=>a+c.length,0); const out=new Float32Array(len); let off=0;
+  chunks.forEach(c=>{out.set(c,off); off+=c.length;}); return out;
+}
+function wavBlobFromFloat32(samples, sampleRate){
+  const wavBuf=new ArrayBuffer(44+samples.length*2); const view=new DataView(wavBuf);
+  const writeStr=(off,s)=>{for(let i=0;i<s.length;i++)view.setUint8(off+i,s.charCodeAt(i));};
+  writeStr(0,'RIFF'); view.setUint32(4,36+samples.length*2,true); writeStr(8,'WAVE'); writeStr(12,'fmt ');
+  view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true); view.setUint32(24,sampleRate,true);
+  view.setUint32(28,sampleRate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true); writeStr(36,'data'); view.setUint32(40,samples.length*2,true);
+  for(let i=0;i<samples.length;i++) view.setInt16(44+i*2, Math.max(-32768,Math.min(32767,samples[i]*32767)), true);
+  return new Blob([wavBuf],{type:'audio/wav'});
+}
+function analyseSegment(samples, sampleRate){
+  if(!samples || samples.length<512) return null;
+  const frame=FFT_SIZE, hop=1024, maxFrames=42; const step=Math.max(hop, Math.floor((samples.length-frame)/maxFrames));
+  let pitchSum=0,pitchN=0, dbSum=0, f1Sum=0,f1N=0,f2Sum=0,f2N=0, highSum=0,centSum=0,beltSum=0,stratN=0;
+  for(let start=0; start+frame<=samples.length; start+=Math.max(1,step)){
+    const buf=samples.slice(start,start+frame);
+    let ss=0; for(let i=0;i<buf.length;i++) ss+=buf[i]*buf[i];
+    const rms=Math.sqrt(ss/buf.length); const db=rms>0?20*Math.log10(rms):-90; dbSum+=db;
+    const pitch=detectPitch(buf,sampleRate); if(pitch){pitchSum+=pitch; pitchN++;}
+    const freqData=fftMagnitude(buf,sampleRate,frame);
+    const formants=estimateFormants(freqData,buf,sampleRate,frame,pitch);
+    if(formants.f1){f1Sum+=formants.f1; f1N++;} if(formants.f2){f2Sum+=formants.f2; f2N++;}
+    const strat=computeVoiceStrategy(freqData,sampleRate,frame,pitch,db,formants);
+    highSum+=strat.highRatio||0; centSum+=strat.centroid||0; beltSum+=strat.beltScore||0; stratN++;
+    if(stratN>=maxFrames) break;
+  }
+  const dur=samples.length/sampleRate;
+  const avgPitch=pitchN?pitchSum/pitchN:null;
+  const f1=f1N?f1Sum/f1N:null, f2=f2N?f2Sum/f2N:null;
+  const vowel=vowelGuess(f1,f2);
+  return { duration:dur, avgF0:avgPitch, note: avgPitch?hzToNote(avgPitch):'—', avgDb:dbSum/(stratN||1), f1, f2, vowel, highRatio:highSum/(stratN||1), centroid:centSum/(stratN||1), beltScore:Math.round(beltSum/(stratN||1)), frames:stratN };
+}
+function diffText(a,b,key,unit='',digits=0){
+  if(!a||!b||a[key]==null||b[key]==null) return '—';
+  const d=b[key]-a[key]; const sign=d>0?'+':''; return `${sign}${d.toFixed(digits)}${unit}`;
+}
+
+
+const SLOT_ORDER=['A','B','C','D','E'];
+const SLOT_COLORS={A:'#6eb5ff',B:'#ff6b9d',C:'#ffd166',D:'#7cffb2',E:'#b388ff'};
+function emptySlots(){
+  const obj={}; SLOT_ORDER.forEach(k=>obj[k]={selection:null,analysis:null}); return obj;
+}
+function nextSlotName(name){
+  const i=SLOT_ORDER.indexOf(name); return SLOT_ORDER[(i+1)%SLOT_ORDER.length];
+}
+const VOWEL_PROFILES = [
+  { name:'아', f1:820, f2:1150, hint:'열린 모음 · 벨팅/강한 소리에 유리' },
+  { name:'어', f1:650, f2:1300, hint:'중간 열린 모음 · 아보다 덜 열림' },
+  { name:'에/애', f1:560, f2:2200, hint:'앞쪽 중간 모음 · 밝게 모임' },
+  { name:'이', f1:330, f2:2800, hint:'닫힌 앞모음 · F2가 높음' },
+  { name:'오', f1:420, f2:900, hint:'뒤쪽 둥근 모음 · F2가 낮아짐' },
+  { name:'우', f1:300, f2:700, hint:'가장 닫힌 뒤모음 · F1/F2 모두 낮음' },
+];
+function vowelGuess(f1, f2){
+  if(!f1 || !f2) return {label:'—', confidence:0, second:'—', hint:'F1/F2가 잡히면 표시됩니다.', scores:[]};
+  const scored = VOWEL_PROFILES.map(v=>{
+    const d1=(f1-v.f1)/260;
+    const d2=(f2-v.f2)/850;
+    const dist=Math.sqrt(d1*d1+d2*d2);
+    return {...v, dist, score: Math.exp(-dist*dist/2)};
+  }).sort((a,b)=>a.dist-b.dist);
+  const total=scored.reduce((a,v)=>a+v.score,0)||1;
+  const top=scored[0], second=scored[1];
+  const conf=Math.round((top.score/total)*100);
+  return {label:top.name, confidence:conf, second:second?.name||'—', hint:top.hint, scores:scored.map(v=>({name:v.name,pct:Math.round(v.score/total*100)}))};
+}
+function vowelLabel(f1,f2){
+  const v=vowelGuess(f1,f2);
+  return v.label==='—'?'—':`${v.label} ${v.confidence}%`;
+}
+function fmtVal(res,key){
+  if(!res) return '—';
+  if(key==='duration') return `${res.duration.toFixed(2)}s`;
+  if(key==='avgF0') return res.avgF0?`${Math.round(res.avgF0)} Hz (${res.note})`:'—';
+  if(key==='avgDb') return `${Math.round(res.avgDb)} dB`;
+  if(key==='f1') return res.f1?`${Math.round(res.f1)} Hz`:'—';
+  if(key==='f2') return res.f2?`${Math.round(res.f2)} Hz`:'—';
+  if(key==='highRatio') return `${Math.round(res.highRatio*100)}%`;
+  if(key==='beltScore') return `${res.beltScore}`;
+  if(key==='vowel') return res.vowel?`${res.vowel.label} ${res.vowel.confidence}%`:'—';
+  return '—';
+}
+
+
+function reliabilityMessages(db, pitch, formants){
+  const messages=[];
+  if(db < -55) messages.push('소리가 작아 분석 신뢰도가 낮습니다.');
+  if(!pitch) messages.push('음높이가 안정적으로 감지되지 않습니다.');
+  if(!formants || !formants.f1 || !formants.f2) messages.push('포먼트 추정이 불안정합니다.');
+  if(messages.length===0) messages.push('현재 입력은 비교적 안정적으로 분석되고 있습니다.');
+  return messages;
+}
+function buildLiveInterpretation(pitch, db, formants, strategy){
+  const v=vowelGuess(formants?.f1, formants?.f2);
+  const lines=[];
+  if(v.label!=='—') lines.push(`현재 소리는 ‘${v.label}’에 가깝게 추정됩니다. 신뢰도는 약 ${v.confidence}%입니다.`);
+  else lines.push('F1/F2가 안정적으로 잡히면 모음 추정이 표시됩니다.');
+  if(formants?.f1){
+    if(formants.f1>=700) lines.push('F1이 높은 편이라 입이 비교적 열린 모음 성향으로 보입니다.');
+    else if(formants.f1<=420) lines.push('F1이 낮은 편이라 입이 비교적 닫힌 모음 성향으로 보입니다.');
+    else lines.push('F1은 중간 영역에 있어 과하게 열리거나 닫힌 상태로 보이지 않습니다.');
+  }
+  if(formants?.f2){
+    if(formants.f2>=2000) lines.push('F2가 높아 앞쪽/밝은 모음 성향이 강합니다.');
+    else if(formants.f2<=1100) lines.push('F2가 낮아 뒤쪽/둥근 모음 성향이 강합니다.');
+    else lines.push('F2는 중간 영역에 있어 앞쪽과 뒤쪽 성향이 섞여 보입니다.');
+  }
+  if(strategy?.beltScore>=65) lines.push('고역 에너지와 음량이 강하게 나타나지만, 이것만으로 벨팅 확정 판정은 아닙니다.');
+  else if(strategy?.beltScore<=40) lines.push('고역 에너지가 상대적으로 낮아 가벼운 믹스/라이트 전략일 가능성이 있습니다.');
+  else lines.push('현재 소리는 믹스와 강한 전략 사이의 중간 구간으로 볼 수 있습니다.');
+  return lines;
+}
+function compareWarnings(slots){
+  const ready=SLOT_ORDER.map(k=>slots[k].analysis).filter(Boolean);
+  const msgs=[];
+  const f0s=ready.map(r=>r.avgF0).filter(Boolean);
+  if(f0s.length>=2 && Math.max(...f0s)-Math.min(...f0s)>35) msgs.push('A~E 구간의 평균 F0 차이가 커서 모음/공명 비교가 어려울 수 있습니다. 가능하면 같은 음높이에서 비교하세요.');
+  const dbs=ready.map(r=>r.avgDb).filter(v=>v!=null);
+  if(dbs.length>=2 && Math.max(...dbs)-Math.min(...dbs)>10) msgs.push('구간별 음량 차이가 큽니다. 벨팅 힌트나 고역 에너지는 음량 영향도 함께 받습니다.');
+  if(!msgs.length) msgs.push('저장된 구간들은 비교용으로 사용할 수 있습니다. 단, 수치는 레슨용 참고 지표입니다.');
+  return msgs;
+}
+
+/* ──────────────── 레슨용 자동 피드백 로직 ──────────────── */
+function generateLessonFeedback(oldRes, newRes, oldName, newName) {
+  const feedback = [];
+  if (!oldRes || !newRes) {
+    return [{ type:'warn', text:'비교할 구간을 먼저 선택해주세요. A~E 구간을 녹음 파형에서 드래그해 저장하면 자동 피드백이 생성됩니다.', color:'#6a6a88' }];
+  }
+  // F0 차이
+  if (oldRes.avgF0 && newRes.avgF0) {
+    const d = Math.abs(newRes.avgF0 - oldRes.avgF0);
+    if (d >= 30)      feedback.push({ type:'warn',    text:`두 구간의 평균 음높이 차이가 커서(약 ${Math.round(d)}Hz) 직접 비교에는 주의가 필요합니다. 가능하면 같은 음높이에서 다시 비교해보세요.`, color:'#ffd166' });
+    else if (d <= 15) feedback.push({ type:'good',    text:'두 구간의 음높이가 비교적 비슷해, 모음과 에너지 변화를 비교하기 좋은 조건입니다.', color:'#7cffb2' });
+  }
+  // 포먼트
+  const hasF = oldRes.f1 && newRes.f1 && oldRes.f2 && newRes.f2;
+  if (!hasF) {
+    feedback.push({ type:'info', text:'포먼트 추정값이 부족해 모음 관련 피드백은 제한됩니다.', color:'#6a6a88' });
+  } else {
+    const f1d = newRes.f1 - oldRes.f1;
+    if (f1d > 80)       feedback.push({ type:'info',    text:`F1이 높아졌습니다(${oldName} ${Math.round(oldRes.f1)}Hz → ${newName} ${Math.round(newRes.f1)}Hz). 입이 더 열린 방향으로 조정되었고, /아/ 계열에 가까워졌을 가능성이 있습니다.`, color:'#6eb5ff' });
+    else if (f1d < -80) feedback.push({ type:'info',    text:`F1이 낮아졌습니다(${oldName} ${Math.round(oldRes.f1)}Hz → ${newName} ${Math.round(newRes.f1)}Hz). 입이 덜 열린 방향으로 바뀌었고, 소리가 조금 더 모인 느낌으로 변했을 수 있습니다.`, color:'#6eb5ff' });
+    else                feedback.push({ type:'neutral', text:'F1 변화는 크지 않습니다. 입의 열림 정도는 비교적 비슷하게 유지된 것으로 보입니다.', color:'#a5a5ba' });
+    const f2d = newRes.f2 - oldRes.f2;
+    if (f2d > 150)       feedback.push({ type:'info',    text:`F2가 높아졌습니다(${oldName} ${Math.round(oldRes.f2)}Hz → ${newName} ${Math.round(newRes.f2)}Hz). 혀가 앞쪽으로 이동한 모음 성향이 강해지고, 소리가 더 밝게 느껴질 수 있습니다.`, color:'#ffd166' });
+    else if (f2d < -150) feedback.push({ type:'info',    text:`F2가 낮아졌습니다(${oldName} ${Math.round(oldRes.f2)}Hz → ${newName} ${Math.round(newRes.f2)}Hz). 혀가 뒤쪽으로 이동한 모음 성향이 강해지고, 소리가 더 둥글거나 어둡게 느껴질 수 있습니다.`, color:'#ffd166' });
+    else                 feedback.push({ type:'neutral', text:'F2 변화는 크지 않습니다. 모음의 앞뒤 위치는 비교적 비슷하게 유지된 것으로 보입니다.', color:'#a5a5ba' });
+  }
+  // 고역 에너지
+  const hd = newRes.highRatio - oldRes.highRatio;
+  if (hd > 0.05)       feedback.push({ type:'info', text:`2.5kHz 이상 고역 에너지가 증가했습니다(${oldName} ${Math.round(oldRes.highRatio*100)}% → ${newName} ${Math.round(newRes.highRatio*100)}%). 소리가 더 선명하거나 앞으로 나오는 느낌이 강해졌을 수 있습니다.`, color:'#ff6b9d' });
+  else if (hd < -0.05) feedback.push({ type:'info', text:`고역 에너지가 줄어들었습니다(${oldName} ${Math.round(oldRes.highRatio*100)}% → ${newName} ${Math.round(newRes.highRatio*100)}%). 소리가 더 부드럽거나 덜 날카롭게 들릴 가능성이 있습니다.`, color:'#ff6b9d' });
+  // 벨팅 힌트
+  const bd = newRes.beltScore - oldRes.beltScore;
+  if (bd > 10)       feedback.push({ type:'info', text:`벨팅 힌트 점수가 올라갔습니다(${oldName} ${oldRes.beltScore} → ${newName} ${newRes.beltScore}). 음량, 고역 에너지, 하모닉스가 더 강한 방향으로 변화한 것으로 보입니다. 단, 이것만으로 벨팅을 확정할 수는 없습니다.`, color:'#7cffb2' });
+  else if (bd < -10) feedback.push({ type:'info', text:`벨팅 힌트 점수가 낮아졌습니다(${oldName} ${oldRes.beltScore} → ${newName} ${newRes.beltScore}). 소리가 더 가볍거나 믹스/라이트한 방향으로 변화했을 가능성이 있습니다.`, color:'#7cffb2' });
+  // 모음 추정
+  const ol = oldRes.vowel?.label, nl = newRes.vowel?.label;
+  if (ol && nl && ol !== '—' && nl !== '—') {
+    if (ol !== nl) feedback.push({ type:'info',    text:`모음 추정이 '${ol}'에서 '${nl}' 쪽으로 이동했습니다. 실제 발음이 바뀌었거나, 같은 모음 안에서 튜닝이 달라졌을 수 있습니다.`, color:'#b388ff' });
+    else           feedback.push({ type:'neutral', text:`모음 추정은 '${ol}' 계열로 유지되었습니다. 큰 모음 변화보다는 에너지나 음색 변화가 중심일 수 있습니다.`, color:'#a5a5ba' });
+  }
+  return feedback;
+}
+
+/* ──────────────── 레슨용 자동 피드백 UI 컴포넌트 ──────────────── */
+function LessonFeedbackPanel({ slots, slotNames }) {
+  const [compareFrom, setCompareFrom] = React.useState('A');
+  const [compareTo,   setCompareTo]   = React.useState('B');
+  const pairs = [];
+  for (let i = 0; i < SLOT_ORDER.length; i++)
+    for (let j = i + 1; j < SLOT_ORDER.length; j++)
+      pairs.push([SLOT_ORDER[i], SLOT_ORDER[j]]);
+  const oldRes  = slots[compareFrom]?.analysis;
+  const newRes  = slots[compareTo]?.analysis;
+  const oldName = slotNames[compareFrom] || compareFrom;
+  const newName = slotNames[compareTo]   || compareTo;
+  const feedback = generateLessonFeedback(oldRes, newRes, oldName, newName);
+  return (
+    <div style={lfStyles.container}>
+      <div style={lfStyles.header}>
+        <div style={lfStyles.title}>🎙 레슨용 자동 피드백</div>
+        <div style={lfStyles.subtitle}>선택한 두 구간의 차이를 보컬 레슨 관점에서 해석한 참고 문장입니다.</div>
+        <div style={lfStyles.disclaimer}>의학적 진단이나 절대 판정이 아니라, 같은 조건에서 비교할 때 유용한 보조 지표입니다.</div>
+      </div>
+      <div style={lfStyles.pairSelector}>
+        <span style={lfStyles.pairLabel}>비교 구간 선택</span>
+        <div style={lfStyles.pairBtns}>
+          {pairs.map(([from, to]) => {
+            const isActive = compareFrom === from && compareTo === to;
+            return (
+              <button key={`${from}-${to}`}
+                onClick={() => { setCompareFrom(from); setCompareTo(to); }}
+                style={{
+                  ...lfStyles.pairBtn,
+                  background: isActive ? '#1e1e38' : '#18181f',
+                  border: isActive ? `1.5px solid ${SLOT_COLORS[from]}` : '1px solid #2a2a38',
+                  boxShadow: isActive ? `0 0 8px ${SLOT_COLORS[from]}44` : 'none',
+                }}>
+                <span style={{ color: SLOT_COLORS[from], fontWeight: 800 }}>{slotNames[from] || from}</span>
+                <span style={{ color: '#6a6a88', margin: '0 3px', fontSize: 11 }}>→</span>
+                <span style={{ color: SLOT_COLORS[to], fontWeight: 800 }}>{slotNames[to] || to}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div style={lfStyles.feedbackList}>
+        {feedback.map((item, i) => (
+          <div key={i} style={{ ...lfStyles.feedbackItem, borderLeft: `3px solid ${item.color}` }}>
+            <span style={{ color: item.color, marginRight: 8, fontSize: 14, flexShrink: 0 }}>●</span>
+            <span style={lfStyles.feedbackText}>{item.text}</span>
+          </div>
+        ))}
+      </div>
+      <div style={lfStyles.footer}>
+        ※ 이 피드백은 음향 수치를 기반으로 한 보컬 레슨용 참고 정보입니다. 의학적 진단이 아니며, 전문 보컬 코치의 판단을 대체하지 않습니다.
+      </div>
+    </div>
+  );
+}
+
+function ConceptDictionary(){
+  const items=[
+    ['F0','기본 주파수입니다. 쉽게 말하면 지금 내고 있는 음높이입니다.'],
+    ['F1','첫 번째 포먼트입니다. 입이 얼마나 열렸는지, 모음이 얼마나 열린 느낌인지와 관련이 큽니다.'],
+    ['F2','두 번째 포먼트입니다. 혀의 앞뒤 위치, 모음의 밝고 어두운 성향과 관련이 큽니다.'],
+    ['포먼트','성도에서 특정 주파수대가 더 강해지는 공명 지점입니다. 모음의 색깔을 만드는 핵심 단서입니다.'],
+    ['하모닉스','F0의 정수배로 생기는 배음 구조입니다. 소리의 밀도, 밝기, 존재감과 관련됩니다.'],
+    ['스펙트로그램','시간에 따라 주파수 에너지가 어떻게 변하는지 보여주는 그림입니다. 색이 밝을수록 에너지가 강합니다.'],
+    ['벨팅 힌트','음량, 고역 에너지, 스펙트럼 중심 등을 합친 참고 점수입니다. 벨팅 확정 판정은 아닙니다.'],
+    ['모음 추정 신뢰도','F1/F2가 기준 모음 위치와 얼마나 가까운지 계산한 값입니다. 노래에서는 말모음과 다르게 튜닝될 수 있습니다.']
+  ];
+  return <section style={styles.eduPanel}>
+    <div style={styles.panelTitle}>개념사전</div>
+    <div style={styles.dictGrid}>{items.map(([term,desc])=><div style={styles.dictCard} key={term}><b>{term}</b><p>{desc}</p></div>)}</div>
+  </section>;
+}
+function VowelMap({currentFormants, slots, slotNames}){
+  const width=560, height=360;
+  const f2Min=500, f2Max=3200, f1Min=250, f1Max=1100;
+  const xOf=f2=> width - 50 - ((f2-f2Min)/(f2Max-f2Min))*(width-90);
+  const yOf=f1=> 30 + ((f1-f1Min)/(f1Max-f1Min))*(height-75);
+  const refs=VOWEL_PROFILES.map(v=>({...v,x:xOf(v.f2),y:yOf(v.f1)}));
+  const points=[];
+  if(currentFormants?.f1 && currentFormants?.f2) points.push({label:'LIVE', f1:currentFormants.f1, f2:currentFormants.f2, color:'#7cffb2', live:true});
+  SLOT_ORDER.forEach(k=>{
+    const r=slots[k].analysis;
+    if(r?.f1 && r?.f2) points.push({label:slotNames?.[k]||k, f1:r.f1, f2:r.f2, color:SLOT_COLORS[k]});
+  });
+  return <section style={styles.eduPanel}>
+    <div style={styles.panelTitle}>F1/F2 모음 지도</div>
+    <div style={styles.mapWrap}>
+      <svg viewBox={`0 0 ${width} ${height}`} style={styles.vowelSvg}>
+        <rect x="45" y="25" width={width-90} height={height-75} rx="14" fill="#0d0d15" stroke="#252536"/>
+        {[500,1000,1500,2000,2500,3000].map(f=><g key={'x'+f}><line x1={xOf(f)} y1="25" x2={xOf(f)} y2={height-50} stroke="#202030"/><text x={xOf(f)} y={height-28} fill="#77778f" fontSize="11" textAnchor="middle">{f}</text></g>)}
+        {[300,500,700,900,1100].map(f=><g key={'y'+f}><line x1="45" y1={yOf(f)} x2={width-45} y2={yOf(f)} stroke="#202030"/><text x="36" y={yOf(f)+4} fill="#77778f" fontSize="11" textAnchor="end">{f}</text></g>)}
+        <text x={width/2} y={height-8} fill="#9999b0" fontSize="12" textAnchor="middle">F2 Hz · 왼쪽일수록 앞쪽/밝은 성향</text>
+        <text x="13" y={height/2} fill="#9999b0" fontSize="12" textAnchor="middle" transform={`rotate(-90 13 ${height/2})`}>F1 Hz · 아래쪽일수록 열린 성향</text>
+        {refs.map(v=><g key={v.name}><circle cx={v.x} cy={v.y} r="6" fill="#18181f" stroke="#6eb5ff"/><text x={v.x+9} y={v.y+4} fill="#cfcfe5" fontSize="13">{v.name}</text></g>)}
+        {points.map((p,i)=><g key={i}><circle cx={xOf(p.f2)} cy={yOf(p.f1)} r={p.live?9:7} fill={p.color} opacity={p.live ? .9 : .85}/><text x={xOf(p.f2)+10} y={yOf(p.f1)-8} fill={p.color} fontSize="12" fontWeight="700">{p.label}</text></g>)}
+      </svg>
+      <div style={styles.mapHint}>주의: F1/F2 위치는 모음의 경향을 보는 참고 지도입니다. 노래에서는 음높이, 음량, 성구, 마이크 거리 때문에 값이 흔들릴 수 있습니다.</div>
+    </div>
+  </section>;
+}
+
+function App(){
+  const [isListening,setIsListening]=useState(false), [isRecording,setIsRecording]=useState(false), [hasRecording,setHasRecording]=useState(false);
+  const [currentPitch,setCurrentPitch]=useState(null), [currentDb,setCurrentDb]=useState(-90), [currentFormants,setCurrentFormants]=useState({f1:null,f2:null});
+  const [strategy,setStrategy]=useState({beltScore:0,label:'관찰 중',hint:'마이크를 시작하세요.',highRatio:0,centroid:0,f1f0:null,harmonicRichness:0,loudnessPart:0,highPart:0,centroidPart:0,harmonicPart:0});
+  const [status,setStatus]=useState('마이크 버튼을 눌러 시작하세요');
+  const [showPitch,setShowPitch]=useState(true), [showFormants,setShowFormants]=useState(true), [showHarmonics,setShowHarmonics]=useState(true), [isFrozen,setIsFrozen]=useState(false);
+  const [recordedBuffer,setRecordedBuffer]=useState(null), [recordSampleRate,setRecordSampleRate]=useState(44100);
+  const [activeSlot,setActiveSlot]=useState('A'), [slots,setSlots]=useState(()=>emptySlots());
+  const [slotNames,setSlotNames]=useState(()=>({A:'A',B:'B',C:'C',D:'D',E:'E'}));
+  const [drag,setDrag]=useState(null);
+
+  const waveCanvasRef=useRef(null), specCanvasRef=useRef(null), recCanvasRef=useRef(null), audioPlayerRef=useRef(null);
+  const audioCtxRef=useRef(null), analyserRef=useRef(null), sourceRef=useRef(null), streamRef=useRef(null), processorRef=useRef(null), zeroGainRef=useRef(null), animFrameRef=useRef(null);
+  const specColsRef=useRef([]), pitchHistRef=useRef([]), formantHistRef=useRef([]), chunksRef=useRef([]), isRecordingRef=useRef(false), isFrozenRef=useRef(false), audioBlobRef=useRef(null);
+  useEffect(()=>{isRecordingRef.current=isRecording;},[isRecording]); useEffect(()=>{isFrozenRef.current=isFrozen;},[isFrozen]);
+
+  const drawLive=useCallback(()=>{
+    const analyser=analyserRef.current, wave=waveCanvasRef.current, spec=specCanvasRef.current, ctx=audioCtxRef.current; if(!analyser||!wave||!spec||!ctx) return;
+    const freqData=new Uint8Array(analyser.frequencyBinCount), timeData=new Float32Array(analyser.fftSize);
+    analyser.getByteFrequencyData(freqData); analyser.getFloatTimeDomainData(timeData);
+    if(!isFrozenRef.current){
+      let ss=0; for(let i=0;i<timeData.length;i++) ss+=timeData[i]*timeData[i]; const rms=Math.sqrt(ss/timeData.length); const db=rms>0?20*Math.log10(rms):-90; setCurrentDb(Math.max(-90,Math.min(0,db)));
+      const pitch=detectPitch(timeData,ctx.sampleRate); setCurrentPitch(pitch);
+      const formants=estimateFormants(freqData,timeData,ctx.sampleRate,analyser.fftSize,pitch); setCurrentFormants(formants);
+      setStrategy(computeVoiceStrategy(freqData,ctx.sampleRate,analyser.fftSize,pitch,db,formants));
+      const wctx=wave.getContext('2d'), w=wave.width/devicePixelRatio, h=wave.height/devicePixelRatio; wctx.clearRect(0,0,w,h); wctx.fillStyle='#0d0d15'; wctx.fillRect(0,0,w,h);
+      wctx.strokeStyle='#1a1a28'; for(let i=1;i<4;i++){wctx.beginPath(); wctx.moveTo(0,h*i/4); wctx.lineTo(w,h*i/4); wctx.stroke();}
+      wctx.beginPath(); wctx.strokeStyle='#7cffb2'; wctx.lineWidth=1.5; for(let i=0;i<timeData.length;i++){const x=i*w/timeData.length, y=(timeData[i]*0.8+1)/2*h; i? wctx.lineTo(x,y):wctx.moveTo(x,y);} wctx.stroke();
+      const sctx=spec.getContext('2d'), sw=spec.width/devicePixelRatio, sh=spec.height/devicePixelRatio, nyq=ctx.sampleRate/2, maxFreq=Math.min(8000,nyq), maxBin=Math.floor(maxFreq/nyq*analyser.frequencyBinCount);
+      const col=[]; for(let i=0;i<maxBin;i++) col.push((freqData[i]/255)*(MAX_DB-MIN_DB)+MIN_DB); specColsRef.current.push(col); if(specColsRef.current.length>sw) specColsRef.current.shift();
+      pitchHistRef.current.push(pitch); if(pitchHistRef.current.length>sw) pitchHistRef.current.shift(); formantHistRef.current.push(formants); if(formantHistRef.current.length>sw) formantHistRef.current.shift();
+      sctx.fillStyle='#070710'; sctx.fillRect(0,0,sw,sh); const cols=specColsRef.current, xOff=sw-cols.length;
+      for(let x=0;x<cols.length;x++){const c=cols[x]; for(let b=0;b<c.length;b++){const y=sh-(b/c.length)*sh, cellH=sh/c.length; sctx.fillStyle=dbToColor(c[b]); sctx.fillRect(xOff+x,y-cellH,1,cellH+1);}}
+      sctx.font='10px Space Mono'; [100,200,500,1000,2000,4000,8000].filter(f=>f<=maxFreq).forEach(f=>{const y=sh-(f/maxFreq)*sh; sctx.fillStyle='rgba(80,80,120,.65)'; sctx.fillRect(0,y,sw,1); sctx.fillStyle='rgba(180,180,220,.8)'; sctx.fillText(f>=1000?`${f/1000}k`:`${f}`,4,y-2);});
+      if(showFormants){ [['f1','#6eb5ff'],['f2','#ffd166']].forEach(([key,color])=>{sctx.beginPath(); sctx.strokeStyle=color; sctx.lineWidth=1.8; let on=false; formantHistRef.current.forEach((fm,i)=>{const f=fm&&fm[key]; if(!f||f>maxFreq){on=false;return;} const x=xOff+i,y=sh-(f/maxFreq)*sh; if(!on){sctx.moveTo(x,y);on=true}else sctx.lineTo(x,y);}); sctx.stroke();});}
+      if(showHarmonics){sctx.save(); sctx.strokeStyle='rgba(255,255,255,.55)'; sctx.setLineDash([3,5]); for(let hh=2;hh<=24;hh++){sctx.beginPath();let on=false; pitchHistRef.current.forEach((p,i)=>{const f=p?p*hh:null; if(!f||f>maxFreq){on=false;return;} const x=xOff+i,y=sh-(f/maxFreq)*sh; if(!on){sctx.moveTo(x,y);on=true}else sctx.lineTo(x,y);}); sctx.stroke();} sctx.restore();}
+      if(showPitch){sctx.beginPath(); sctx.strokeStyle='#ff6b9d'; sctx.lineWidth=2; let on=false; pitchHistRef.current.forEach((p,i)=>{if(!p||p>maxFreq){on=false;return;} const x=xOff+i,y=sh-(p/maxFreq)*sh; if(!on){sctx.moveTo(x,y);on=true}else sctx.lineTo(x,y);}); sctx.stroke();}
+    }
+    animFrameRef.current=requestAnimationFrame(drawLive);
+  },[showPitch,showFormants,showHarmonics]);
+
+  const resizeCanvas=(c,h)=>{ if(!c)return; const d=window.devicePixelRatio||1; c.width=Math.floor(c.offsetWidth*d); c.height=Math.floor(h*d); const ctx=c.getContext('2d'); ctx.setTransform(d,0,0,d,0,0); };
+  useEffect(()=>{const r=()=>{resizeCanvas(waveCanvasRef.current,90); resizeCanvas(specCanvasRef.current,280); resizeCanvas(recCanvasRef.current,150); drawRecorded();}; r(); window.addEventListener('resize',r); return()=>window.removeEventListener('resize',r);},[]);
+
+  const startListening=async()=>{try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}); streamRef.current=stream;
+    const ctx=new AudioContext(); audioCtxRef.current=ctx; setRecordSampleRate(ctx.sampleRate);
+    const source=ctx.createMediaStreamSource(stream); sourceRef.current=source;
+    const analyser=ctx.createAnalyser(); analyser.fftSize=FFT_SIZE; analyser.smoothingTimeConstant=SMOOTHING; analyserRef.current=analyser;
+    const proc=ctx.createScriptProcessor(2048,1,1); processorRef.current=proc; const zero=ctx.createGain(); zero.gain.value=0; zeroGainRef.current=zero;
+    proc.onaudioprocess=(e)=>{ if(isRecordingRef.current){ const input=e.inputBuffer.getChannelData(0); chunksRef.current.push(new Float32Array(input)); } };
+    source.connect(analyser); source.connect(proc); proc.connect(zero); zero.connect(ctx.destination);
+    specColsRef.current=[]; pitchHistRef.current=[]; formantHistRef.current=[]; setIsListening(true); setStatus('실시간 분석 중...'); animFrameRef.current=requestAnimationFrame(drawLive);
+  }catch(e){setStatus('마이크 접근 실패: '+e.message);}};
+  const stopListening=()=>{cancelAnimationFrame(animFrameRef.current); [processorRef.current,zeroGainRef.current,sourceRef.current].forEach(n=>{try{n&&n.disconnect()}catch(e){}}); if(streamRef.current)streamRef.current.getTracks().forEach(t=>t.stop()); if(audioCtxRef.current)audioCtxRef.current.close(); setIsListening(false); setIsRecording(false); setIsFrozen(false); setStatus('정지됨');};
+  const startRecording=()=>{chunksRef.current=[]; setRecordedBuffer(null); setSlots(emptySlots()); setHasRecording(false); setIsRecording(true); setStatus('녹음 중... 🔴');};
+  const stopRecording=()=>{setIsRecording(false); const merged=mergeChunks(chunksRef.current); setRecordedBuffer(merged); setHasRecording(merged.length>0); if(merged.length){const blob=wavBlobFromFloat32(merged,recordSampleRate); audioBlobRef.current=blob; if(audioPlayerRef.current) audioPlayerRef.current.src=URL.createObjectURL(blob);} setStatus('녹음 완료 · A~E 구간을 선택하세요'); setTimeout(drawRecorded,30);};
+  const saveWav=()=>{ if(!recordedBuffer)return; const a=document.createElement('a'); a.href=URL.createObjectURL(wavBlobFromFloat32(recordedBuffer,recordSampleRate)); a.download=`vocalfit_ab_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.wav`; a.click(); };
+
+  const drawRecorded=()=>{ const c=recCanvasRef.current; if(!c)return; const ctx=c.getContext('2d'), w=c.width/(window.devicePixelRatio||1), h=c.height/(window.devicePixelRatio||1); ctx.clearRect(0,0,w,h); ctx.fillStyle='#0d0d15'; ctx.fillRect(0,0,w,h); ctx.strokeStyle='#1a1a28'; for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(0,h*i/4);ctx.lineTo(w,h*i/4);ctx.stroke();}
+    if(!recordedBuffer){ctx.fillStyle='#55556d';ctx.font='13px Noto Sans KR';ctx.fillText('녹음 후 이 영역에서 A~E 구간을 드래그해서 선택하세요.',16,h/2); return;}
+    const data=recordedBuffer, samplesPerPx=Math.max(1,Math.floor(data.length/w)); ctx.strokeStyle='#7cffb2'; ctx.lineWidth=1; ctx.beginPath();
+    for(let x=0;x<w;x++){let min=1,max=-1; const start=x*samplesPerPx,end=Math.min(data.length,start+samplesPerPx); for(let i=start;i<end;i++){if(data[i]<min)min=data[i]; if(data[i]>max)max=data[i];} ctx.moveTo(x,(1-max)*h/2); ctx.lineTo(x,(1-min)*h/2);} ctx.stroke();
+    const paintSel=(sel,color,label,alpha=.22)=>{if(!sel)return; const x1=sel.start/data.length*w, x2=sel.end/data.length*w; const rgba=color.startsWith('#')?hexToRgba(color,alpha):color; ctx.fillStyle=rgba; ctx.fillRect(x1,0,Math.max(2,x2-x1),h); ctx.strokeStyle=color; ctx.strokeRect(x1+0.5,0.5,Math.max(2,x2-x1)-1,h-1); ctx.fillStyle='#fff'; ctx.font='bold 13px Space Mono'; ctx.fillText(label,x1+6,18);};
+    SLOT_ORDER.forEach(k=>paintSel(slots[k]?.selection,SLOT_COLORS[k],k,.22));
+    if(drag){paintSel({start:Math.min(drag.start,drag.now),end:Math.max(drag.start,drag.now)},SLOT_COLORS[activeSlot],activeSlot,.16);} };
+  function hexToRgba(hex,alpha){const n=parseInt(hex.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${alpha})`;}
+  useEffect(drawRecorded,[recordedBuffer,slots,drag,activeSlot]);
+  const canvasSample=(e)=>{const c=recCanvasRef.current; if(!c||!recordedBuffer)return 0; const rect=c.getBoundingClientRect(); const x=Math.max(0,Math.min(rect.width,e.clientX-rect.left)); return Math.round(x/rect.width*recordedBuffer.length);};
+  const onRecDown=(e)=>{if(!recordedBuffer)return; const s=canvasSample(e); setDrag({start:s,now:s});};
+  const onRecMove=(e)=>{if(!drag||!recordedBuffer)return; setDrag({...drag,now:canvasSample(e)});};
+  const onRecUp=(e)=>{if(!drag||!recordedBuffer)return; const end=canvasSample(e), start=Math.min(drag.start,end), stop=Math.max(drag.start,end); setDrag(null); if(stop-start<recordSampleRate*0.08)return; const sel={start,end:stop}; const seg=recordedBuffer.slice(start,stop); const result=analyseSegment(seg,recordSampleRate); setSlots(prev=>({...prev,[activeSlot]:{selection:sel,analysis:result}})); setActiveSlot(nextSlotName(activeSlot)); };
+  const playSelection=(sel)=>{ if(!sel||!recordedBuffer)return; const blob=wavBlobFromFloat32(recordedBuffer.slice(sel.start,sel.end),recordSampleRate); const url=URL.createObjectURL(blob); const a=new Audio(url); a.play(); };
+  const clearSlots=()=>{setSlots(emptySlots());setActiveSlot('A');};
+
+  const dbNorm=Math.max(0,Math.min(1,(currentDb+60)/60)); const vuColor=dbNorm>.85?'#ff4444':dbNorm>.6?'#ffcc00':'#7cffb2';
+  const metric=(label,value,color='#e8e8f0',hint='')=><div style={styles.metricCard}><div style={styles.metricLabel}>{label}</div><div style={{...styles.metricValue,color}}>{value}</div><div style={styles.metricHint}>{hint}</div></div>;
+  const resultCard=(name,obj)=>{const res=obj?.analysis, sel=obj?.selection, color=SLOT_COLORS[name]; return <div style={styles.resultCard}><div style={styles.resultHead}><span style={{color,fontWeight:800}}>구간 {name} · {slotNames[name]||name}</span><button onClick={()=>playSelection(sel)} disabled={!res} style={{...styles.smallBtn,opacity:res?1:.3}}>▶ 재생</button></div>{res? <>
+    <div style={styles.resultGrid}><span>길이</span><b>{res.duration.toFixed(2)}s</b><span>평균 F0</span><b>{res.avgF0?`${Math.round(res.avgF0)} Hz (${res.note})`:'—'}</b><span>평균 dB</span><b>{Math.round(res.avgDb)} dB</b><span>F1</span><b>{res.f1?`${Math.round(res.f1)} Hz`:'—'}</b><span>F2</span><b>{res.f2?`${Math.round(res.f2)} Hz`:'—'}</b><span>모음 추정</span><b>{res.vowel?`${res.vowel.label} ${res.vowel.confidence}%`:'—'}</b><span>고역</span><b>{Math.round(res.highRatio*100)}%</b><span>벨트 힌트</span><b>{res.beltScore}</b></div>
+  </>:<div style={styles.emptyResult}>{name}로 잡을 구간을 파형에서 드래그하세요.</div>}</div>};
+  const compareRows=[['길이','duration'],['평균 F0','avgF0'],['평균 dB','avgDb'],['F1','f1'],['F2','f2'],['모음 추정','vowel'],['고역','highRatio'],['벨트 힌트','beltScore']];
+  const numeric=(res,key)=>!res?null:(key==='duration'?res.duration:key==='highRatio'?res.highRatio:key==='avgF0'?res.avgF0:key==='avgDb'?res.avgDb:res[key]);
+  const bestFor=(key)=>{const vals=SLOT_ORDER.map(k=>[k,numeric(slots[k].analysis,key)]).filter(([,v])=>v!=null&&!Number.isNaN(v)); if(!vals.length)return null; vals.sort((a,b)=>b[1]-a[1]); return vals[0][0];};
+  const compareTable=<div style={styles.tableWrap}><table style={styles.compareTable}><thead><tr><th>항목</th>{SLOT_ORDER.map(k=><th key={k} style={{color:SLOT_COLORS[k]}}>구간 {k}</th>)}</tr></thead><tbody>{compareRows.map(([label,key])=>{const best=bestFor(key);return <tr key={key}><td>{label}</td>{SLOT_ORDER.map(k=><td key={k} style={best===k?styles.bestCell:null}>{fmtVal(slots[k].analysis,key)}</td>)}</tr>})}</tbody></table></div>;
+
+  return <div style={styles.app}>
+    <header style={styles.header}><div style={styles.logo}><span style={styles.logoAccent}>보컬핏</span><span style={styles.logoSub}> Spectrogram Vowel Lab Pro</span></div><div style={styles.statusBadge}><div style={{...styles.statusDot,background:isListening?(isRecording?'#ff4444':'#7cffb2'):'#444'}}/><span style={styles.statusText}>{isFrozen?'프리즈됨 · 화면 고정':status}</span></div></header>
+    <div style={styles.pitchDisplay}><div style={styles.pitchLeft}><div style={styles.pitchHz}>{currentPitch?`${Math.round(currentPitch)} Hz`:'— Hz'}</div><div style={styles.pitchNote}>{currentPitch?hzToNote(currentPitch):'—'}</div></div><div style={styles.vuMeter}><div style={styles.vuLabel}>dB</div><div style={styles.vuTrack}><div style={{...styles.vuBar,width:`${dbNorm*100}%`,background:vuColor,boxShadow:`0 0 8px ${vuColor}`}}/></div><div style={styles.vuValue}>{Math.round(currentDb)}</div></div></div>
+    <div style={styles.analysisGrid}>{metric('모음 추정',vowelLabel(currentFormants.f1,currentFormants.f2),'#7cffb2',vowelGuess(currentFormants.f1,currentFormants.f2).hint)}{metric('F1 추정',currentFormants.f1?`${Math.round(currentFormants.f1)} Hz`:'—','#6eb5ff',currentFormants.source||'LPC/FFT')}{metric('F2 추정',currentFormants.f2?`${Math.round(currentFormants.f2)} Hz`:'—','#ffd166',currentFormants.source||'LPC/FFT')}{metric('고역 에너지',strategy.highRatio?`${Math.round(strategy.highRatio*100)}%`:'—','#ff6b9d','2.5kHz 이상')}{metric('벨팅 힌트',strategy.beltScore??'—','#fff',strategy.label)}</div>
+    <div style={styles.insightPanel}><div style={styles.insightTitle}>자동 해석</div>{buildLiveInterpretation(currentPitch,currentDb,currentFormants,strategy).map((t,i)=><div key={i} style={styles.insightLine}>• {t}</div>)}</div>
+    <div style={styles.warnPanel}>{reliabilityMessages(currentDb,currentPitch,currentFormants).map((t,i)=><span key={i} style={styles.warnChip}>{t}</span>)}</div>
+    <section style={styles.section}><div style={styles.sectionLabel}>실시간 파형 WAVEFORM</div><canvas ref={waveCanvasRef} style={styles.waveCanvas}/></section>
+    <section style={styles.section}><div style={styles.sectionLabel}>실시간 스펙트로그램 SPECTROGRAM <label style={styles.toggle}><input type="checkbox" checked={showPitch} onChange={e=>setShowPitch(e.target.checked)} style={{display:'none'}}/><span style={{...styles.toggleBtn,background:showPitch?'#ff6b9d':'#333'}}>F0</span></label><label style={styles.toggle}><input type="checkbox" checked={showFormants} onChange={e=>setShowFormants(e.target.checked)} style={{display:'none'}}/><span style={{...styles.toggleBtn,background:showFormants?'#6eb5ff':'#333'}}>F1/F2</span></label><label style={styles.toggle}><input type="checkbox" checked={showHarmonics} onChange={e=>setShowHarmonics(e.target.checked)} style={{display:'none'}}/><span style={{...styles.toggleBtn,background:showHarmonics?'#fff':'#333',color:showHarmonics?'#111':'#fff'}}>하모닉스</span></label></div><canvas ref={specCanvasRef} style={styles.specCanvas}/></section>
+    <div style={styles.vowelNote}>모음 추정은 F1/F2 위치로 가장 가까운 모음을 보여주는 참고값입니다. 노래 모음은 실제 말모음과 다르게 튜닝될 수 있습니다.</div>
+    <div style={styles.workflow}>
+      <div style={styles.stepCard}>
+        <div style={styles.stepNo}>1</div>
+        <div style={styles.stepTitle}>마이크 켜기</div>
+        <div style={styles.stepText}>먼저 실시간 분석을 켭니다.</div>
+        <button onClick={isListening?stopListening:startListening} style={{...styles.bigBtn,...(isListening?styles.btnDanger:styles.btnAccent)}}>{isListening?'⏹ 분석 정지':'🎤 마이크 시작'}</button>
+      </div>
+      <div style={styles.stepCard}>
+        <div style={styles.stepNo}>2</div>
+        <div style={styles.stepTitle}>노래 녹음</div>
+        <div style={styles.stepText}>소리를 낸 뒤 녹음을 멈추면 아래 파형이 생깁니다.</div>
+        <button onClick={isRecording?stopRecording:startRecording} disabled={!isListening} style={{...styles.bigBtn,...(isRecording?styles.btnRec:styles.btnSecondary),opacity:isListening?1:.35}}>{isRecording?'⏺ 녹음 끝내기':'⏺ 녹음 시작'}</button>
+      </div>
+      <div style={styles.stepCard}>
+        <div style={styles.stepNo}>3</div>
+        <div style={styles.stepTitle}>A~E 구간 잡기</div>
+        <div style={styles.stepText}>아래 파형에서 드래그하면 현재 선택된 칸에 자동 저장됩니다.</div>
+        <div style={styles.slotRow}>{SLOT_ORDER.map(k=><button key={k} onClick={()=>setActiveSlot(k)} style={{...styles.slotBig,background:activeSlot===k?SLOT_COLORS[k]:'#18181f',color:activeSlot===k?'#06111d':'#fff'}}>{slotNames[k]||k} 저장</button>)}</div>
+      </div>
+      <div style={styles.stepCard}>
+        <div style={styles.stepNo}>4</div>
+        <div style={styles.stepTitle}>비교/저장</div>
+        <div style={styles.stepText}>구간 재생, 전체 재생, WAV 저장을 여기서 합니다.</div>
+        <div style={styles.slotRow}>
+          <button onClick={()=>audioPlayerRef.current?.play()} disabled={!hasRecording} style={{...styles.miniAction,opacity:hasRecording?1:.35}}>▶ 전체</button>
+          <button onClick={saveWav} disabled={!hasRecording} style={{...styles.miniAction,opacity:hasRecording?1:.35}}>💾 WAV</button>
+          <button onClick={clearSlots} style={styles.miniAction}>초기화</button>
+        </div>
+      </div>
+    </div>
+    <div style={styles.quickBar}>
+      <button onClick={()=>setIsFrozen(v=>!v)} disabled={!isListening} style={{...styles.btn,...(isFrozen?styles.btnFreezeOn:styles.btnSecondary),opacity:isListening?1:.35}}>{isFrozen?'❄ 화면 고정 해제':'❄ 지금 화면 프리즈'}</button>
+      <div style={styles.nextHint}>{hasRecording ? `지금은 ${activeSlot} 구간을 저장하는 모드입니다. 파형에서 원하는 부분을 드래그하세요.` : '녹음이 끝나면 아래에 파형이 나타납니다.'}</div>
+    </div>
+    <audio ref={audioPlayerRef} style={styles.player} controls={hasRecording}/>
+    <section style={styles.section}>
+      <div style={styles.selectionHeader}>
+        <div>
+          <div style={styles.sectionLabel}>녹음 구간 선택 A~E SELECTION</div>
+          <div style={styles.selectionGuide}>{hasRecording ? `드래그하면 ${activeSlot} 구간으로 저장됩니다. A~E까지 최대 5개를 비교할 수 있습니다.` : '먼저 녹음 시작 → 녹음 끝내기를 누르세요.'}</div>
+        </div>
+        <div style={{...styles.activeBadge,background:SLOT_COLORS[activeSlot],color:'#06111d'}}>현재: {activeSlot} 저장</div>
+      </div>
+      <canvas ref={recCanvasRef} style={styles.recCanvas} onMouseDown={onRecDown} onMouseMove={onRecMove} onMouseUp={onRecUp} onMouseLeave={onRecUp}/>
+    </section>
+    <div style={styles.nameEditor}>
+      <div style={styles.panelTitle}>A~E 이름 변경</div>
+      <div style={styles.nameRow}>{SLOT_ORDER.map(k=><label key={k} style={styles.nameBox}><span style={{color:SLOT_COLORS[k]}}>구간 {k}</span><input value={slotNames[k]} onChange={e=>setSlotNames(prev=>({...prev,[k]:e.target.value||k}))}/></label>)}</div>
+      <div style={styles.compareNotice}>{compareWarnings(slots).map((m,i)=><span key={i}>• {m}</span>)}</div>
+    </div>
+    {compareTable}
+    <LessonFeedbackPanel slots={slots} slotNames={slotNames}/>
+    <VowelMap currentFormants={currentFormants} slots={slots} slotNames={slotNames}/>
+    <div style={styles.compareGrid}>{SLOT_ORDER.map(k=>resultCard(k,slots[k]))}</div>
+    <ConceptDictionary/>
+    <div style={styles.footer}><span style={{color:'#ff6b9d'}}>■</span> F0 · <span style={{color:'#fff'}}>┄</span> 하모닉스 · <span style={{color:'#6eb5ff'}}>■</span> F1 · <span style={{color:'#ffd166'}}>■</span> F2 · A~E 구간은 레슨용 참고 지표입니다.</div>
+  </div>;
+}
+
+const lfStyles = {
+  container:    { background:'#111118', border:'1px solid #252536', borderRadius:14, padding:18, display:'flex', flexDirection:'column', gap:14 },
+  header:       { display:'flex', flexDirection:'column', gap:5 },
+  title:        { fontWeight:900, fontSize:17, color:'#e8e8f0' },
+  subtitle:     { fontSize:13, color:'#c5c5dc', lineHeight:1.5 },
+  disclaimer:   { fontSize:12, color:'#77778f', lineHeight:1.45, background:'#18181f', border:'1px solid #2a2a38', borderRadius:8, padding:'8px 12px' },
+  pairSelector: { display:'flex', flexDirection:'column', gap:8 },
+  pairLabel:    { fontSize:11, fontFamily:"'Space Mono', monospace", color:'#7a7a90', letterSpacing:.5 },
+  pairBtns:     { display:'flex', gap:6, flexWrap:'wrap' },
+  pairBtn:      { padding:'7px 13px', borderRadius:10, cursor:'pointer', fontSize:13, fontFamily:"'Noto Sans KR', sans-serif", transition:'all .15s', whiteSpace:'nowrap', color:'#e8e8f0' },
+  feedbackList: { display:'flex', flexDirection:'column', gap:10 },
+  feedbackItem: { display:'flex', alignItems:'flex-start', background:'#18181f', borderRadius:10, padding:'11px 14px' },
+  feedbackText: { fontSize:13, color:'#d6d6ee', lineHeight:1.6 },
+  footer:       { fontSize:11, color:'#55556e', lineHeight:1.5, borderTop:'1px solid #1e1e2e', paddingTop:10 },
+};
+
+const styles={
+  app:{maxWidth:1180,margin:'0 auto',padding:16,display:'flex',flexDirection:'column',gap:12,minHeight:'100vh'},
+  header:{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #1e1e2e',paddingBottom:12}, logo:{fontFamily:"'Space Mono', monospace",fontSize:20}, logoAccent:{color:'#7cffb2',fontWeight:700}, logoSub:{color:'#6a6a88'},
+  statusBadge:{display:'flex',alignItems:'center',gap:8,background:'#111118',border:'1px solid #2a2a38',borderRadius:20,padding:'4px 12px'}, statusDot:{width:8,height:8,borderRadius:'50%'}, statusText:{fontSize:12,color:'#9a9ab0',fontFamily:"'Space Mono', monospace"},
+  pitchDisplay:{background:'#0d0d18',border:'1px solid #1e1e30',borderRadius:10,padding:'12px 20px',display:'flex',alignItems:'center',gap:24}, pitchLeft:{display:'flex',alignItems:'baseline',gap:12}, pitchHz:{fontFamily:"'Space Mono', monospace",fontSize:28,color:'#7cffb2',minWidth:130}, pitchNote:{fontFamily:"'Space Mono', monospace",fontSize:22,color:'#ff6b9d',minWidth:50},
+  vuMeter:{flex:1,display:'flex',alignItems:'center',gap:8}, vuLabel:{color:'#6a6a88',fontSize:11,fontFamily:"'Space Mono', monospace"}, vuTrack:{flex:1,height:10,background:'#1a1a28',borderRadius:5,overflow:'hidden'}, vuBar:{height:'100%',borderRadius:5,transition:'width .05s'}, vuValue:{fontFamily:"'Space Mono', monospace",fontSize:11,color:'#6a6a88',minWidth:30,textAlign:'right'},
+  analysisGrid:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}, metricCard:{background:'#111118',border:'1px solid #252536',borderRadius:10,padding:12}, metricLabel:{fontSize:11,color:'#6a6a88',fontFamily:"'Space Mono', monospace",letterSpacing:.5}, metricValue:{fontFamily:"'Space Mono', monospace",fontSize:22,marginTop:4}, metricHint:{fontSize:11,color:'#65657d',marginTop:4,lineHeight:1.35},
+  section:{display:'flex',flexDirection:'column',gap:6}, sectionLabel:{fontSize:11,fontFamily:"'Space Mono', monospace",color:'#7a7a90',letterSpacing:1,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}, toggle:{cursor:'pointer'}, toggleBtn:{fontSize:10,padding:'2px 10px',borderRadius:12,color:'#fff',userSelect:'none'},
+  waveCanvas:{width:'100%',height:90,borderRadius:8,border:'1px solid #1a1a28',display:'block'}, specCanvas:{width:'100%',height:280,borderRadius:8,border:'1px solid #1a1a28',display:'block'}, recCanvas:{width:'100%',height:150,borderRadius:8,border:'1px solid #1a1a28',display:'block',cursor:'crosshair'},
+  vowelNote:{background:'#101820',border:'1px solid #234',borderRadius:10,padding:'10px 12px',color:'#9fb7d0',fontSize:13,lineHeight:1.45}, workflow:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}, stepCard:{background:'#111118',border:'1px solid #252536',borderRadius:14,padding:14,display:'flex',flexDirection:'column',gap:8,minHeight:152}, stepNo:{width:24,height:24,borderRadius:12,background:'#252536',color:'#cfcfe5',fontFamily:"'Space Mono', monospace",fontSize:12,display:'flex',alignItems:'center',justifyContent:'center'}, stepTitle:{fontWeight:700,fontSize:15}, stepText:{fontSize:12,color:'#85859c',lineHeight:1.45,minHeight:34}, bigBtn:{marginTop:'auto',padding:'12px 14px',borderRadius:10,border:'none',cursor:'pointer',fontSize:14,fontFamily:"'Noto Sans KR', sans-serif",fontWeight:800}, slotRow:{display:'flex',gap:6,flexWrap:'wrap',marginTop:'auto'}, slotBig:{flex:1,minWidth:58,padding:'10px 8px',borderRadius:10,border:'1px solid #2a2a38',color:'#fff',fontWeight:800,cursor:'pointer'}, miniAction:{padding:'9px 10px',borderRadius:10,border:'1px solid #2a2a38',background:'#18181f',color:'#fff',fontWeight:700,cursor:'pointer'}, quickBar:{display:'flex',alignItems:'center',gap:10,background:'#0d0d18',border:'1px solid #1e1e30',borderRadius:12,padding:10}, nextHint:{fontSize:13,color:'#a5a5ba',lineHeight:1.4}, selectionHeader:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}, selectionGuide:{fontSize:13,color:'#a5a5ba',marginTop:4}, activeBadge:{padding:'8px 12px',borderRadius:999,fontSize:13,fontWeight:800,whiteSpace:'nowrap'},
+  controls:{display:'flex',gap:10,flexWrap:'wrap'}, btn:{padding:'10px 18px',borderRadius:8,border:'none',cursor:'pointer',fontSize:14,fontFamily:"'Noto Sans KR', sans-serif",fontWeight:700}, btnAccent:{background:'#7cffb2',color:'#0a0a0f'}, btnDanger:{background:'#2a1a1a',color:'#ff6b6b',border:'1px solid #ff6b6b44'}, btnRec:{background:'#ff4444',color:'#fff'}, btnSecondary:{background:'#18181f',color:'#e8e8f0',border:'1px solid #2a2a38'}, btnFreezeOn:{background:'#6eb5ff',color:'#06111d'},
+  player:{width:'100%',height:36,borderRadius:8,opacity:.85}, slotBtn:{fontSize:11,padding:'4px 10px',borderRadius:12,border:'1px solid #2a2a38',background:'#18181f',color:'#fff',cursor:'pointer'},
+  compareGrid:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}, resultCard:{background:'#111118',border:'1px solid #252536',borderRadius:10,padding:12,minHeight:160}, resultHead:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}, smallBtn:{fontSize:11,padding:'4px 8px',borderRadius:8,border:'1px solid #2a2a38',background:'#18181f',color:'#fff',cursor:'pointer'}, resultGrid:{display:'grid',gridTemplateColumns:'88px 1fr',gap:'6px 10px',fontSize:13}, emptyResult:{fontSize:13,color:'#77778f',lineHeight:1.5,paddingTop:20}, tableWrap:{background:'#111118',border:'1px solid #252536',borderRadius:14,overflow:'auto'}, compareTable:{width:'100%',borderCollapse:'collapse',fontSize:13}, bestCell:{background:'rgba(124,255,178,.12)',color:'#7cffb2',fontWeight:900},
+  footer:{textAlign:'center',fontSize:11,color:'#5a5a72',fontFamily:"'Space Mono', monospace",paddingBottom:8},
+  insightPanel:{background:'#101820',border:'1px solid #234',borderRadius:12,padding:'12px 14px',display:'flex',flexDirection:'column',gap:5},
+  insightTitle:{fontWeight:900,color:'#7cffb2',fontSize:14,marginBottom:2},
+  insightLine:{fontSize:13,color:'#c9d6e4',lineHeight:1.45},
+  warnPanel:{display:'flex',gap:8,flexWrap:'wrap'},
+  warnChip:{background:'#18181f',border:'1px solid #333348',borderRadius:999,padding:'7px 10px',fontSize:12,color:'#d6d6ee'},
+  nameEditor:{background:'#111118',border:'1px solid #252536',borderRadius:14,padding:14,display:'flex',flexDirection:'column',gap:10},
+  panelTitle:{fontWeight:900,fontSize:16,color:'#e8e8f0'},
+  nameRow:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:8},
+  nameBox:{display:'flex',flexDirection:'column',gap:6,fontSize:12,fontWeight:800},
+  compareNotice:{display:'flex',flexDirection:'column',gap:4,fontSize:12,color:'#a5a5ba',lineHeight:1.45},
+  eduPanel:{background:'#111118',border:'1px solid #252536',borderRadius:14,padding:14,display:'flex',flexDirection:'column',gap:12},
+  dictGrid:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10},
+  dictCard:{background:'#18181f',border:'1px solid #2a2a38',borderRadius:12,padding:12,fontSize:13,lineHeight:1.5},
+  mapWrap:{display:'grid',gridTemplateColumns:'minmax(320px,1fr) 250px',gap:12,alignItems:'center'},
+  vowelSvg:{width:'100%',height:'auto',borderRadius:12},
+  mapHint:{fontSize:13,color:'#a5a5ba',lineHeight:1.55,background:'#18181f',border:'1px solid #2a2a38',borderRadius:12,padding:12},
+};
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
