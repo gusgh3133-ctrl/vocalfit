@@ -1119,6 +1119,18 @@
             <div style="font-size:.72rem;color:var(--text2);margin-top:6px;text-align:center;">워밍업 · 무거운 목소리 · 가벼운 목소리 모든 루틴에 공통 적용</div>
         </div>
 
+        <!-- 🔊 피아노 볼륨 컨트롤 -->
+        <div class="card routine-bpm-card">
+            <div style="font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:.03em;">🔊 피아노 볼륨</div>
+            <div class="routine-bpm-row">
+                <button class="routine-bpm-btn" onclick="setPianoVolume(pianoVolume - 2)">−</button>
+                <input type="range" id="piano-vol-slider" min="0" max="30" value="20" step="1"
+                       oninput="setPianoVolume(+this.value)" style="flex:1;accent-color:var(--purple);">
+                <button class="routine-bpm-btn" onclick="setPianoVolume(pianoVolume + 2)">+</button>
+                <span id="piano-vol-display" class="routine-bpm-val">20 dB</span>
+            </div>
+        </div>
+
         <!-- ① 워밍업 1 accordion -->
         <div class="card accordion-item">
             <div class="accordion-header" onclick="toggleAccordion('wu')">
@@ -3104,6 +3116,17 @@ const WU_ALL_NOTES = (function() {
 // 모든 루틴(워밍업/무거운/가벼운)이 공통으로 참조하는 전역 BPM
 // ════════════════════════════════════════════════
 let ROUTINE_BPM = 90; // 기본값 90 BPM (범위: 50~120)
+let pianoVolume = 20; // 기본값 20dB (범위: 0~30)
+
+function setPianoVolume(val) {
+    pianoVolume = Math.max(0, Math.min(30, Math.round(val)));
+    const slider  = document.getElementById('piano-vol-slider');
+    const display = document.getElementById('piano-vol-display');
+    if (slider)  slider.value        = pianoVolume;
+    if (display) display.textContent = pianoVolume + ' dB';
+    try { if (piano) piano.volume.value = pianoVolume; } catch(e) {}
+    console.log('[VOL] pianoVolume →', pianoVolume);
+}
 
 function setRoutineBpm(val) {
     ROUTINE_BPM = Math.max(50, Math.min(120, Math.round(val)));
