@@ -718,7 +718,7 @@
     <header class="header">
         <h1>보컬핏 스튜디오</h1>
         <p>Vocal Training System</p>
-        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.6</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7</p>
     </header>
 
     <!-- Desktop top nav -->
@@ -754,10 +754,14 @@
         </button>
     </nav>
 
-    <!-- 🔊 Sound unlock banner (mobile only) -->
-    <div class="snd-banner" id="snd-banner">
-        <span class="snd-banner-hint">버튼을 눌러 <strong>소리를 활성화</strong>해 주세요</span>
-        <button class="snd-unlock-btn" id="snd-unlock-btn">🔊 소리 켜기</button>
+    <!-- 🔊 Sound unlock banner 제거됨 (자동 언락으로 대체) -->
+    <!-- ⚠️ Chrome iOS 안내 배너 -->
+    <div id="chrome-ios-banner" style="display:none;align-items:center;gap:10px;padding:10px 16px;background:rgba(239,68,68,.12);border-bottom:1px solid rgba(239,68,68,.25);">
+        <span style="font-size:1.1rem;">⚠️</span>
+        <span style="font-size:.78rem;color:#f87171;line-height:1.5;flex:1;">
+            <strong style="color:#fca5a5;">iPhone Chrome은 소리가 제한됩니다.</strong><br>
+            <strong>Safari</strong>로 열면 마이크 없이도 소리가 납니다 🎵
+        </span>
     </div>
 
     <!-- Mobile more menu overlay -->
@@ -779,10 +783,23 @@
             <div style="font-size:.75rem;color:var(--muted);">앱 개선 기록을 확인하세요</div>
         </div>
 
+        <!-- v0.7 -->
+        <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="background:var(--purple);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.7</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--text);">피아노 음질 개선 & 브라우저 안내</span>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.06.04</span>
+            </div>
+            <div class="cl-item">🎹 <strong>피아노 샘플 교체</strong> — Salamander Grand Piano(실제 그랜드 피아노 녹음)로 업그레이드. 기존 대비 음질 대폭 향상</div>
+            <div class="cl-item">🔊 <strong>볼륨 상향</strong> — 피아노 출력 볼륨 20dB로 통일 (모바일/데스크탑 동일)</div>
+            <div class="cl-item">📱 <strong>iPhone Chrome 안내</strong> — Chrome 환경에서는 소리 제한 안내 배너 표시 및 Safari 사용 권장</div>
+            <div class="cl-item">🔇 <strong>소리 켜기 버튼 제거</strong> — 별도 버튼 없이 자동 오디오 언락으로 변경. 소리 안 날 경우 Safari 사용 안내</div>
+        </div>
+
         <!-- v0.6 -->
         <div class="card" style="padding:14px 16px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <span style="background:var(--purple);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.6</span>
+                <span style="background:rgba(139,92,246,.4);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;">v0.6</span>
                 <span style="font-size:.78rem;font-weight:700;color:var(--text);">iOS 오디오 덕킹 방지</span>
                 <span style="margin-left:auto;font-size:.7rem;color:var(--muted);">2026.04.22</span>
             </div>
@@ -1077,7 +1094,7 @@
 
         <!-- 소리 안날 때 안내 -->
         <div style="font-size:.78rem;color:var(--text2);text-align:center;padding:8px 16px 4px;line-height:1.6;">
-            🔇 소리가 안 나오면 <strong style="color:var(--yellow);">음정</strong> 탭 → <strong style="color:var(--yellow);">마이크 켜기</strong> 후 다시 시도해주세요
+            🔇 소리가 안 나오면 <strong style="color:var(--yellow);">Safari</strong>에서 실행해주세요
         </div>
 
         <!-- 🔥 보컬 루틴 설명 -->
@@ -2429,9 +2446,9 @@ function initPiano() {
                 Fs1:'Fs1.mp3',Fs2:'Fs2.mp3',Fs3:'Fs3.mp3',Fs4:'Fs4.mp3',
                 Fs5:'Fs5.mp3',Fs6:'Fs6.mp3',Fs7:'Fs7.mp3',
             },
-            volume: isMobile ? 12 : 8,
+            volume: 20,
             release: 1.2,
-            baseUrl: 'https://nbrosowsky.github.io/tonejs-instruments/samples/piano/',
+            baseUrl: 'https://tonejs.github.io/audio/salamander/',
             onload: () => {
                 pianoReady = true;
                 document.getElementById('piano-prog').style.width = '100%';
@@ -2448,7 +2465,7 @@ function initPiano() {
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 },
-            volume: isMobile ? 12 : 8
+            volume: 20
         }).connect(pianoComp);
         pianoReady = true;
         document.getElementById('piano-msg').textContent = '✅ 피아노 로딩 완료!';
@@ -4467,7 +4484,7 @@ async function ensurePianoReady() {
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.4, release:1.8 },
-            volume: 8
+            volume: 20
         }).connect(fbComp);
         pianoReady = true;
     }
@@ -5425,6 +5442,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Build C-note reference lines on spectrogram
     buildSpecOverlay();
+
+    // ── ⚠️ Chrome iOS 감지: Safari 안내 배너 표시 ──────────────────
+    if (/CriOS/i.test(navigator.userAgent)) {
+        const chromeBanner = document.getElementById('chrome-ios-banner');
+        if (chromeBanner) chromeBanner.style.display = 'flex';
+        console.log('[VF] Chrome iOS 감지 → Safari 안내 배너 표시');
+    }
 
     // ── 🔊 Sound unlock button: click + touchend (iOS requires touchend) ──
     const sndBtn = document.getElementById('snd-unlock-btn');
