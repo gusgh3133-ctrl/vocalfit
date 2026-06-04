@@ -718,7 +718,7 @@
     <header class="header">
         <h1>보컬핏 스튜디오</h1>
         <p>Vocal Training System</p>
-        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7-20260604-1017</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7-20260604-1019</p>
     </header>
 
     <!-- Desktop top nav -->
@@ -6425,19 +6425,19 @@ function riffInitDrums() {
         pitchDecay: 0.05, octaves: 6,
         envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.1 }
     }).toDestination();
-    riffKick.volume.value = -4;
+    riffKick.volume.value = 4;
 
     riffSnare = new Tone.NoiseSynth({
         noise: { type: 'white' },
         envelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.05 }
     }).toDestination();
-    riffSnare.volume.value = -8;
+    riffSnare.volume.value = 0;
 
     riffHihat = new Tone.MetalSynth({
         frequency: 400, envelope: { attack: 0.001, decay: 0.04, release: 0.01 },
         harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5
     }).toDestination();
-    riffHihat.volume.value = -14;
+    riffHihat.volume.value = -6;
 }
 
 // ── 타이밍 헬퍼 ───────────────────────────────────────────────
