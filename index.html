@@ -718,7 +718,7 @@
     <header class="header">
         <h1>보컬핏 스튜디오</h1>
         <p>Vocal Training System</p>
-        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7-20260604-1015</p>
     </header>
 
     <!-- Desktop top nav -->
@@ -2449,7 +2449,9 @@ function initPiano() {
     const pianoLimiter = new Tone.Limiter(-1);
 
     // 체인 연결: EQ → 컴프레서 → 리미터 → Destination
-    pianoEQ.chain(pianoComp, pianoLimiter, Tone.Destination);
+    pianoEQ.connect(pianoComp);
+    pianoComp.connect(pianoLimiter);
+    pianoLimiter.toDestination();
 
     try {
         piano = new Tone.Sampler({
@@ -4511,7 +4513,9 @@ async function ensurePianoReady() {
         const fbEQ      = new Tone.EQ3({ low:2, mid:4, high:2, lowFrequency:300, highFrequency:3500 });
         const fbComp    = new Tone.Compressor({ threshold:-18, ratio:4, attack:0.003, release:0.15, knee:8 });
         const fbLimiter = new Tone.Limiter(-1);
-        fbEQ.chain(fbComp, fbLimiter, Tone.Destination);
+        fbEQ.connect(fbComp);
+        fbComp.connect(fbLimiter);
+        fbLimiter.toDestination();
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.4, release:1.8 },
