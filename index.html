@@ -718,7 +718,7 @@
     <header class="header">
         <h1>보컬핏 스튜디오</h1>
         <p>Vocal Training System</p>
-        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7-20260604-1015</p>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:4px;">v0.7-20260604-1017</p>
     </header>
 
     <!-- Desktop top nav -->
@@ -2448,10 +2448,15 @@ function initPiano() {
     // 리미터: 브릭월(-1dB) — 클리핑 없이 최대 음압
     const pianoLimiter = new Tone.Limiter(-1);
 
-    // 체인 연결: EQ → 컴프레서 → 리미터 → Destination
+    // 리미터 앞 게인 부스트: 평균 음압 극대화
+    const pianoPreGain = new Tone.Volume(12); // +12dB 밀어넣기
+    // 체인: EQ → 컴프 → PreGain(+12dB) → 리미터(-1dB) → 출력(+10dB)
     pianoEQ.connect(pianoComp);
-    pianoComp.connect(pianoLimiter);
+    pianoComp.connect(pianoPreGain);
+    pianoPreGain.connect(pianoLimiter);
     pianoLimiter.toDestination();
+    // 마스터 출력 +10dB
+    try { Tone.Destination.volume.value = 10; } catch(e) {}
 
     try {
         piano = new Tone.Sampler({
@@ -4513,8 +4518,10 @@ async function ensurePianoReady() {
         const fbEQ      = new Tone.EQ3({ low:2, mid:4, high:2, lowFrequency:300, highFrequency:3500 });
         const fbComp    = new Tone.Compressor({ threshold:-18, ratio:4, attack:0.003, release:0.15, knee:8 });
         const fbLimiter = new Tone.Limiter(-1);
+        const fbPreGain = new Tone.Volume(12);
         fbEQ.connect(fbComp);
-        fbComp.connect(fbLimiter);
+        fbComp.connect(fbPreGain);
+        fbPreGain.connect(fbLimiter);
         fbLimiter.toDestination();
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
