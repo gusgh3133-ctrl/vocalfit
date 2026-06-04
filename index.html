@@ -2427,11 +2427,11 @@ function initPiano() {
 
     // ── 컴프레서: 클리핑 방지 + 소리 균일하게 ──────────────────────────
     const pianoComp = new Tone.Compressor({
-        threshold: -14,  // 이 레벨 넘으면 압축 시작 (dB)
-        ratio: 4,        // 4:1 압축비
+        threshold: -6,   // 압축 시작점 높임 → 더 크게 통과
+        ratio: 2,        // 2:1 압축비 (압축량 감소 → 음량 증가)
         attack: 0.005,
         release: 0.1,
-        knee: 6,
+        knee: 3,
     }).toDestination();
 
     try {
@@ -4480,7 +4480,7 @@ async function ensurePianoReady() {
     if (!pianoReady) {
         // Last-resort fallback: replace with instant PolySynth
         try { piano.dispose(); } catch(e){}
-        const fbComp = new Tone.Compressor({ threshold:-14, ratio:4, attack:0.005, release:0.1, knee:6 }).toDestination();
+        const fbComp = new Tone.Compressor({ threshold:-6, ratio:2, attack:0.005, release:0.1, knee:3 }).toDestination();
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.4, release:1.8 },
