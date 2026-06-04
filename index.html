@@ -2428,14 +2428,28 @@ function initPiano() {
     // ── 모바일/웹 볼륨 분리 ──────────────────────────────────────────────
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // ── 컴프레서: 클리핑 방지 + 소리 균일하게 ──────────────────────────
+    // ── 마스터링 체인: EQ → 컴프레서 → 리미터 → 출력 ─────────────────
+    // EQ: 피아노 중역대(존재감) + 고역(공기감) 약간 부스트
+    const pianoEQ = new Tone.EQ3({
+        low:           2,    // 저역 +2dB (두께감)
+        mid:           4,    // 중역 +4dB (피아노 존재감 핵심 대역)
+        high:          2,    // 고역 +2dB (공기감·선명도)
+        lowFrequency:  300,
+        highFrequency: 3500,
+    });
+    // 컴프레서: 다이나믹 정리 (makeup gain 역할)
     const pianoComp = new Tone.Compressor({
-        threshold: -6,   // 압축 시작점 높임 → 더 크게 통과
-        ratio: 2,        // 2:1 압축비 (압축량 감소 → 음량 증가)
-        attack: 0.005,
-        release: 0.1,
-        knee: 3,
-    }).toDestination();
+        threshold: -18,  // 낮게 잡아서 압축 후 전체 레벨 끌어올림
+        ratio:      4,
+        attack:     0.003,
+        release:    0.15,
+        knee:       8,
+    });
+    // 리미터: 브릭월(-1dB) — 클리핑 없이 최대 음압
+    const pianoLimiter = new Tone.Limiter(-1);
+
+    // 체인 연결: EQ → 컴프레서 → 리미터 → Destination
+    pianoEQ.chain(pianoComp, pianoLimiter, Tone.Destination);
 
     try {
         piano = new Tone.Sampler({
@@ -2462,14 +2476,14 @@ function initPiano() {
                     document.querySelector('.progress-bar').style.display = 'none';
                 }, 1800);
             }
-        }).connect(pianoComp);
+        }).connect(pianoEQ);
         document.getElementById('piano-prog').style.width = '55%';
     } catch(e) {
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.3, release:1.8 },
             volume: 20
-        }).connect(pianoComp);
+        }).connect(pianoEQ);
         pianoReady = true;
         document.getElementById('piano-msg').textContent = '✅ 피아노 로딩 완료!';
         document.getElementById('piano-prog').style.width = '100%';
@@ -4494,12 +4508,15 @@ async function ensurePianoReady() {
     if (!pianoReady) {
         // Last-resort fallback: replace with instant PolySynth
         try { piano.dispose(); } catch(e){}
-        const fbComp = new Tone.Compressor({ threshold:-6, ratio:2, attack:0.005, release:0.1, knee:3 }).toDestination();
+        const fbEQ      = new Tone.EQ3({ low:2, mid:4, high:2, lowFrequency:300, highFrequency:3500 });
+        const fbComp    = new Tone.Compressor({ threshold:-18, ratio:4, attack:0.003, release:0.15, knee:8 });
+        const fbLimiter = new Tone.Limiter(-1);
+        fbEQ.chain(fbComp, fbLimiter, Tone.Destination);
         piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type:'triangle8' },
             envelope: { attack:.02, decay:.6, sustain:.4, release:1.8 },
             volume: 20
-        }).connect(fbComp);
+        }).connect(fbEQ);
         pianoReady = true;
     }
     return true;
